@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DimeTú - Banco de Chile | Sistema Zero-Trust Accesible para el Adulto Mayor</title>
+  <!-- SEO Tags -->
+  <meta name="description" content="DimeTú es una aplicación de seguridad bancaria bidireccional basada en la filosofía Zero Trust, optimizada para adultos mayores con una interfaz clara y de fácil uso diario.">
+  <meta name="author" content="Banco de Chile - Zero Trust Development">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Application Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">DT</div>
+      <div class="brand-info">
+        <h1>DimeTú &bull; Seguridad Bidireccional</h1>
+        <p>Sistema Zero Trust de Verificación de Identidad Bancaria</p>
+      </div>
+    </div>
+    <div class="security-badge" style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent); font-size: 0.9rem;">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Zero Trust Activo</span>
+    </div>
+  </header>
+
+  <!-- Main Grid Simulator Container -->
+  <main class="main-container">
+
+    <!-- LEFT PANEL: Phone Device Simulator (Older Adult App) -->
+    <section class="device-pane" aria-label="Simulador de Aplicación Móvil">
+      <div class="phone-bezel">
+        <!-- Physical notch -->
+        <div class="phone-notch">
+          <div class="notch-speaker"></div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="phone-status-bar">
+          <span class="status-time">15:34</span>
+          <div class="status-icons">
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-battery-three-quarters"></i>
+          </div>
+        </div>
+
+        <!-- Touch Screen Container -->
+        <div class="phone-screen">
+
+          <!-- SCREEN STATE 1: Lock Screen (Face ID / Fingerprint Scan) -->
+          <div class="screen-state" id="state-lock">
+            <div class="lock-header">
+              <h2>Seguridad DimeTú</h2>
+              <p>Autentíquese para visualizar la palabra de seguridad de hoy.</p>
+            </div>
+
+            <div class="biometric-area">
+              <!-- Scanner Frame -->
+              <button class="faceid-scanner" id="faceid-scanner" aria-label="Escanear Face ID o Huella Digital">
+                <div class="scanner-line"></div>
+                <i class="fa-solid fa-face-recognition scanner-icon"></i>
+              </button>
+              <p class="biometric-status" id="biometric-status-msg">Presione el icono para ingresar</p>
+            </div>
+
+            <div class="lock-footer">
+              <button class="fallback-btn" id="fallback-to-pin-btn">
+                <i class="fa-solid fa-keyboard" style="margin-right: 8px;"></i>
+                Ingresar con PIN de Celular
+              </button>
+              <div class="security-shield-footer" style="color: var(--text-secondary); font-size: 0.75rem;">
+                <i class="fa-solid fa-lock"></i>
+                Autenticación protegida por el celular
+              </div>
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 2: PIN Fallback Screen -->
+          <div class="screen-state pin-screen" id="state-pin">
+            <div class="pin-header">
+              <button class="back-btn" id="back-to-lock-btn" style="position: absolute; left: 1rem; top: 1rem;" aria-label="Volver">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h3>Clave del Dispositivo</h3>
+              <p>Ingrese la clave de desbloqueo de su teléfono</p>
+            </div>
+
+            <!-- PIN Display Dots -->
+            <div class="pin-dots-container">
+              <div class="pin-dots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+              </div>
+              <p style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;">
+                PIN de prueba: <strong>1234</strong>
+              </p>
+            </div>
+
+            <!-- Custom Keyboard Pad -->
+            <div class="pin-pad">
+              <button class="pin-key" data-val="1">1</button>
+              <button class="pin-key" data-val="2">2</button>
+              <button class="pin-key" data-val="3">3</button>
+              <button class="pin-key" data-val="4">4</button>
+              <button class="pin-key" data-val="5">5</button>
+              <button class="pin-key" data-val="6">6</button>
+              <button class="pin-key" data-val="7">7</button>
+              <button class="pin-key" data-val="8">8</button>
+              <button class="pin-key" data-val="9">9</button>
+              <button class="pin-key clear-key" data-val="clear">Limpiar</button>
+              <button class="pin-key" data-val="0">0</button>
+              <button class="pin-key clear-key" style="opacity: 0; pointer-events: none;">Blank</button>
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 3: App Dashboard (Revealing the word - Accessible design) -->
+          <div class="screen-state dashboard-screen" id="state-dashboard">
+            <nav class="app-navbar">
+              <div class="app-logo">
+                <div class="app-logo-icon">DT</div>
+                <span class="app-logo-text">DimeTú</span>
+              </div>
+              <button class="lock-app-btn" id="lock-app-manual" title="Bloquear aplicación" aria-label="Bloquear aplicación">
+                <i class="fa-solid fa-right-from-bracket"></i>
+              </button>
+            </nav>
+
+            <div class="dash-content">
+              <!-- Default Verify Button (Big and central for tactile accuracy) -->
+              <button class="verify-trigger-btn" id="verify-trigger" aria-label="Verificar Palabra de Hoy">
+                <i class="fa-solid fa-key verify-icon"></i>
+                <span class="verify-text">Ver palabra<br>de hoy</span>
+              </button>
+
+              <!-- Result Word Card (Highly Legible, Big Text) -->
+              <div class="word-card" id="word-result-card">
+                <div class="word-card-header">
+                  <div class="pulse-dot"></div>
+                  <span>Identidad Bancaria</span>
+                </div>
+                
+                <div class="word-display-container">
+                  <p class="word-text-large" id="client-word">Cóndor Azul</p>
+                  <p class="word-meaning-hint">Contra-clave oficial de hoy</p>
+                </div>
+
+                <!-- Web speech vocalizer -->
+                <button class="audio-btn" id="audio-speaker-btn" aria-label="Escuchar palabra en voz alta">
+                  <i class="fa-solid fa-volume-high"></i>
+                  <span>Escuchar Palabra</span>
+                </button>
+                
+                <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3; max-width: 90%;">
+                  El ejecutivo del banco que le llama debe decirle exactamente este código.
+                </p>
+              </div>
+            </div>
+
+            <!-- Footer navigation -->
+            <div class="dash-footer">
+              <button class="history-btn" id="open-history-btn">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Ver palabras de la semana
+              </button>
+              
+              <div class="security-shield-footer">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Verificación segura activa</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 4: History Overlay Screen -->
+          <div class="screen-state history-screen" id="state-history">
+            <div class="history-nav">
+              <button class="back-btn" id="back-to-dash-btn" aria-label="Volver al panel principal">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h3>Palabras de la Semana</h3>
+            </div>
+
+            <!-- List items populated dynamically by script -->
+            <div class="history-list" id="history-list-container">
+              <!-- Simulated elements will render here -->
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 5: Active Remote Control Warning Lockout Screen -->
+          <div class="screen-state remote-blocked-screen" id="state-remote-blocked">
+            <div class="warning-animation">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 class="danger-title">Acceso Bloqueado</h2>
+            <p class="danger-desc">
+              Se ha detectado software de control remoto activo (como <span>AnyDesk</span> o <span>TeamViewer</span>) en su dispositivo.
+            </p>
+            <div class="security-tip-box">
+              <strong style="color: var(--danger); display: block; margin-bottom: 4px;">Por seguridad de sus cuentas:</strong>
+              Para protegerlo de fraudes y manipulación a distancia, DimeTú suspende la visualización del código mientras estas herramientas estén en ejecución. Cierre la sesión remota para desbloquear.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Simulation Control Dashboard & Call Center -->
+    <section class="control-pane" aria-label="Panel de Simulación y Control">
+      
+      <!-- Panel Card 1: Simulation Tools (Toggles and Dates) -->
+      <div class="panel-card">
+        <h2 class="panel-title">
+          <i class="fa-solid fa-sliders"></i>
+          Herramientas del Simulador
+        </h2>
+        
+        <div class="simulator-tools">
+          <!-- Toggle Biometrics Fail -->
+          <div class="toggle-switch-wrapper">
+            <div class="toggle-label" onclick="document.getElementById('biometrics-fail').click()">
+              <span class="toggle-title">Simular Fallo Biométrico</span>
+              <span class="toggle-desc">Fuerza el uso del PIN de desbloqueo</span>
+            </div>
+            <label class="switch" aria-label="Simular Fallo Biométrico">
+              <input type="checkbox" id="biometrics-fail">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Toggle Remote Access Detected -->
+          <div class="toggle-switch-wrapper">
+            <div class="toggle-label" onclick="document.getElementById('remote-control').click()">
+              <span class="toggle-title">Simular Control Remoto</span>
+              <span class="toggle-desc">AnyDesk / TeamViewer activo</span>
+            </div>
+            <label class="switch" aria-label="Simular Control Remoto Activo">
+              <input type="checkbox" id="remote-control">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Date Shifter dropdown -->
+        <div class="date-shifter-control" style="display: flex; flex-direction: column; gap: 6px;">
+          <label for="sim-date-shift" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">
+            Desplazar fecha del sistema (Para testear códigos del historial):
+          </label>
+          <select id="sim-date-shift" style="background: var(--bg-card-light); border: 1px solid var(--border-color); color: white; padding: 0.75rem 1rem; border-radius: 12px; font-family: var(--font-body); outline: none;">
+            <option value="0">Hoy (Código Actual)</option>
+            <option value="1">Mañana (+1 día)</option>
+            <option value="-1">Ayer (-1 día)</option>
+            <option value="-2">Hace 2 días</option>
+            <option value="-3">Hace 3 días</option>
+            <option value="-4">Hace 4 días</option>
+            <option value="-5">Hace 5 días</option>
+            <option value="-6">Hace 6 días</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Panel Card 2: Interactive Call Center Simulator -->
+      <div class="panel-card">
+        <h2 class="panel-title">
+          <i class="fa-solid fa-headset"></i>
+          Centro de Llamados & API del Banco
+        </h2>
+
+        <div class="call-center-layout">
+          <!-- Widget call dialer -->
+          <div class="call-simulator-widget">
+            <div class="widget-user-info">
+              <div class="user-avatar-placeholder">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <div class="user-details">
+                <h4>Ejecutivo de Call Center</h4>
+                <p>Banco de Chile &bull; Canal Telefónico</p>
+              </div>
+            </div>
+            <button class="call-btn" id="dial-client-btn">
+              <i class="fa-solid fa-phone"></i>
+              Llamar Cliente
+            </button>
+          </div>
+
+          <!-- Operator Console displaying the correct API word -->
+          <div class="call-center-dashboard">
+            <div class="console-stat">
+              <span class="stat-label">Conexión con Cliente:</span>
+              <span class="stat-value" id="exec-call-status">Inactiva</span>
+            </div>
+            <div class="console-stat">
+              <span class="stat-label">Fecha del Sistema API:</span>
+              <span class="stat-value" id="exec-word-date">2026-06-13</span>
+            </div>
+            <div class="console-stat">
+              <span class="stat-label">Contra-Clave en Pantalla Ejecutivo:</span>
+              <span class="stat-value highlight" id="exec-word-display">Cargando...</span>
+            </div>
+          </div>
+
+          <!-- Call Dialogue Interactive Logs -->
+          <div class="script-console">
+            <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+              Transcripción interactiva de llamada:
+            </p>
+            <div class="script-log" id="script-logs">
+              <div class="log-entry system">Presione "Llamar Cliente" para iniciar el flujo de diálogo interactivo.</div>
+            </div>
+            <div class="script-actions">
+              <button class="script-btn" id="script-action-next" disabled>
+                <span>Avanzar Diálogo</span>
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+              <button class="script-btn" id="script-action-reset" style="flex: 0 0 60px;" title="Resetear diálogo" aria-label="Resetear diálogo">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Card 3: Notifications Simulator (SMS/Email dynamic seals) -->
+      <div class="panel-card">
+        <h2 class="panel-title">
+          <i class="fa-solid fa-envelope-open-text"></i>
+          Validación en Canales Escritos
+        </h2>
+
+        <div class="channels-layout">
+          <!-- Device Tabs -->
+          <div class="mock-device-tabs">
+            <button class="tab-btn active" data-tab="sms">Notificación SMS</button>
+            <button class="tab-btn" data-tab="email">Correo Electrónico</button>
+          </div>
+
+          <!-- SMS Tab -->
+          <div class="tab-content active" id="tab-sms">
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+              Los SMS legítimos prependen de forma obligatoria el sello dinámico DimeTú:
+            </p>
+            <div class="sms-inbox">
+              <div class="sms-bubble">
+                <p id="sms-content-text">
+                  <span class="sms-header-prefix">DimeTú: Cóndor Azul</span>Banco de Chile informa: Se ha programado una transferencia de $150.000...
+                </p>
+                <div class="sms-time" id="sms-time-stamp">2026-06-13 15:34</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Tab -->
+          <div class="tab-content" id="tab-email">
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+              El correo incorpora un sello de autenticidad integrado de lectura rápida:
+            </p>
+            <div class="email-client">
+              <div class="email-headers">
+                <div class="email-field"><span>De:</span> Banco de Chile &lt;notificaciones@bancodechile.cl&gt;</div>
+                <div class="email-field"><span>Para:</span> juan.valencia@chile.cl</div>
+                <div class="email-field" style="font-weight: 600;"><span>Asunto:</span> <span id="email-subject-text">[DimeTú: Cóndor Azul] Notificación de Ingreso</span></div>
+                <div class="email-field"><span>Fecha:</span> <span id="email-date-text">2026-06-13 15:34</span></div>
+              </div>
+              
+              <div class="email-body">
+                <!-- Sello DimeTú -->
+                <div class="email-secure-header">
+                  <i class="fa-solid fa-shield-check email-secure-icon"></i>
+                  <div class="email-secure-text">
+                    Sello de Confianza DimeTú de hoy: 
+                    <strong class="email-secure-badge" id="email-badge-word">Cóndor Azul</strong>
+                    <br>
+                    <span style="font-size: 0.75rem; color: #4a5568;">Verifique este sello en su app para garantizar que este correo es real.</span>
+                  </div>
+                </div>
+                
+                <p style="margin-bottom: 0.5rem;">Estimado cliente Juan José,</p>
+                <p style="margin-bottom: 0.5rem;">Le informamos que se ha registrado una conexión exitosa a su Banca en Línea desde un nuevo dispositivo móvil.</p>
+                <p style="margin-bottom: 0.5rem; font-size: 0.8rem; color: #718096;">Detalles del Acceso:<br>&bull; Ubicación: Santiago, Chile<br>&bull; Navegador: Chrome / OS X</p>
+                <p>Si no reconoce esta conexión, le solicitamos bloquear preventivamente sus claves en la sección de seguridad.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Application Footer -->
+  <footer>
+    <p>&copy; 2026 Banco de Chile. Desarrollado bajo especificaciones de seguridad bidireccional y accesibilidad universal.</p>
+  </footer>
+
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
