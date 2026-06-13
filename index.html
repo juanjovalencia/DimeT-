@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DimeTú - Banco de Chile | Sistema Zero-Trust Accesible para el Adulto Mayor</title>
+  <title>DimeTú - Banco de Chile | Portal de Seguridad Zero-Trust</title>
   <!-- SEO Tags -->
-  <meta name="description" content="DimeTú es una aplicación de seguridad bancaria bidireccional basada en la filosofía Zero Trust, optimizada para adultos mayores con una interfaz clara y de fácil uso diario.">
+  <meta name="description" content="DimeTú es una plataforma de seguridad bidireccional basada en Zero Trust. Elige ingresar como Cliente (Adulto Mayor) con interfaz adaptada o como Ejecutivo (Banco de Chile).">
   <meta name="author" content="Banco de Chile - Zero Trust Development">
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
@@ -14,26 +14,68 @@
 </head>
 <body>
 
-  <!-- Application Header -->
-  <header>
-    <div class="brand">
-      <div class="brand-logo">DT</div>
-      <div class="brand-info">
-        <h1>DimeTú &bull; Seguridad Bidireccional</h1>
-        <p>Sistema Zero Trust de Verificación de Identidad Bancaria</p>
+  <!-- 1. MAIN ROLE SELECTION PORTAL SCREEN -->
+  <div class="portal-overlay active" id="state-portal">
+    <div class="portal-content">
+      <div class="portal-brand">
+        <div class="portal-logo">DT</div>
+        <h2>DimeTú &bull; Plataforma Zero-Trust</h2>
+        <p>Seleccione su rol de usuario para ingresar al simulador</p>
+      </div>
+
+      <div class="portal-cards-grid">
+        <!-- Role Card 1: Cliente (Abuelo) -->
+        <button class="portal-card" id="enter-client-role-btn">
+          <div class="portal-card-icon client">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+          </div>
+          <h3>Acceso Cliente</h3>
+          <p class="portal-card-role">Adulto Mayor / Titular</p>
+          <ul class="portal-card-features">
+            <li><i class="fa-solid fa-check"></i> Interfaz ultra-legible y accesible</li>
+            <li><i class="fa-solid fa-check"></i> Acceso biométrico (Face ID / PIN)</li>
+            <li><i class="fa-solid fa-check"></i> Lector de palabras por voz (TTS)</li>
+            <li><i class="fa-solid fa-check"></i> Bloqueo automático ante estafas</li>
+          </ul>
+          <span class="portal-card-btn">Ingresar como Cliente</span>
+        </button>
+
+        <!-- Role Card 2: Ejecutivo (Banco) -->
+        <button class="portal-card" id="enter-bank-role-btn">
+          <div class="portal-card-icon bank">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <h3>Acceso Ejecutivo</h3>
+          <p class="portal-card-role">Operador de Call Center / Sucursal</p>
+          <ul class="portal-card-features">
+            <li><i class="fa-solid fa-check"></i> Consola de llamadas de seguridad</li>
+            <li><i class="fa-solid fa-check"></i> Consulta de API de contra-claves</li>
+            <li><i class="fa-solid fa-check"></i> Plantillas de SMS y Correo Electrónico</li>
+            <li><i class="fa-solid fa-check"></i> Historial y logs de auditoría</li>
+          </ul>
+          <span class="portal-card-btn">Ingresar como Banco</span>
+        </button>
+      </div>
+
+      <div class="portal-footer">
+        <p><i class="fa-solid fa-shield-halved"></i> Filosofía Zero Trust: "Nunca confiar, siempre verificar". &bull; Banco de Chile 2026</p>
       </div>
     </div>
-    <div class="security-badge" style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent); font-size: 0.9rem;">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span>Zero Trust Activo</span>
+  </div>
+
+  <!-- 2. CLIENT (GRANDFATHER) VIEW CONTAINER -->
+  <div class="role-view-container" id="client-view-container" style="display: none;">
+    <!-- Top Bar Client View -->
+    <div class="view-header">
+      <button class="portal-exit-btn" id="exit-client-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Salir al Portal de Roles
+      </button>
+      <span class="view-title-tag"><i class="fa-solid fa-mobile-screen"></i> Vista Cliente (Adulto Mayor)</span>
     </div>
-  </header>
 
-  <!-- Main Grid Simulator Container -->
-  <main class="main-container">
-
-    <!-- LEFT PANEL: Phone Device Simulator (Older Adult App) -->
-    <section class="device-pane" aria-label="Simulador de Aplicación Móvil">
+    <!-- Centered Smartphone Container -->
+    <div class="device-pane client-centered-view">
       <div class="phone-bezel">
         <!-- Physical notch -->
         <div class="phone-notch">
@@ -210,196 +252,228 @@
 
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- RIGHT PANEL: Simulation Control Dashboard & Call Center -->
-    <section class="control-pane" aria-label="Panel de Simulación y Control">
-      
-      <!-- Panel Card 1: Simulation Tools (Toggles and Dates) -->
-      <div class="panel-card">
-        <h2 class="panel-title">
-          <i class="fa-solid fa-sliders"></i>
-          Herramientas del Simulador
-        </h2>
+    <!-- COLLAPSIBLE SIMULATOR DRAWER (For Developer Testing inside Client View) -->
+    <div class="developer-drawer" id="developer-drawer">
+      <button class="drawer-toggle-btn" id="drawer-toggle-btn">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Simular Amenazas</span>
+      </button>
+      <div class="drawer-content">
+        <h4>Panel de Pruebas de Seguridad</h4>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Usa estos controles para simular incidentes en el teléfono del abuelo.
+        </p>
         
-        <div class="simulator-tools">
-          <!-- Toggle Biometrics Fail -->
-          <div class="toggle-switch-wrapper">
-            <div class="toggle-label" onclick="document.getElementById('biometrics-fail').click()">
-              <span class="toggle-title">Simular Fallo Biométrico</span>
-              <span class="toggle-desc">Fuerza el uso del PIN de desbloqueo</span>
-            </div>
-            <label class="switch" aria-label="Simular Fallo Biométrico">
-              <input type="checkbox" id="biometrics-fail">
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <!-- Toggle Remote Access Detected -->
-          <div class="toggle-switch-wrapper">
-            <div class="toggle-label" onclick="document.getElementById('remote-control').click()">
-              <span class="toggle-title">Simular Control Remoto</span>
-              <span class="toggle-desc">AnyDesk / TeamViewer activo</span>
-            </div>
-            <label class="switch" aria-label="Simular Control Remoto Activo">
-              <input type="checkbox" id="remote-control">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Date Shifter dropdown -->
-        <div class="date-shifter-control" style="display: flex; flex-direction: column; gap: 6px;">
-          <label for="sim-date-shift" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">
-            Desplazar fecha del sistema (Para testear códigos del historial):
+        <!-- Toggle Biometrics Fail -->
+        <div class="drawer-control-item">
+          <label class="switch-label">
+            <input type="checkbox" id="biometrics-fail-drawer">
+            <span>Fuerza Fallo Biométrico</span>
           </label>
-          <select id="sim-date-shift" style="background: var(--bg-card-light); border: 1px solid var(--border-color); color: white; padding: 0.75rem 1rem; border-radius: 12px; font-family: var(--font-body); outline: none;">
-            <option value="0">Hoy (Código Actual)</option>
-            <option value="1">Mañana (+1 día)</option>
-            <option value="-1">Ayer (-1 día)</option>
-            <option value="-2">Hace 2 días</option>
-            <option value="-3">Hace 3 días</option>
-            <option value="-4">Hace 4 días</option>
-            <option value="-5">Hace 5 días</option>
-            <option value="-6">Hace 6 días</option>
-          </select>
+        </div>
+
+        <!-- Toggle Remote Access Detected -->
+        <div class="drawer-control-item">
+          <label class="switch-label danger-switch">
+            <input type="checkbox" id="remote-control-drawer">
+            <span>Simular Control Remoto Activo</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. BANK EXECUTIVE VIEW CONTAINER -->
+  <div class="role-view-container" id="bank-view-container" style="display: none;">
+    <!-- Top Bar Bank View -->
+    <div class="view-header">
+      <button class="portal-exit-btn" id="exit-bank-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Salir al Portal de Roles
+      </button>
+      <span class="view-title-tag"><i class="fa-solid fa-building-columns"></i> Vista Banco (Consola Ejecutiva)</span>
+    </div>
+
+    <div class="main-container bank-dashboard-layout">
+      <!-- Left Panel: Call Center Console -->
+      <div class="control-pane">
+        <!-- Call Center Widget -->
+        <div class="panel-card">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-headset"></i>
+            Centro de Llamados & API del Banco
+          </h2>
+
+          <div class="call-center-layout">
+            <!-- Widget call dialer -->
+            <div class="call-simulator-widget">
+              <div class="widget-user-info">
+                <div class="user-avatar-placeholder">
+                  <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div class="user-details">
+                  <h4>Ejecutivo de Call Center</h4>
+                  <p>Banco de Chile &bull; Canal Telefónico</p>
+                </div>
+              </div>
+              <button class="call-btn" id="dial-client-btn">
+                <i class="fa-solid fa-phone"></i>
+                Llamar Cliente
+              </button>
+            </div>
+
+            <!-- Operator Console displaying the correct API word -->
+            <div class="call-center-dashboard">
+              <div class="console-stat">
+                <span class="stat-label">Conexión con Cliente:</span>
+                <span class="stat-value" id="exec-call-status">Inactiva</span>
+              </div>
+              <div class="console-stat">
+                <span class="stat-label">Fecha del Sistema API:</span>
+                <span class="stat-value" id="exec-word-date">2026-06-13</span>
+              </div>
+              <div class="console-stat">
+                <span class="stat-label">Contra-Clave en Pantalla Ejecutivo:</span>
+                <span class="stat-value highlight" id="exec-word-display">Cargando...</span>
+              </div>
+            </div>
+
+            <!-- Call Dialogue Interactive Logs -->
+            <div class="script-console">
+              <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                Transcripción interactiva de llamada:
+              </p>
+              <div class="script-log" id="script-logs">
+                <div class="log-entry system">Presione "Llamar Cliente" para iniciar el flujo de diálogo interactivo.</div>
+              </div>
+              <div class="script-actions">
+                <button class="script-btn" id="script-action-next" disabled>
+                  <span>Avanzar Diálogo</span>
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <button class="script-btn" id="script-action-reset" style="flex: 0 0 45px;" title="Resetear diálogo" aria-label="Resetear diálogo">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Tools panel -->
+        <div class="panel-card">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-sliders"></i>
+            Controles del Simulador API
+          </h2>
+          
+          <div class="simulator-tools-bank">
+            <div class="date-shifter-control" style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="sim-date-shift" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+                Desplazar fecha del sistema (Para testear códigos pasados/futuros):
+              </label>
+              <select id="sim-date-shift" style="background: var(--bg-card-light); border: 1px solid var(--border-color); color: white; padding: 0.65rem; border-radius: 10px; font-family: var(--font-body); outline: none;">
+                <option value="0">Hoy (Código Actual)</option>
+                <option value="1">Mañana (+1 día)</option>
+                <option value="-1">Ayer (-1 día)</option>
+                <option value="-2">Hace 2 días</option>
+                <option value="-3">Hace 3 días</option>
+                <option value="-4">Hace 4 días</option>
+                <option value="-5">Hace 5 días</option>
+                <option value="-6">Hace 6 días</option>
+              </select>
+            </div>
+            
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+              * Al cambiar la fecha, la API generará una contra-clave diferente utilizando la fecha modificada como semilla de encriptación.
+            </p>
+          </div>
         </div>
       </div>
 
-      <!-- Panel Card 2: Interactive Call Center Simulator -->
-      <div class="panel-card">
-        <h2 class="panel-title">
-          <i class="fa-solid fa-headset"></i>
-          Centro de Llamados & API del Banco
-        </h2>
+      <!-- Right Panel: Channels and Audits -->
+      <div class="control-pane">
+        <!-- Written Validation Channels -->
+        <div class="panel-card">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-envelope-open-text"></i>
+            Validación en Canales Escritos
+          </h2>
 
-        <div class="call-center-layout">
-          <!-- Widget call dialer -->
-          <div class="call-simulator-widget">
-            <div class="widget-user-info">
-              <div class="user-avatar-placeholder">
-                <i class="fa-solid fa-user-tie"></i>
-              </div>
-              <div class="user-details">
-                <h4>Ejecutivo de Call Center</h4>
-                <p>Banco de Chile &bull; Canal Telefónico</p>
-              </div>
+          <div class="channels-layout">
+            <!-- Device Tabs -->
+            <div class="mock-device-tabs">
+              <button class="tab-btn active" data-tab="sms">Notificación SMS</button>
+              <button class="tab-btn" data-tab="email">Correo Electrónico</button>
             </div>
-            <button class="call-btn" id="dial-client-btn">
-              <i class="fa-solid fa-phone"></i>
-              Llamar Cliente
-            </button>
-          </div>
 
-          <!-- Operator Console displaying the correct API word -->
-          <div class="call-center-dashboard">
-            <div class="console-stat">
-              <span class="stat-label">Conexión con Cliente:</span>
-              <span class="stat-value" id="exec-call-status">Inactiva</span>
-            </div>
-            <div class="console-stat">
-              <span class="stat-label">Fecha del Sistema API:</span>
-              <span class="stat-value" id="exec-word-date">2026-06-13</span>
-            </div>
-            <div class="console-stat">
-              <span class="stat-label">Contra-Clave en Pantalla Ejecutivo:</span>
-              <span class="stat-value highlight" id="exec-word-display">Cargando...</span>
-            </div>
-          </div>
-
-          <!-- Call Dialogue Interactive Logs -->
-          <div class="script-console">
-            <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
-              Transcripción interactiva de llamada:
-            </p>
-            <div class="script-log" id="script-logs">
-              <div class="log-entry system">Presione "Llamar Cliente" para iniciar el flujo de diálogo interactivo.</div>
-            </div>
-            <div class="script-actions">
-              <button class="script-btn" id="script-action-next" disabled>
-                <span>Avanzar Diálogo</span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-              <button class="script-btn" id="script-action-reset" style="flex: 0 0 60px;" title="Resetear diálogo" aria-label="Resetear diálogo">
-                <i class="fa-solid fa-rotate-left"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel Card 3: Notifications Simulator (SMS/Email dynamic seals) -->
-      <div class="panel-card">
-        <h2 class="panel-title">
-          <i class="fa-solid fa-envelope-open-text"></i>
-          Validación en Canales Escritos
-        </h2>
-
-        <div class="channels-layout">
-          <!-- Device Tabs -->
-          <div class="mock-device-tabs">
-            <button class="tab-btn active" data-tab="sms">Notificación SMS</button>
-            <button class="tab-btn" data-tab="email">Correo Electrónico</button>
-          </div>
-
-          <!-- SMS Tab -->
-          <div class="tab-content active" id="tab-sms">
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
-              Los SMS legítimos prependen de forma obligatoria el sello dinámico DimeTú:
-            </p>
-            <div class="sms-inbox">
-              <div class="sms-bubble">
-                <p id="sms-content-text">
-                  <span class="sms-header-prefix">DimeTú: Cóndor Azul</span>Banco de Chile informa: Se ha programado una transferencia de $150.000...
-                </p>
-                <div class="sms-time" id="sms-time-stamp">2026-06-13 15:34</div>
+            <!-- SMS Tab -->
+            <div class="tab-content active" id="tab-sms">
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                Los SMS legítimos prependen de forma obligatoria el sello dinámico DimeTú:
+              </p>
+              <div class="sms-inbox">
+                <div class="sms-bubble">
+                  <p id="sms-content-text">
+                    <span class="sms-header-prefix">DimeTú: Cóndor Azul</span>Banco de Chile informa: Se ha programado una transferencia de $150.000...
+                  </p>
+                  <div class="sms-time" id="sms-time-stamp">2026-06-13 15:34</div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Email Tab -->
-          <div class="tab-content" id="tab-email">
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
-              El correo incorpora un sello de autenticidad integrado de lectura rápida:
-            </p>
-            <div class="email-client">
-              <div class="email-headers">
-                <div class="email-field"><span>De:</span> Banco de Chile &lt;notificaciones@bancodechile.cl&gt;</div>
-                <div class="email-field"><span>Para:</span> juan.valencia@chile.cl</div>
-                <div class="email-field" style="font-weight: 600;"><span>Asunto:</span> <span id="email-subject-text">[DimeTú: Cóndor Azul] Notificación de Ingreso</span></div>
-                <div class="email-field"><span>Fecha:</span> <span id="email-date-text">2026-06-13 15:34</span></div>
-              </div>
-              
-              <div class="email-body">
-                <!-- Sello DimeTú -->
-                <div class="email-secure-header">
-                  <i class="fa-solid fa-shield-check email-secure-icon"></i>
-                  <div class="email-secure-text">
-                    Sello de Confianza DimeTú de hoy: 
-                    <strong class="email-secure-badge" id="email-badge-word">Cóndor Azul</strong>
-                    <br>
-                    <span style="font-size: 0.75rem; color: #4a5568;">Verifique este sello en su app para garantizar que este correo es real.</span>
-                  </div>
+            <!-- Email Tab -->
+            <div class="tab-content" id="tab-email">
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                El correo incorpora un sello de autenticidad integrado de lectura rápida:
+              </p>
+              <div class="email-client">
+                <div class="email-headers">
+                  <div class="email-field"><span>De:</span> Banco de Chile &lt;notificaciones@bancodechile.cl&gt;</div>
+                  <div class="email-field"><span>Para:</span> juan.valencia@chile.cl</div>
+                  <div class="email-field" style="font-weight: 600;"><span>Asunto:</span> <span id="email-subject-text">[DimeTú: Cóndor Azul] Notificación de Ingreso</span></div>
+                  <div class="email-field"><span>Fecha:</span> <span id="email-date-text">2026-06-13 15:34</span></div>
                 </div>
                 
-                <p style="margin-bottom: 0.5rem;">Estimado cliente Juan José,</p>
-                <p style="margin-bottom: 0.5rem;">Le informamos que se ha registrado una conexión exitosa a su Banca en Línea desde un nuevo dispositivo móvil.</p>
-                <p style="margin-bottom: 0.5rem; font-size: 0.8rem; color: #718096;">Detalles del Acceso:<br>&bull; Ubicación: Santiago, Chile<br>&bull; Navegador: Chrome / OS X</p>
-                <p>Si no reconoce esta conexión, le solicitamos bloquear preventivamente sus claves en la sección de seguridad.</p>
+                <div class="email-body">
+                  <!-- Sello DimeTú -->
+                  <div class="email-secure-header">
+                    <i class="fa-solid fa-shield-check email-secure-icon"></i>
+                    <div class="email-secure-text">
+                      Sello de Confianza DimeTú de hoy: 
+                      <strong class="email-secure-badge" id="email-badge-word">Cóndor Azul</strong>
+                      <br>
+                      <span style="font-size: 0.75rem; color: #4a5568;">Verifique este sello en su app para garantizar que este correo es real.</span>
+                    </div>
+                  </div>
+                  
+                  <p style="margin-bottom: 0.5rem;">Estimado cliente Juan José,</p>
+                  <p style="margin-bottom: 0.5rem;">Le informamos que se ha registrado una conexión exitosa a su Banca en Línea desde un nuevo dispositivo móvil.</p>
+                  <p style="margin-bottom: 0.5rem; font-size: 0.8rem; color: #718096;">Detalles del Acceso:<br>&bull; Ubicación: Santiago, Chile<br>&bull; Navegador: Chrome / OS X</p>
+                  <p>Si no reconoce esta conexión, le solicitamos bloquear preventivamente sus claves en la sección de seguridad.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- System Audit Log widget -->
+        <div class="panel-card">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-receipt"></i>
+            Logs de Auditoría Global (API)
+          </h2>
+          <div class="call-center-dashboard" style="max-height: 150px; overflow-y: auto; padding: 0.75rem; font-family: monospace; font-size: 0.75rem; color: var(--text-secondary);" id="system-audit-logs">
+            [17:43:53] API de Banco de Chile conectada.<br>
+            [17:43:53] Base de datos de sustantivos cargada (160 registros).<br>
+            [17:43:53] Base de datos de adjetivos cargada (160 registros).<br>
+            [17:43:53] Clave del dispositivo configurada (deviceCredential local).
+          </div>
+        </div>
       </div>
-
-    </section>
-
-  </main>
-
-  <!-- Application Footer -->
-  <footer>
-    <p>&copy; 2026 Banco de Chile. Desarrollado bajo especificaciones de seguridad bidireccional y accesibilidad universal.</p>
-  </footer>
+    </div>
+  </div>
 
   <!-- Main Application Script -->
   <script src="app.js"></script>

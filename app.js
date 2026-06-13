@@ -81,15 +81,22 @@ const AppState = {
   remoteAccessDetected: false,
   isCallActive: false,
   callStep: 0,
+  activeRole: "portal", // "portal" | "client" | "bank"
   
   init() {
-    // Synchronize simulator inputs on load in case browser cached them
-    this.biometricsFailSimulated = document.getElementById('biometrics-fail').checked;
-    this.remoteAccessDetected = document.getElementById('remote-control').checked;
-    
     this.renderWords();
     this.setupEventListeners();
-    this.showScreen('state-lock');
+    this.syncToggles();
+    this.showRoleView("portal");
+  },
+  
+  // Read initial states of simulator checkboxes in case of browser caching
+  syncToggles() {
+    const bioFailInput = document.getElementById('biometrics-fail-drawer');
+    const remoteInput = document.getElementById('remote-control-drawer');
+    
+    if (bioFailInput) this.biometricsFailSimulated = bioFailInput.checked;
+    if (remoteInput) this.remoteAccessDetected = remoteInput.checked;
   },
   
   // Get word of the simulated date
@@ -97,7 +104,7 @@ const AppState = {
     return getWordForDate(this.currentDate);
   },
   
-  // Render calculated word details across the dashboard and executive console
+  // Render calculated word details across client interface and bank views
   renderWords() {
     const word = this.getDailyWord();
     
@@ -120,6 +127,35 @@ const AppState = {
     document.getElementById('email-badge-word').innerText = word.combination;
   },
   
+  // Switch between Portal screen, Centered Client view, or Executive view
+  showRoleView(role) {
+    this.activeRole = role;
+    
+    // Hide all containers
+    document.getElementById('state-portal').classList.remove('active');
+    document.getElementById('client-view-container').style.display = 'none';
+    document.getElementById('bank-view-container').style.display = 'none';
+    
+    if (role === 'portal') {
+      document.getElementById('state-portal').classList.add('active');
+      this.logAudit("Usuario regresó al portal de selección de roles.");
+    } 
+    else if (role === 'client') {
+      document.getElementById('client-view-container').style.display = 'flex';
+      
+      // Reset phone state back to locked screen on login
+      document.getElementById('word-result-card').classList.remove('visible');
+      document.getElementById('verify-trigger').style.display = 'flex';
+      this.showScreen('state-lock');
+      
+      this.logAudit("Usuario ingresó como Cliente (Adulto Mayor).");
+    } 
+    else if (role === 'bank') {
+      document.getElementById('bank-view-container').style.display = 'block';
+      this.logAudit("Usuario ingresó como Ejecutivo Bancario.");
+    }
+  },
+  
   // Navigation helper for phone screen states
   showScreen(screenId) {
     // Hide all states
@@ -136,6 +172,19 @@ const AppState = {
   
   // Event registration
   setupEventListeners() {
+    // Portal Role selectors
+    document.getElementById('enter-client-role-btn').addEventListener('click', () => this.showRoleView('client'));
+    document.getElementById('enter-bank-role-btn').addEventListener('click', () => this.showRoleView('bank'));
+    
+    // Portal exit buttons
+    document.getElementById('exit-client-btn').addEventListener('click', () => this.showRoleView('portal'));
+    document.getElementById('exit-bank-btn').addEventListener('click', () => this.showRoleView('portal'));
+    
+    // Developer slide-out drawer trigger
+    document.getElementById('drawer-toggle-btn').addEventListener('click', () => {
+      document.getElementById('developer-drawer').classList.toggle('open');
+    });
+
     // Face ID area simulation trigger
     const faceidScanner = document.getElementById('faceid-scanner');
     faceidScanner.addEventListener('click', () => this.triggerBiometricAuth());
@@ -176,7 +225,7 @@ const AppState = {
     document.getElementById('verify-trigger').addEventListener('click', () => {
       document.getElementById('verify-trigger').style.display = 'none';
       document.getElementById('word-result-card').classList.add('visible');
-      this.logSystemEvent("Cliente reveló la contra-clave en la aplicación.");
+      this.logAudit("Cliente reveló la contra-clave en la aplicación.");
     });
     
     // Text-To-Speech audio reader button
@@ -188,7 +237,7 @@ const AppState = {
       document.getElementById('word-result-card').classList.remove('visible');
       document.getElementById('verify-trigger').style.display = 'flex';
       this.showScreen('state-lock');
-      this.logSystemEvent("Aplicación bloqueada manualmente.");
+      this.logAudit("Cliente bloqueó la aplicación manualmente.");
     });
     
     // Open History Screen
@@ -202,25 +251,28 @@ const AppState = {
       this.showScreen('state-dashboard');
     });
     
-    // SIMULATOR CONTROLS (Right Panel)
+    // CLIENT VIEW - FLOATING DEVELOPER DRAWER CONTROLS
     
     // Toggle Biometrics Failure Simulation
-    document.getElementById('biometrics-fail').addEventListener('change', (e) => {
+    document.getElementById('biometrics-fail-drawer').addEventListener('change', (e) => {
       this.biometricsFailSimulated = e.currentTarget.checked;
+      this.logAudit(`Fallo biométrico simulado: ${this.biometricsFailSimulated ? 'ACTIVO' : 'INACTIVO'}`);
     });
     
     // Toggle Remote Control App Detection
-    document.getElementById('remote-control').addEventListener('change', (e) => {
+    document.getElementById('remote-control-drawer').addEventListener('change', (e) => {
       this.remoteAccessDetected = e.currentTarget.checked;
       if (this.remoteAccessDetected) {
-        this.logSystemEvent("ALERTA: Se detectó ejecución de AnyDesk en segundo plano.");
+        this.logAudit("AUDITORÍA DE RIESGO: Se detectó ejecución de software de control remoto (AnyDesk/TeamViewer).");
         this.showScreen('state-remote-blocked');
       } else {
-        this.logSystemEvent("Seguridad: Software de control remoto cerrado. Desbloqueando app.");
+        this.logAudit("Seguridad: Software de control remoto cerrado. Desbloqueando app.");
         // Returns to lock screen
         this.showScreen('state-lock');
       }
     });
+    
+    // BANK PANEL CONTROLS
     
     // Tab switching for SMS / Email simulator
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -250,7 +302,7 @@ const AppState = {
       this.currentDate = newDate;
       
       this.renderWords();
-      this.logSystemEvent(`Simulador: Fecha desplazada a ${formatDate(this.currentDate)}`);
+      this.logAudit(`Servidor API: Fecha desplazada a ${formatDate(this.currentDate)}`);
     });
   },
   
@@ -264,14 +316,14 @@ const AppState = {
     
     scanner.className = 'faceid-scanner scanning';
     statusText.innerText = "Escaneando rostro...";
-    this.logSystemEvent("Autenticación biométrica iniciada (Face ID/Huella)...");
+    this.logAudit("Intento de acceso: Iniciando escaneo biométrico.");
     
     setTimeout(() => {
       if (this.biometricsFailSimulated) {
         // Fail biometrics
         scanner.className = 'faceid-scanner error';
         statusText.innerHTML = `<span style="color:var(--danger)">Huella o rostro no reconocidos</span>`;
-        this.logSystemEvent("Autenticación biométrica fallida. Solicitando PIN de respaldo.");
+        this.logAudit("Intento de acceso: Autenticación biométrica fallida. Solicitando PIN.");
         
         // Auto navigate to PIN after 1.2 seconds
         setTimeout(() => {
@@ -285,7 +337,7 @@ const AppState = {
         // Success biometrics
         scanner.className = 'faceid-scanner success';
         statusText.innerHTML = `<span style="color:var(--success)">¡Autenticado con éxito!</span>`;
-        this.logSystemEvent("Autenticación biométrica exitosa.");
+        this.logAudit("Intento de acceso: Autenticación biométrica exitosa. Dispositivo desbloqueado.");
         
         setTimeout(() => {
           scanner.className = 'faceid-scanner';
@@ -312,11 +364,11 @@ const AppState = {
     const dots = document.querySelectorAll('.pin-dot');
     
     if (this.inputPin === this.correctPin) {
-      this.logSystemEvent("PIN verificado con éxito.");
+      this.logAudit("Intento de acceso: PIN verificado con éxito.");
       this.showScreen('state-dashboard');
     } else {
       // Show error feedback
-      this.logSystemEvent("Error: PIN de dispositivo incorrecto.");
+      this.logAudit("Intento de acceso: Error de clave PIN.");
       dots.forEach(dot => dot.classList.add('error'));
       
       setTimeout(() => {
@@ -341,7 +393,7 @@ const AppState = {
       utterance.pitch = 1.0;
       
       window.speechSynthesis.speak(utterance);
-      this.logSystemEvent("Lector de voz activado.");
+      this.logAudit("Accesibilidad: Activación de lectura en voz alta.");
     } else {
       alert("La lectura por voz no está disponible en este navegador.");
     }
@@ -383,8 +435,8 @@ const AppState = {
     }
   },
   
-  // Log event text into the operator console log
-  logSystemEvent(msg, type = "system") {
+  // Log dialogue lines into the call script container
+  logCallScriptLine(msg, type = "system") {
     const logContainer = document.getElementById('script-logs');
     const entry = document.createElement('div');
     entry.className = `log-entry ${type}`;
@@ -394,6 +446,16 @@ const AppState = {
     
     logContainer.appendChild(entry);
     logContainer.scrollTop = logContainer.scrollHeight;
+  },
+  
+  // Audit logging console for the corporate dashboard
+  logAudit(msg) {
+    const auditContainer = document.getElementById('system-audit-logs');
+    if (!auditContainer) return;
+    
+    const time = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    auditContainer.innerHTML += `[${time}] ${msg}<br>`;
+    auditContainer.scrollTop = auditContainer.scrollHeight;
   },
   
   // CALL CENTER OPERATOR SIMULATION
@@ -409,7 +471,8 @@ const AppState = {
       dialBtn.innerHTML = `<i class="fas fa-phone-alt"></i> Llamar Cliente`;
       dialBtn.className = "call-btn";
       nextBtn.disabled = true;
-      this.logSystemEvent("Llamada finalizada por el ejecutivo.", "system");
+      this.logCallScriptLine("Llamada finalizada por el ejecutivo.", "system");
+      this.logAudit("Centro de Llamados: Llamada con cliente finalizada.");
       document.getElementById('exec-call-status').innerText = "Inactiva";
       document.getElementById('exec-call-status').style.color = "var(--text-secondary)";
     } else {
@@ -425,9 +488,10 @@ const AppState = {
       
       // Clear logs and print step 1
       document.getElementById('script-logs').innerHTML = "";
-      this.logSystemEvent("Ejecutivo del Banco de Chile inició llamada de contacto.", "system");
-      this.logSystemEvent("Ejecutivo: 'Buenas tardes Sr. Juan José, le llamamos del área de seguridad de Banco de Chile. Se ha retenido una transferencia sospechosa de su cuenta por $300.000.'", "executive");
-      this.logSystemEvent("Sugerencia del sistema: Para validar, desafíe al ejecutivo preguntando por la palabra del día en DimeTú.", "system");
+      this.logCallScriptLine("Ejecutivo del Banco de Chile inició llamada de contacto.", "system");
+      this.logCallScriptLine("Ejecutivo: 'Buenas tardes Sr. Juan José, le llamamos del área de seguridad de Banco de Chile. Se ha retenido una transferencia sospechosa de su cuenta por $300.000.'", "executive");
+      this.logCallScriptLine("Sugerencia del sistema: Para validar, desafíe al ejecutivo preguntando por la palabra del día en DimeTú.", "system");
+      this.logAudit("Centro de Llamados: Llamada iniciada. Contactando a don Juan José.");
     }
   },
   
@@ -440,16 +504,19 @@ const AppState = {
     this.callStep++;
     
     if (this.callStep === 2) {
-      this.logSystemEvent("Cliente: 'Mire señorita, hay muchas estafas telefónicas en estos días. Antes de darle ningún dato, ¿me podría decir cuál es la Contra-Clave del día de DimeTú?'", "client");
-      this.logSystemEvent("Sugerencia del sistema: El ejecutivo ahora revisa su pantalla de la API del banco y responde.", "system");
+      this.logCallScriptLine("Cliente (Abuelo): 'Mire señorita, hay muchas estafas telefónicas en estos días. Antes de darle ningún dato, ¿me podría decir cuál es la Contra-Clave del día de DimeTú?'", "client");
+      this.logCallScriptLine("Sugerencia del sistema: El ejecutivo ahora revisa su pantalla de la API del banco y responde.", "system");
+      this.logAudit("Centro de Llamados: Cliente desafía al operador solicitando código DimeTú.");
     } 
     else if (this.callStep === 3) {
-      this.logSystemEvent(`Ejecutivo: 'Claro don Juan José, me parece perfecto su cuidado. Consultando nuestro canal oficial, la palabra del día en DimeTú es "${word}". Por favor verifíquela.'`, "executive");
-      this.logSystemEvent("Sugerencia del sistema: En el simulador de celular de la izquierda, inicie sesión con Face ID y presione 'Verificar' para corroborar.", "system");
+      this.logCallScriptLine(`Ejecutivo: 'Claro don Juan José, me parece perfecto su cuidado. Consultando nuestro canal oficial, la palabra del día en DimeTú es "${word}". Por favor verifíquela.'`, "executive");
+      this.logCallScriptLine("Sugerencia del sistema: En la vista de Cliente, inicie sesión con Face ID y presione 'Verificar' para corroborar.", "system");
+      this.logAudit(`Centro de Llamados: Operador provee código de validación: "${word}".`);
     } 
     else if (this.callStep === 4) {
-      this.logSystemEvent("Cliente: 'A ver, déjeme abrir la aplicación... Sí, efectivamente aquí me figura la palabra del día como \"" + word + "\". Excelente, ahora sé que la llamada es auténtica. Cuénteme del problema.'", "client");
-      this.logSystemEvent("Sistema: ¡Identidad verificada exitosamente! Se evitó el fraude y se generó un canal seguro bidireccional.", "system");
+      this.logCallScriptLine("Cliente (Abuelo): 'A ver, déjeme abrir la aplicación... Sí, efectivamente aquí me figura la palabra del día como \"" + word + "\". Excelente, ahora sé que la llamada es auténtica. Cuénteme del problema.'", "client");
+      this.logCallScriptLine("Sistema: ¡Identidad verificada exitosamente! Se evitó el fraude y se generó un canal seguro bidireccional.", "system");
+      this.logAudit("Centro de Llamados: Identidad del ejecutivo VERIFICADA exitosamente por el cliente.");
       nextBtn.disabled = true;
     }
   },
@@ -467,7 +534,8 @@ const AppState = {
     document.getElementById('exec-call-status').innerText = "Inactiva";
     document.getElementById('exec-call-status').style.color = "var(--text-secondary)";
     
-    this.logSystemEvent("Consola de simulación reseteada.");
+    this.logCallScriptLine("Consola de simulación reseteada.");
+    this.logAudit("Centro de Llamados: Diálogo telefónico reseteado.");
   }
 };
 

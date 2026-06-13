@@ -1461,3 +1461,373 @@ footer {
     height: 720px;
   }
 }
+
+/* ==========================================================================
+   ROLE PORTAL AND ROUTING STYLES
+   ========================================================================== */
+
+/* Portal Screen (Select Role Overlay) */
+.portal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #0c1c36 0%, #03060c 100%);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.portal-overlay.active {
+  display: flex;
+}
+
+.portal-content {
+  width: 100%;
+  max-width: 900px;
+  text-align: center;
+  animation: zoom-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.portal-brand {
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.portal-logo {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 2rem;
+  color: #fff;
+  font-family: var(--font-title);
+  box-shadow: 0 0 25px var(--primary-glow);
+  margin-bottom: 0.5rem;
+}
+
+.portal-brand h2 {
+  font-family: var(--font-title);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(to right, #ffffff, #88b7ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.portal-brand p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Cards Grid */
+.portal-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 768px) {
+  .portal-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Portal Role Selection Card */
+.portal-card {
+  background: rgba(12, 21, 36, 0.75);
+  border: 2px solid var(--border-color);
+  border-radius: 28px;
+  padding: 2.5rem 2rem;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  color: inherit;
+  font-family: inherit;
+  outline: none;
+}
+
+.portal-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 103, 177, 0.25);
+  background: rgba(16, 28, 48, 0.95);
+}
+
+.portal-card-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  transition: var(--transition-normal);
+}
+
+.portal-card-icon.client {
+  background: rgba(0, 103, 177, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(0, 103, 177, 0.3);
+}
+
+.portal-card-icon.bank {
+  background: rgba(242, 169, 0, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(242, 169, 0, 0.3);
+}
+
+.portal-card:hover .portal-card-icon.client {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.portal-card:hover .portal-card-icon.bank {
+  background: var(--accent);
+  color: var(--text-dark);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.portal-card h3 {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.portal-card-role {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+.portal-card-features {
+  list-style: none;
+  width: 100%;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.portal-card-features li {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portal-card-features li i {
+  color: var(--success);
+  font-size: 0.85rem;
+}
+
+.portal-card-btn {
+  background: var(--bg-card-light);
+  border: 1.5px solid var(--border-color);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: var(--transition-normal);
+  text-align: center;
+  width: 100%;
+  margin-top: auto;
+}
+
+.portal-card:hover .portal-card-btn {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.portal-footer {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* Role View Container Wrapper */
+.role-view-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-primary);
+  animation: fade-in 0.4s ease-out;
+}
+
+.view-header {
+  background: #060b13;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.portal-exit-btn {
+  background: var(--bg-card-light);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition-normal);
+}
+
+.portal-exit-btn:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  box-shadow: 0 0 10px var(--danger-glow);
+}
+
+.view-title-tag {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Client Centered Smartphone View layout */
+.client-centered-view {
+  flex: 1;
+  padding: 3rem 1.5rem;
+  background: radial-gradient(circle at center, #0a111e 0%, #030508 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Developer controls drawer floating in client view */
+.developer-drawer {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  z-index: 999;
+  width: 280px;
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(0,0,0,0.5);
+  transform: translateY(calc(100% - 48px));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.developer-drawer.open {
+  transform: translateY(0);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-lg), 0 0 25px rgba(0, 103, 177, 0.25);
+}
+
+.drawer-toggle-btn {
+  width: 100%;
+  height: 48px;
+  background: var(--bg-card-light);
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: var(--transition-normal);
+}
+
+.developer-drawer.open .drawer-toggle-btn {
+  background: var(--primary);
+}
+
+.drawer-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.drawer-content h4 {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.drawer-control-item {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--success);
+  cursor: pointer;
+}
+
+.switch-label.danger-switch input {
+  accent-color: var(--danger);
+}
+
+/* Bank Dashboard Full Width Layout overrides */
+.bank-dashboard-layout {
+  grid-template-columns: 1fr 1fr;
+  padding: 1.5rem 2rem;
+  max-width: 100%;
+}
+
+.simulator-tools-bank {
+  background: var(--bg-card-light);
+  border: 1.5px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
