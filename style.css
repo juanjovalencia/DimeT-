@@ -1502,19 +1502,23 @@ footer {
 }
 
 .portal-logo {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  background: #fff;
+  width: 124px;
+  height: 72px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 2rem;
-  color: #fff;
-  font-family: var(--font-title);
-  box-shadow: 0 0 25px var(--primary-glow);
+  padding: 0.65rem;
+  box-shadow: 0 0 25px var(--primary-glow), 0 12px 28px rgba(0, 0, 0, 0.28);
   margin-bottom: 0.5rem;
+}
+
+.portal-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .portal-brand h2 {
