@@ -254,6 +254,19 @@ header {
   align-items: center;
   justify-content: center;
   transition: var(--transition-normal);
+  background: var(--bg-card-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.faceid-scanner:hover {
+  background: var(--border-color);
+  transform: scale(1.04);
+}
+
+.faceid-scanner:active {
+  transform: scale(0.96);
 }
 
 .faceid-scanner.scanning {
