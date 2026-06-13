@@ -83,6 +83,10 @@ const AppState = {
   callStep: 0,
   
   init() {
+    // Synchronize simulator inputs on load in case browser cached them
+    this.biometricsFailSimulated = document.getElementById('biometrics-fail').checked;
+    this.remoteAccessDetected = document.getElementById('remote-control').checked;
+    
     this.renderWords();
     this.setupEventListeners();
     this.showScreen('state-lock');
@@ -146,7 +150,7 @@ const AppState = {
     // PIN pad keys
     document.querySelectorAll('.pin-key').forEach(key => {
       key.addEventListener('click', (e) => {
-        const val = e.target.dataset.val;
+        const val = e.currentTarget.dataset.val;
         if (val === 'clear') {
           this.inputPin = "";
           this.updatePinDots();
@@ -202,12 +206,12 @@ const AppState = {
     
     // Toggle Biometrics Failure Simulation
     document.getElementById('biometrics-fail').addEventListener('change', (e) => {
-      this.biometricsFailSimulated = e.target.checked;
+      this.biometricsFailSimulated = e.currentTarget.checked;
     });
     
     // Toggle Remote Control App Detection
     document.getElementById('remote-control').addEventListener('change', (e) => {
-      this.remoteAccessDetected = e.target.checked;
+      this.remoteAccessDetected = e.currentTarget.checked;
       if (this.remoteAccessDetected) {
         this.logSystemEvent("ALERTA: Se detectó ejecución de AnyDesk en segundo plano.");
         this.showScreen('state-remote-blocked');
@@ -221,7 +225,7 @@ const AppState = {
     // Tab switching for SMS / Email simulator
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const tabTarget = e.target.dataset.tab;
+        const tabTarget = e.currentTarget.dataset.tab;
         
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
