@@ -310,11 +310,13 @@ const AppState = {
   triggerBiometricAuth() {
     const scanner = document.getElementById('faceid-scanner');
     const statusText = document.getElementById('biometric-status-msg');
+    const btnText = scanner.querySelector('.scanner-text-btn');
     
     // Prevent double clicking while scanning
     if (scanner.classList.contains('scanning') || scanner.classList.contains('success')) return;
     
     scanner.className = 'faceid-scanner scanning';
+    if (btnText) btnText.innerText = "ESPERE...";
     statusText.innerText = "Escaneando rostro...";
     this.logAudit("Intento de acceso: Iniciando escaneo biométrico.");
     
@@ -322,13 +324,15 @@ const AppState = {
       if (this.biometricsFailSimulated) {
         // Fail biometrics
         scanner.className = 'faceid-scanner error';
+        if (btnText) btnText.innerText = "REINTENTE";
         statusText.innerHTML = `<span style="color:var(--danger)">Huella o rostro no reconocidos</span>`;
         this.logAudit("Intento de acceso: Autenticación biométrica fallida. Solicitando PIN.");
         
         // Auto navigate to PIN after 1.2 seconds
         setTimeout(() => {
           scanner.className = 'faceid-scanner';
-          statusText.innerText = "Presione el icono para ingresar";
+          if (btnText) btnText.innerText = "PRESIONA ACÁ";
+          statusText.innerText = "Presione el botón para ingresar";
           this.inputPin = "";
           this.updatePinDots();
           this.showScreen('state-pin');
@@ -336,12 +340,14 @@ const AppState = {
       } else {
         // Success biometrics
         scanner.className = 'faceid-scanner success';
+        if (btnText) btnText.innerText = "¡LISTO!";
         statusText.innerHTML = `<span style="color:var(--success)">¡Autenticado con éxito!</span>`;
         this.logAudit("Intento de acceso: Autenticación biométrica exitosa. Dispositivo desbloqueado.");
         
         setTimeout(() => {
           scanner.className = 'faceid-scanner';
-          statusText.innerText = "Presione el icono para ingresar";
+          if (btnText) btnText.innerText = "PRESIONA ACÁ";
+          statusText.innerText = "Presione el botón para ingresar";
           this.showScreen('state-dashboard');
         }, 800);
       }
