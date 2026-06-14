@@ -247,26 +247,30 @@ header {
 .faceid-scanner {
   width: 135px;
   height: 135px;
-  border: 4px solid #f87171;
-  border-radius: 50%;
+  border: 4px solid #f87171 !important;
+  border-radius: 50% !important;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--transition-normal);
-  background: var(--danger);
-  color: #ffffff;
+  background: #ef4444 !important;
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
   cursor: pointer;
   outline: none;
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.5) !important;
   user-select: none;
   animation: pulse-red 2s infinite;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .faceid-scanner:hover {
-  background: #dc2626;
-  border-color: #ef4444;
-  box-shadow: 0 0 35px rgba(239, 68, 68, 0.7);
+  background: #dc2626 !important;
+  background-color: #dc2626 !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.7) !important;
   transform: scale(1.05);
 }
 
@@ -281,28 +285,31 @@ header {
   letter-spacing: -0.01em;
   text-align: center;
   line-height: 1.2;
-  color: #ffffff;
+  color: #ffffff !important;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .faceid-scanner.scanning {
-  background: var(--primary);
-  border-color: #60a5fa;
-  box-shadow: 0 0 25px rgba(0, 103, 177, 0.6);
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 25px rgba(0, 103, 177, 0.6) !important;
   animation: none;
 }
 
 .faceid-scanner.success {
-  background: var(--success);
-  border-color: #34d399;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+  background: var(--success) !important;
+  background-color: var(--success) !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.6) !important;
   animation: none;
 }
 
 .faceid-scanner.error {
-  background: #b91c1c;
-  border-color: #fca5a5;
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+  background: #b91c1c !important;
+  background-color: #b91c1c !important;
+  border-color: #fca5a5 !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.6) !important;
   animation: none;
 }
 
