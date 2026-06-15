@@ -11,7 +11,7 @@
   <meta name="description" content="DimeTú es una plataforma de seguridad bidireccional basada en Zero Trust. Elige ingresar como Cliente (Adulto Mayor) con interfaz adaptada o como Ejecutivo (Banco de Chile).">
   <meta name="author" content="Banco de Chile - Zero Trust Development">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.2">
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -38,7 +38,7 @@
           <p class="portal-card-role">Adulto Mayor / Titular</p>
           <ul class="portal-card-features">
             <li><i class="fa-solid fa-check"></i> Interfaz ultra-legible y accesible</li>
-            <li><i class="fa-solid fa-check"></i> Acceso biométrico (Face ID / PIN)</li>
+            <li><i class="fa-solid fa-check"></i> Advertencia de seguridad roja</li>
             <li><i class="fa-solid fa-check"></i> Lector de palabras por voz (TTS)</li>
             <li><i class="fa-solid fa-check"></i> Bloqueo automático ante estafas</li>
           </ul>
@@ -100,72 +100,27 @@
         <!-- Touch Screen Container -->
         <div class="phone-screen">
 
-          <!-- SCREEN STATE 1: Lock Screen (Face ID / Fingerprint Scan) -->
-          <div class="screen-state" id="state-lock">
-            <div class="lock-header">
-              <h2>Seguridad DimeTú</h2>
-              <p>Autentíquese para visualizar la palabra de seguridad de hoy.</p>
+          <!-- SCREEN STATE 1: Lock Screen (Red Warning Notice for Older Adults) -->
+          <div class="screen-state lock-warning-screen" id="state-lock">
+            <div class="warning-header-icon">
+              <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-
-            <div class="biometric-area">
-              <!-- Scanner Frame -->
-              <button class="faceid-scanner" id="faceid-scanner" aria-label="Ingresar a la aplicación">
-                <div class="scanner-line"></div>
-                <span class="scanner-text-btn">PRESIONA ACÁ</span>
-              </button>
-              <p class="biometric-status" id="biometric-status-msg">Presione el botón para ingresar</p>
-            </div>
-
-            <div class="lock-footer">
-              <button class="fallback-btn" id="fallback-to-pin-btn">
-                <i class="fa-solid fa-keyboard" style="margin-right: 8px;"></i>
-                Ingresar con PIN de Celular
-              </button>
-              <div class="security-shield-footer" style="color: var(--text-secondary); font-size: 0.75rem;">
-                <i class="fa-solid fa-lock"></i>
-                Autenticación protegida por el celular
+            
+            <div class="warning-title-text">¡ADVERTENCIA DE SEGURIDAD!</div>
+            
+            <div class="warning-body-box">
+              <p class="warning-para-main"><strong>NO DEBES NUNCA</strong> compartir esta palabra con nadie.</p>
+              <p class="warning-para-desc">Esta palabra sirve para que <strong>TÚ</strong> verifiques la llamada del banco.</p>
+              
+              <div class="safety-rule-box">
+                <i class="fa-solid fa-triangle-exclamation rule-icon"></i>
+                <span><strong>Exígesela a la persona que te está contactando.</strong> No continúes hasta que te diga la palabra correcta.</span>
               </div>
             </div>
-          </div>
 
-          <!-- SCREEN STATE 2: PIN Fallback Screen -->
-          <div class="screen-state pin-screen" id="state-pin">
-            <div class="pin-header">
-              <button class="back-btn" id="back-to-lock-btn" style="position: absolute; left: 1rem; top: 1rem;" aria-label="Volver">
-                <i class="fa-solid fa-arrow-left"></i>
-              </button>
-              <h3>Clave del Dispositivo</h3>
-              <p>Ingrese la clave de desbloqueo de su teléfono</p>
-            </div>
-
-            <!-- PIN Display Dots -->
-            <div class="pin-dots-container">
-              <div class="pin-dots">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-              </div>
-              <p style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;">
-                PIN de prueba: <strong>1234</strong>
-              </p>
-            </div>
-
-            <!-- Custom Keyboard Pad -->
-            <div class="pin-pad">
-              <button class="pin-key" data-val="1">1</button>
-              <button class="pin-key" data-val="2">2</button>
-              <button class="pin-key" data-val="3">3</button>
-              <button class="pin-key" data-val="4">4</button>
-              <button class="pin-key" data-val="5">5</button>
-              <button class="pin-key" data-val="6">6</button>
-              <button class="pin-key" data-val="7">7</button>
-              <button class="pin-key" data-val="8">8</button>
-              <button class="pin-key" data-val="9">9</button>
-              <button class="pin-key clear-key" data-val="clear">Limpiar</button>
-              <button class="pin-key" data-val="0">0</button>
-              <button class="pin-key clear-key" style="opacity: 0; pointer-events: none;">Blank</button>
-            </div>
+            <button class="accept-continue-btn" id="verify-biometrics-override">
+              ACEPTAR Y CONTINUAR
+            </button>
           </div>
 
           <!-- SCREEN STATE 3: App Dashboard (Revealing the word - Accessible design) -->
@@ -183,11 +138,7 @@
             </nav>
 
             <div class="dash-content">
-              <!-- Default Verify Button (Big and central for tactile accuracy) -->
-              <button class="verify-trigger-btn" id="verify-trigger" aria-label="Verificar Palabra de Hoy">
-                <i class="fa-solid fa-key verify-icon"></i>
-                <span class="verify-text">Ver palabra<br>de hoy</span>
-              </button>
+
 
               <!-- Result Word Card (Highly Legible, Big Text) -->
               <div class="word-card" id="word-result-card">
@@ -273,13 +224,7 @@
           Usa estos controles para simular incidentes en el teléfono del abuelo.
         </p>
         
-        <!-- Toggle Biometrics Fail -->
-        <div class="drawer-control-item">
-          <label class="switch-label">
-            <input type="checkbox" id="biometrics-fail-drawer">
-            <span>Fuerza Fallo Biométrico</span>
-          </label>
-        </div>
+
 
         <!-- Toggle Remote Access Detected -->
         <div class="drawer-control-item">

@@ -75,9 +75,7 @@ function getWordForDate(date) {
 // Global Application State Manager
 const AppState = {
   currentDate: new Date(),
-  correctPin: "1234",
-  inputPin: "",
-  biometricsFailSimulated: false,
+
   remoteAccessDetected: false,
   isCallActive: false,
   callStep: 0,
@@ -92,10 +90,7 @@ const AppState = {
   
   // Read initial states of simulator checkboxes in case of browser caching
   syncToggles() {
-    const bioFailInput = document.getElementById('biometrics-fail-drawer');
     const remoteInput = document.getElementById('remote-control-drawer');
-    
-    if (bioFailInput) this.biometricsFailSimulated = bioFailInput.checked;
     if (remoteInput) this.remoteAccessDetected = remoteInput.checked;
   },
   
@@ -145,7 +140,6 @@ const AppState = {
       
       // Reset phone state back to locked screen on login
       document.getElementById('word-result-card').classList.remove('visible');
-      document.getElementById('verify-trigger').style.display = 'flex';
       this.showScreen('state-lock');
       
       this.logAudit("Usuario ingresó como Cliente (Adulto Mayor).");
@@ -185,48 +179,15 @@ const AppState = {
       document.getElementById('developer-drawer').classList.toggle('open');
     });
 
-    // Face ID area simulation trigger
-    const faceidScanner = document.getElementById('faceid-scanner');
-    faceidScanner.addEventListener('click', () => this.triggerBiometricAuth());
-    
-    // Fallback to PIN trigger button
-    document.getElementById('fallback-to-pin-btn').addEventListener('click', () => {
-      this.inputPin = "";
-      this.updatePinDots();
-      this.showScreen('state-pin');
-    });
-    
-    // PIN pad keys
-    document.querySelectorAll('.pin-key').forEach(key => {
-      key.addEventListener('click', (e) => {
-        const val = e.currentTarget.dataset.val;
-        if (val === 'clear') {
-          this.inputPin = "";
-          this.updatePinDots();
-        } else if (val) {
-          if (this.inputPin.length < 4) {
-            this.inputPin += val;
-            this.updatePinDots();
-            if (this.inputPin.length === 4) {
-              // Check PIN after tiny delay for visual effect
-              setTimeout(() => this.verifyPIN(), 250);
-            }
-          }
-        }
+    // Aceptar y Continuar (Warning button)
+    const warningBtn = document.getElementById('verify-biometrics-override');
+    if (warningBtn) {
+      warningBtn.addEventListener('click', () => {
+        this.logAudit("Cliente aceptó la advertencia de seguridad.");
+        document.getElementById('word-result-card').classList.add('visible');
+        this.showScreen('state-dashboard');
       });
-    });
-    
-    // Back from PIN screen to Lock screen
-    document.getElementById('back-to-lock-btn').addEventListener('click', () => {
-      this.showScreen('state-lock');
-    });
-    
-    // Reveal daily code button (Verify)
-    document.getElementById('verify-trigger').addEventListener('click', () => {
-      document.getElementById('verify-trigger').style.display = 'none';
-      document.getElementById('word-result-card').classList.add('visible');
-      this.logAudit("Cliente reveló la contra-clave en la aplicación.");
-    });
+    }
     
     // Text-To-Speech audio reader button
     document.getElementById('audio-speaker-btn').addEventListener('click', () => this.speakWordOutLoud());
@@ -235,7 +196,6 @@ const AppState = {
     document.getElementById('lock-app-manual').addEventListener('click', () => {
       // Re-lock app
       document.getElementById('word-result-card').classList.remove('visible');
-      document.getElementById('verify-trigger').style.display = 'flex';
       this.showScreen('state-lock');
       this.logAudit("Cliente bloqueó la aplicación manualmente.");
     });
@@ -253,11 +213,7 @@ const AppState = {
     
     // CLIENT VIEW - FLOATING DEVELOPER DRAWER CONTROLS
     
-    // Toggle Biometrics Failure Simulation
-    document.getElementById('biometrics-fail-drawer').addEventListener('change', (e) => {
-      this.biometricsFailSimulated = e.currentTarget.checked;
-      this.logAudit(`Fallo biométrico simulado: ${this.biometricsFailSimulated ? 'ACTIVO' : 'INACTIVO'}`);
-    });
+
     
     // Toggle Remote Control App Detection
     document.getElementById('remote-control-drawer').addEventListener('change', (e) => {
@@ -306,83 +262,7 @@ const AppState = {
     });
   },
   
-  // Simulate Face ID / Fingerprint Auth scanning
-  triggerBiometricAuth() {
-    const scanner = document.getElementById('faceid-scanner');
-    const statusText = document.getElementById('biometric-status-msg');
-    const btnText = scanner.querySelector('.scanner-text-btn');
-    
-    // Prevent double clicking while scanning
-    if (scanner.classList.contains('scanning') || scanner.classList.contains('success')) return;
-    
-    scanner.className = 'faceid-scanner scanning';
-    if (btnText) btnText.innerText = "ESPERE...";
-    statusText.innerText = "Escaneando rostro...";
-    this.logAudit("Intento de acceso: Iniciando escaneo biométrico.");
-    
-    setTimeout(() => {
-      if (this.biometricsFailSimulated) {
-        // Fail biometrics
-        scanner.className = 'faceid-scanner error';
-        if (btnText) btnText.innerText = "REINTENTE";
-        statusText.innerHTML = `<span style="color:var(--danger)">Huella o rostro no reconocidos</span>`;
-        this.logAudit("Intento de acceso: Autenticación biométrica fallida. Solicitando PIN.");
-        
-        // Auto navigate to PIN after 1.2 seconds
-        setTimeout(() => {
-          scanner.className = 'faceid-scanner';
-          if (btnText) btnText.innerText = "PRESIONA ACÁ";
-          statusText.innerText = "Presione el botón para ingresar";
-          this.inputPin = "";
-          this.updatePinDots();
-          this.showScreen('state-pin');
-        }, 1200);
-      } else {
-        // Success biometrics
-        scanner.className = 'faceid-scanner success';
-        if (btnText) btnText.innerText = "¡LISTO!";
-        statusText.innerHTML = `<span style="color:var(--success)">¡Autenticado con éxito!</span>`;
-        this.logAudit("Intento de acceso: Autenticación biométrica exitosa. Dispositivo desbloqueado.");
-        
-        setTimeout(() => {
-          scanner.className = 'faceid-scanner';
-          if (btnText) btnText.innerText = "PRESIONA ACÁ";
-          statusText.innerText = "Presione el botón para ingresar";
-          this.showScreen('state-dashboard');
-        }, 800);
-      }
-    }, 1500);
-  },
-  
-  // Update visual dots on PIN screen
-  updatePinDots() {
-    const dots = document.querySelectorAll('.pin-dot');
-    dots.forEach((dot, idx) => {
-      dot.className = 'pin-dot';
-      if (idx < this.inputPin.length) {
-        dot.classList.add('filled');
-      }
-    });
-  },
-  
-  // Check Pin code matching
-  verifyPIN() {
-    const dots = document.querySelectorAll('.pin-dot');
-    
-    if (this.inputPin === this.correctPin) {
-      this.logAudit("Intento de acceso: PIN verificado con éxito.");
-      this.showScreen('state-dashboard');
-    } else {
-      // Show error feedback
-      this.logAudit("Intento de acceso: Error de clave PIN.");
-      dots.forEach(dot => dot.classList.add('error'));
-      
-      setTimeout(() => {
-        this.inputPin = "";
-        this.updatePinDots();
-      }, 500);
-    }
-  },
+
   
   // Web Speech synthesis to vocalize the daily combination
   speakWordOutLoud() {
@@ -516,7 +396,7 @@ const AppState = {
     } 
     else if (this.callStep === 3) {
       this.logCallScriptLine(`Ejecutivo: 'Claro don Juan José, me parece perfecto su cuidado. Consultando nuestro canal oficial, la palabra del día en DimeTú es "${word}". Por favor verifíquela.'`, "executive");
-      this.logCallScriptLine("Sugerencia del sistema: En la vista de Cliente, inicie sesión con Face ID y presione 'Verificar' para corroborar.", "system");
+      this.logCallScriptLine("Sugerencia del sistema: En la vista de Cliente, acepte la advertencia de seguridad para visualizar la palabra clave de hoy.", "system");
       this.logAudit(`Centro de Llamados: Operador provee código de validación: "${word}".`);
     } 
     else if (this.callStep === 4) {
