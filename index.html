@@ -38,7 +38,7 @@
           <p class="portal-card-role">Adulto Mayor / Titular</p>
           <ul class="portal-card-features">
             <li><i class="fa-solid fa-check"></i> Interfaz ultra-legible y accesible</li>
-            <li><i class="fa-solid fa-check"></i> Palabra del día disponible al ingresar</li>
+            <li><i class="fa-solid fa-check"></i> Acceso biométrico (Face ID / PIN)</li>
             <li><i class="fa-solid fa-check"></i> Lector de palabras por voz (TTS)</li>
             <li><i class="fa-solid fa-check"></i> Bloqueo automático ante estafas</li>
           </ul>
@@ -100,7 +100,75 @@
         <!-- Touch Screen Container -->
         <div class="phone-screen">
 
-          <!-- SCREEN STATE 1: App Dashboard (Daily word - Accessible design) -->
+          <!-- SCREEN STATE 1: Lock Screen (Face ID / Fingerprint Scan) -->
+          <div class="screen-state" id="state-lock">
+            <div class="lock-header">
+              <h2>Seguridad DimeTú</h2>
+              <p>Autentíquese para visualizar la palabra de seguridad de hoy.</p>
+            </div>
+
+            <div class="biometric-area">
+              <!-- Scanner Frame -->
+              <button class="faceid-scanner" id="faceid-scanner" aria-label="Ingresar a la aplicación">
+                <div class="scanner-line"></div>
+                <span class="scanner-text-btn">PRESIONA ACÁ</span>
+              </button>
+              <p class="biometric-status" id="biometric-status-msg">Presione el botón para ingresar</p>
+            </div>
+
+            <div class="lock-footer">
+              <button class="fallback-btn" id="fallback-to-pin-btn">
+                <i class="fa-solid fa-keyboard" style="margin-right: 8px;"></i>
+                Ingresar con PIN de Celular
+              </button>
+              <div class="security-shield-footer" style="color: var(--text-secondary); font-size: 0.75rem;">
+                <i class="fa-solid fa-lock"></i>
+                Autenticación protegida por el celular
+              </div>
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 2: PIN Fallback Screen -->
+          <div class="screen-state pin-screen" id="state-pin">
+            <div class="pin-header">
+              <button class="back-btn" id="back-to-lock-btn" style="position: absolute; left: 1rem; top: 1rem;" aria-label="Volver">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h3>Clave del Dispositivo</h3>
+              <p>Ingrese la clave de desbloqueo de su teléfono</p>
+            </div>
+
+            <!-- PIN Display Dots -->
+            <div class="pin-dots-container">
+              <div class="pin-dots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+              </div>
+              <p style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;">
+                PIN de prueba: <strong>1234</strong>
+              </p>
+            </div>
+
+            <!-- Custom Keyboard Pad -->
+            <div class="pin-pad">
+              <button class="pin-key" data-val="1">1</button>
+              <button class="pin-key" data-val="2">2</button>
+              <button class="pin-key" data-val="3">3</button>
+              <button class="pin-key" data-val="4">4</button>
+              <button class="pin-key" data-val="5">5</button>
+              <button class="pin-key" data-val="6">6</button>
+              <button class="pin-key" data-val="7">7</button>
+              <button class="pin-key" data-val="8">8</button>
+              <button class="pin-key" data-val="9">9</button>
+              <button class="pin-key clear-key" data-val="clear">Limpiar</button>
+              <button class="pin-key" data-val="0">0</button>
+              <button class="pin-key clear-key" style="opacity: 0; pointer-events: none;">Blank</button>
+            </div>
+          </div>
+
+          <!-- SCREEN STATE 3: App Dashboard (Revealing the word - Accessible design) -->
           <div class="screen-state dashboard-screen" id="state-dashboard">
             <nav class="app-navbar">
               <div class="app-logo">
@@ -109,11 +177,20 @@
                 </div>
                 <span class="app-logo-text">DimeTú</span>
               </div>
+              <button class="lock-app-btn" id="lock-app-manual" title="Bloquear aplicación" aria-label="Bloquear aplicación">
+                <i class="fa-solid fa-right-from-bracket"></i>
+              </button>
             </nav>
 
             <div class="dash-content">
+              <!-- Default Verify Button (Big and central for tactile accuracy) -->
+              <button class="verify-trigger-btn" id="verify-trigger" aria-label="Verificar Palabra de Hoy">
+                <i class="fa-solid fa-key verify-icon"></i>
+                <span class="verify-text">Ver palabra<br>de hoy</span>
+              </button>
+
               <!-- Result Word Card (Highly Legible, Big Text) -->
-              <div class="word-card visible" id="word-result-card">
+              <div class="word-card" id="word-result-card">
                 <div class="word-card-header">
                   <div class="pulse-dot"></div>
                   <span>Identidad Bancaria</span>
@@ -196,6 +273,14 @@
           Usa estos controles para simular incidentes en el teléfono del abuelo.
         </p>
         
+        <!-- Toggle Biometrics Fail -->
+        <div class="drawer-control-item">
+          <label class="switch-label">
+            <input type="checkbox" id="biometrics-fail-drawer">
+            <span>Fuerza Fallo Biométrico</span>
+          </label>
+        </div>
+
         <!-- Toggle Remote Access Detected -->
         <div class="drawer-control-item">
           <label class="switch-label danger-switch">
