@@ -13,7 +13,7 @@ const NOUNS = [
   "Oso", "Ballena", "Colibrí", "Llama", "Alpaca", "Liebre", "Ciervo", "Carpintero", "Queltehue", "Huemul",
   "Pudú", "Trineo", "Castillo", "Torre", "Muralla", "Portal", "Quebrada", "Cascada", "Arroyo", "Vertiente",
   "Laguna", "Bahía", "Península", "Cabo", "Acantilado", "Duna", "Pradera", "Pampa", "Cordillera", "Nevado",
-  "Cumbre", "Pico", "Loma", "Llanura", "Estero", "Pantano", "Parque", "Invernadero", "Parra", "Olivo",
+  "Cumbre", "Trofeo", "Loma", "Llanura", "Estero", "Pantano", "Parque", "Invernadero", "Parra", "Olivo",
   "Manzano", "Peral", "Limonero", "Naranjo", "Almendro", "Nogal", "Cactus", "Helecho", "Musgo", "Alga",
   "Coral", "Caracol", "Cangrejo", "Pulpo", "Lobo", "Foca", "Pingüino", "Pelícano", "Gaviota", "Albatros",
   "Chinchilla", "Guanaco", "GatoAndino", "MonitoDelMonte", "Quique", "Vizcacha", "Yeco", "Bandurria", "Loica", "Chucao"
