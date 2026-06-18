@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valtek Security — Sistema de Control de Acceso Escolar</title>
+  <meta name="description" content="Valtek Security: Sistema integral de control de acceso escolar con esclusa bidireccional, parseo de cédula chilena, dashboard de presencia en tiempo real, y lógica anti-passback.">
+  <meta name="author" content="Valtek Security">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+
+    <!-- ============================================
+         SIDEBAR NAVIGATION
+         ============================================ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <h1>Valtek Security</h1>
+          <span>Control de Acceso Escolar</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <button class="nav-item active" data-view="dashboard" id="nav-dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-item" data-view="airlock" id="nav-airlock">
+            <i class="fa-solid fa-door-open"></i>
+            <span>Esclusa & Lectores</span>
+          </button>
+          <button class="nav-item" data-view="users" id="nav-users">
+            <i class="fa-solid fa-users"></i>
+            <span>Usuarios</span>
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Registro</div>
+          <button class="nav-item" data-view="enrollment" id="nav-enrollment">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Pre-Enrolamiento</span>
+          </button>
+          <button class="nav-item" data-view="scanner" id="nav-scanner">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Parseo Cédula</span>
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Sistema</div>
+          <button class="nav-item" data-view="hardware" id="nav-hardware">
+            <i class="fa-solid fa-microchip"></i>
+            <span>Hardware</span>
+          </button>
+          <button class="nav-item" data-view="alerts" id="nav-alerts">
+            <i class="fa-solid fa-bell"></i>
+            <span>Alertas</span>
+            <span class="nav-badge" id="alerts-badge" style="display:none;">0</span>
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-status">
+          <div class="status-dot online" id="connection-dot"></div>
+          <span id="connection-label">Sistema Online</span>
+        </div>
+        <label class="toggle-switch mt-1" id="offline-toggle">
+          <input type="checkbox" id="toggle-offline">
+          <div class="toggle-track"></div>
+          <span class="toggle-label">Simular Offline</span>
+        </label>
+      </div>
+    </aside>
+
+    <!-- ============================================
+         MAIN CONTENT AREA
+         ============================================ -->
+    <main class="main-content">
+
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <h2 id="page-title">Dashboard de Conserjería</h2>
+          <span class="page-desc" id="page-desc">Vista general del recinto en tiempo real</span>
+        </div>
+        <div class="top-bar-right">
+          <span class="clock-display" id="live-clock">--:--:--</span>
+          <button class="top-bar-btn" id="btn-refresh" title="Actualizar datos">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
+          <button class="top-bar-btn danger" id="btn-force-sync" title="Sincronizar datos offline">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span id="sync-badge-count" style="display:none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content">
+
+        <!-- Global Alerts Container -->
+        <div id="global-alerts-container"></div>
+
+        <!-- ============================================
+             PAGE: DASHBOARD
+             ============================================ -->
+        <div class="view-page active" id="view-dashboard">
+
+          <!-- KPI Metrics -->
+          <div class="metrics-grid">
+            <div class="metric-card purple">
+              <div class="metric-icon"><i class="fa-solid fa-building"></i></div>
+              <div class="metric-value" id="kpi-poblacion">0</div>
+              <div class="metric-label">Población Actual</div>
+              <div class="metric-change up"><i class="fa-solid fa-arrow-up"></i> Interior del colegio</div>
+            </div>
+            <div class="metric-card blue">
+              <div class="metric-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
+              <div class="metric-value" id="kpi-ingresados">0</div>
+              <div class="metric-label">Total Ingresados Hoy</div>
+            </div>
+            <div class="metric-card red">
+              <div class="metric-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+              <div class="metric-value" id="kpi-egresados">0</div>
+              <div class="metric-label">Total Egresados Hoy</div>
+            </div>
+            <div class="metric-card green">
+              <div class="metric-icon"><i class="fa-solid fa-map-pin"></i></div>
+              <div class="metric-value" id="kpi-recinto">0</div>
+              <div class="metric-label">En Recinto Total</div>
+              <div class="metric-change up"><i class="fa-solid fa-arrow-up"></i> Incluye patio</div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <!-- User Status Table -->
+            <div class="card full-width">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-table-list"></i>
+                  Ficha de Usuarios en Tiempo Real
+                </div>
+                <div class="card-badge live"><i class="fa-solid fa-circle" style="font-size:0.5rem;margin-right:3px;"></i> EN VIVO</div>
+              </div>
+              <div class="search-bar mb-1">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Buscar por nombre o RUN..." id="search-users-input">
+              </div>
+              <div class="data-table-wrapper" style="max-height: 320px; overflow-y: auto;">
+                <table class="data-table" id="users-status-table">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>RUN</th>
+                      <th>Rol</th>
+                      <th>Hora Entrada</th>
+                      <th>Hora Salida</th>
+                      <th>Estado Actual</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-status-tbody">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Event Timeline -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-timeline"></i>
+                  Timeline de Eventos
+                </div>
+              </div>
+              <div class="event-log" id="event-log">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Door Sensor Monitor -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-door-closed"></i>
+                  Sensor Portón Exterior
+                </div>
+                <div class="card-badge live" id="door-status-badge">CERRADO</div>
+              </div>
+              <div class="door-sensor-widget">
+                <div class="door-icon-big closed" id="door-icon">
+                  <i class="fa-solid fa-door-closed"></i>
+                </div>
+                <div class="door-timer" id="door-timer">00:00</div>
+                <p class="text-secondary" style="font-size:0.78rem;" id="door-msg">Portón cerrado — Sin alertas</p>
+                <div class="flex gap-1">
+                  <button class="btn btn-secondary btn-sm" id="btn-sim-door-open">
+                    <i class="fa-solid fa-lock-open"></i> Simular Apertura
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="btn-sim-door-close" disabled>
+                    <i class="fa-solid fa-lock"></i> Simular Cierre
+                  </button>
+                  <button class="btn btn-danger btn-sm hidden" id="btn-ack-alarm">
+                    <i class="fa-solid fa-volume-xmark"></i> Silenciar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: AIRLOCK & READERS
+             ============================================ -->
+        <div class="view-page" id="view-airlock">
+
+          <div class="airlock-container">
+            <!-- Scan Input -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-id-card"></i>
+                  Escanear / Ingresar RUN
+                </div>
+              </div>
+              <div class="scan-input-group">
+                <input type="text" class="form-input mono" id="airlock-run-input"
+                       placeholder="Ingrese o escanee RUN (ej: 12.345.678-9)"
+                       autocomplete="off">
+                <select class="form-select" id="airlock-reader-select" style="max-width: 220px;">
+                  <option value="L1">L1 — Entrada Portón</option>
+                  <option value="L2">L2 — Salida Portón</option>
+                  <option value="L3">L3 — Entrada Torniquete</option>
+                  <option value="L4">L4 — Salida Torniquete</option>
+                </select>
+                <button class="btn btn-primary" id="btn-process-scan">
+                  <i class="fa-solid fa-barcode"></i> Procesar
+                </button>
+              </div>
+              <div id="scan-result-msg" class="form-hint" style="min-height:1.2em;"></div>
+            </div>
+
+            <!-- Visual Airlock Diagram -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-vector-square"></i>
+                  Diagrama de Esclusa Bidireccional
+                </div>
+              </div>
+              <div class="airlock-visual">
+                <div class="airlock-diagram">
+                  <!-- Row 1: Exterior Gate -->
+                  <div class="airlock-zone">
+                    <div class="zone-label">
+                      <i class="fa-solid fa-road"></i> CALLE
+                    </div>
+                    <span class="arrow-flow" id="arrow-l1">→</span>
+                    <div class="gate-element" id="gate-porton">
+                      <i class="fa-solid fa-warehouse gate-icon"></i>
+                      <span class="gate-name">PORTÓN EXT</span>
+                      <span class="gate-name text-muted" style="font-size:0.6rem;">Relé 1</span>
+                    </div>
+                    <span class="arrow-flow" id="arrow-l2">→</span>
+                    <div class="zone-label">
+                      <i class="fa-solid fa-road"></i> CALLE
+                    </div>
+                  </div>
+
+                  <!-- Connector -->
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;">
+                    <span class="arrow-flow">↕</span>
+                    <div class="zone-label highlight">
+                      <i class="fa-solid fa-tree"></i> PATIO INTERMEDIO
+                    </div>
+                    <span class="arrow-flow">↕</span>
+                  </div>
+
+                  <!-- Row 2: Turnstile -->
+                  <div class="airlock-zone">
+                    <div class="zone-label">
+                      <i class="fa-solid fa-tree"></i> PATIO
+                    </div>
+                    <span class="arrow-flow" id="arrow-l3">→</span>
+                    <div class="gate-element" id="gate-torniquete">
+                      <i class="fa-solid fa-rotate gate-icon"></i>
+                      <span class="gate-name">TORNIQUETE</span>
+                      <span class="gate-name text-muted" style="font-size:0.6rem;">Relé 2 / 3</span>
+                    </div>
+                    <span class="arrow-flow" id="arrow-l4">→</span>
+                    <div class="zone-label">
+                      <i class="fa-solid fa-tree"></i> PATIO
+                    </div>
+                  </div>
+
+                  <!-- Interior -->
+                  <div style="display:flex;flex-direction:column;align-items:center;">
+                    <span class="arrow-flow">↕</span>
+                    <div class="zone-label highlight">
+                      <i class="fa-solid fa-school"></i> INTERIOR COLEGIO
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-grid">
+              <!-- Quick Scan Buttons -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    Simulación Rápida de Lectores
+                  </div>
+                </div>
+                <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                  Seleccione un usuario enrolado y haga clic en un lector para simular el escaneo:
+                </p>
+                <div class="form-group">
+                  <label class="form-label">Usuario para simular:</label>
+                  <select class="form-select" id="sim-user-select">
+                    <!-- Populated by JS -->
+                  </select>
+                </div>
+                <div class="readers-grid">
+                  <button class="reader-btn entry" data-reader="L1">
+                    <div class="reader-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
+                    <span class="reader-label">L1: Entrada</span>
+                    <span class="reader-sublabel">Portón Ext.</span>
+                  </button>
+                  <button class="reader-btn exit" data-reader="L2">
+                    <div class="reader-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+                    <span class="reader-label">L2: Salida</span>
+                    <span class="reader-sublabel">Portón Ext.</span>
+                  </button>
+                  <button class="reader-btn entry" data-reader="L3">
+                    <div class="reader-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
+                    <span class="reader-label">L3: Entrada</span>
+                    <span class="reader-sublabel">Torniquete</span>
+                  </button>
+                  <button class="reader-btn exit" data-reader="L4">
+                    <div class="reader-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+                    <span class="reader-label">L4: Salida</span>
+                    <span class="reader-sublabel">Torniquete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Relay Status -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class="fa-solid fa-bolt"></i>
+                    Estado de Relés
+                  </div>
+                </div>
+                <div class="relay-indicators" style="flex-direction:column;">
+                  <div class="relay-indicator" id="relay-1-indicator">
+                    <div class="relay-led" id="relay-1-led"></div>
+                    <span>Relé 1 — Portón Exterior</span>
+                    <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_1" data-action="force">
+                      <i class="fa-solid fa-bolt"></i> Force Open
+                    </button>
+                  </div>
+                  <div class="relay-indicator" id="relay-2-indicator">
+                    <div class="relay-led" id="relay-2-led"></div>
+                    <span>Relé 2 — Torniquete Entrada</span>
+                    <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_2" data-action="force">
+                      <i class="fa-solid fa-bolt"></i> Force Open
+                    </button>
+                  </div>
+                  <div class="relay-indicator" id="relay-3-indicator">
+                    <div class="relay-led" id="relay-3-led"></div>
+                    <span>Relé 3 — Torniquete Salida</span>
+                    <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_3" data-action="force">
+                      <i class="fa-solid fa-bolt"></i> Force Open
+                    </button>
+                  </div>
+                </div>
+                <!-- Scan Activity Log -->
+                <div class="card-header mt-2">
+                  <div class="card-title" style="font-size:0.82rem;">
+                    <i class="fa-solid fa-list-check"></i>
+                    Actividad Reciente
+                  </div>
+                </div>
+                <div class="event-log" id="relay-activity-log" style="max-height:200px;">
+                  <div class="empty-state" style="padding:1.5rem;">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>Sin actividad reciente</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: USERS LIST
+             ============================================ -->
+        <div class="view-page" id="view-users">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-address-book"></i>
+                Directorio de Usuarios Enrolados
+              </div>
+              <span class="card-badge live" id="enrolled-count-badge">0 registrados</span>
+            </div>
+            <div class="search-bar mb-1">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" placeholder="Buscar usuario por nombre o RUN..." id="search-all-users">
+            </div>
+            <div class="data-table-wrapper" style="max-height: 500px; overflow-y: auto;">
+              <table class="data-table" id="enrolled-users-table">
+                <thead>
+                  <tr>
+                    <th>Nombre Completo</th>
+                    <th>RUN</th>
+                    <th>Rol</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>Enrolado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="enrolled-users-tbody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: PRE-ENROLLMENT FORM
+             ============================================ -->
+        <div class="view-page" id="view-enrollment">
+          <div class="dashboard-grid">
+            <div class="card enrollment-form-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-user-plus"></i>
+                  Formulario de Pre-Enrolamiento
+                </div>
+              </div>
+              <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">
+                Complete el formulario para registrar un nuevo usuario en el sistema. Todos los campos son obligatorios.
+              </p>
+              <form id="enrollment-form" autocomplete="off">
+                <div class="form-grid">
+                  <div class="form-group full-span">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-input" id="enroll-name" placeholder="Ej: Juan Pérez González" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">RUN (con dígito verificador)</label>
+                    <input type="text" class="form-input mono" id="enroll-run" placeholder="12.345.678-9" required>
+                    <div class="run-validation-indicator" id="enroll-run-indicator"></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Rol</label>
+                    <select class="form-select" id="enroll-role" required>
+                      <option value="">Seleccione rol...</option>
+                      <option value="Alumno">Alumno</option>
+                      <option value="Apoderado">Apoderado</option>
+                      <option value="Docente">Docente</option>
+                      <option value="Administrativo">Administrativo</option>
+                      <option value="Visita">Visita</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input type="tel" class="form-input" id="enroll-phone" placeholder="+56 9 1234 5678" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-input" id="enroll-email" placeholder="correo@ejemplo.cl" required>
+                  </div>
+                </div>
+                <div class="flex gap-1 mt-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-user-check"></i> Registrar Usuario
+                  </button>
+                  <button type="reset" class="btn btn-secondary">
+                    <i class="fa-solid fa-eraser"></i> Limpiar
+                  </button>
+                </div>
+              </form>
+              <div id="enrollment-result" class="mt-1"></div>
+            </div>
+
+            <!-- Recently Enrolled -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  Enrolados Recientemente
+                </div>
+              </div>
+              <div id="recent-enrollments" class="event-log" style="max-height:400px;">
+                <div class="empty-state">
+                  <i class="fa-solid fa-user-plus"></i>
+                  <h3>Sin enrolamientos</h3>
+                  <p>Los usuarios recién enrolados aparecerán aquí</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: SCANNER / ID PARSER
+             ============================================ -->
+        <div class="view-page" id="view-scanner">
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-qrcode"></i>
+                  Parseo de Cédula de Identidad Chilena
+                </div>
+              </div>
+              <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">
+                Pegue el string crudo que entrega el lector de QR (frente) o PDF417 (reverso) de la cédula chilena.
+                El sistema detectará automáticamente el formato y extraerá el RUN.
+              </p>
+
+              <!-- Tabs -->
+              <div class="tabs-bar">
+                <button class="tab-btn active" data-scanner-tab="auto">Auto-Detectar</button>
+                <button class="tab-btn" data-scanner-tab="qr">QR Frontal</button>
+                <button class="tab-btn" data-scanner-tab="pdf417">PDF417 Reverso</button>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">String crudo del lector:</label>
+                <textarea class="form-input" id="scanner-raw-input" rows="4"
+                          placeholder="Pegue aquí el string completo del código escaneado...
+Ejemplo QR: https://portal.sidiv.registrocivil.cl/docstatus?RUN=12345678&type=CI&serial=...
+Ejemplo PDF417: 0123456789CLPÉREZGONZÁLEZJUAN..."
+                          style="resize:vertical;font-family:var(--font-mono);font-size:0.8rem;"></textarea>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-primary" id="btn-parse-id">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Parsear
+                </button>
+                <button class="btn btn-secondary" id="btn-clear-scanner">
+                  <i class="fa-solid fa-eraser"></i> Limpiar
+                </button>
+              </div>
+
+              <!-- Parse Result -->
+              <div id="scanner-result" class="mt-2" style="min-height:60px;"></div>
+            </div>
+
+            <!-- Test Examples -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-flask"></i>
+                  Ejemplos de Prueba
+                </div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                Haga clic en un ejemplo para cargarlo en el parser:
+              </p>
+              <div class="flex flex-col gap-1">
+                <button class="btn btn-secondary btn-sm test-example"
+                        data-example="https://portal.sidiv.registrocivil.cl/docstatus?RUN=12345678&type=CI&serial=AAA111222">
+                  <i class="fa-solid fa-qrcode"></i> QR: URL con parámetro RUN
+                </button>
+                <button class="btn btn-secondary btn-sm test-example"
+                        data-example="https://registo.srcei.cl/ci/SERIALNUMBER=12345678-5/type=cedula">
+                  <i class="fa-solid fa-qrcode"></i> QR: URL con SERIALNUMBER
+                </button>
+                <button class="btn btn-secondary btn-sm test-example"
+                        data-example="0123456785CLPEREZGONZALEZJUAN19900115MSANTIAGO">
+                  <i class="fa-solid fa-barcode"></i> PDF417: Formato con RUN al inicio
+                </button>
+                <button class="btn btn-secondary btn-sm test-example"
+                        data-example="CI00234567890CLGOMEZLOPEZANA19851220FVALPARAISO">
+                  <i class="fa-solid fa-barcode"></i> PDF417: Formato con prefijo CI
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: HARDWARE ADMIN
+             ============================================ -->
+        <div class="view-page" id="view-hardware">
+          <div class="dashboard-grid">
+            <!-- Controller Config -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-server"></i>
+                  Configuración de Controladora
+                </div>
+              </div>
+              <div class="device-card">
+                <div class="device-status">
+                  <div class="status-dot online" id="hw-controller-dot"></div>
+                  <span id="hw-controller-status">Conectada</span>
+                </div>
+                <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                  <div class="form-group">
+                    <label class="form-label">Dirección IP</label>
+                    <input type="text" class="form-input mono" id="hw-ip" value="192.168.1.200">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Puerto</label>
+                    <input type="number" class="form-input mono" id="hw-port" value="4370">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Máscara de Subred</label>
+                    <input type="text" class="form-input mono" id="hw-subnet" value="255.255.255.0">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Puerta de Enlace</label>
+                    <input type="text" class="form-input mono" id="hw-gateway" value="192.168.1.1">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Modelo</label>
+                    <input type="text" class="form-input" id="hw-model" value="ZKTeco inBio-260" disabled>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Protocolo</label>
+                    <select class="form-select" id="hw-protocol">
+                      <option value="Wiegand" selected>Wiegand D0/D1</option>
+                      <option value="OSDP">OSDP v2</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="flex gap-1 mt-1">
+                  <button class="btn btn-primary btn-sm" id="btn-save-hw">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Config
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="btn-ping-hw">
+                    <i class="fa-solid fa-wifi"></i> Ping
+                  </button>
+                </div>
+                <div id="hw-result" class="form-hint mt-1"></div>
+              </div>
+            </div>
+
+            <!-- Reader Mapping -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-network-wired"></i>
+                  Mapeo de Lectores (Wiegand/OSDP)
+                </div>
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="device-card">
+                  <div class="device-status">
+                    <div class="status-dot online"></div>
+                    <span>Lector 1 — Entrada Portón</span>
+                  </div>
+                  <div class="device-detail"><span class="detail-label">Puerto</span><span class="detail-value">Wiegand D0/D1 - Entrada 1</span></div>
+                  <div class="device-detail"><span class="detail-label">Dirección</span><span class="detail-value">IN (Ingreso)</span></div>
+                  <div class="device-detail"><span class="detail-label">Relé</span><span class="detail-value">Relé 1 (Portón)</span></div>
+                  <div class="device-detail"><span class="detail-label">Hito</span><span class="detail-value">Ingreso_Perimetral</span></div>
+                </div>
+                <div class="device-card">
+                  <div class="device-status">
+                    <div class="status-dot online"></div>
+                    <span>Lector 2 — Salida Portón</span>
+                  </div>
+                  <div class="device-detail"><span class="detail-label">Puerto</span><span class="detail-value">Wiegand D0/D1 - Entrada 2</span></div>
+                  <div class="device-detail"><span class="detail-label">Dirección</span><span class="detail-value">OUT (Salida)</span></div>
+                  <div class="device-detail"><span class="detail-label">Relé</span><span class="detail-value">Relé 1 (Portón)</span></div>
+                  <div class="device-detail"><span class="detail-label">Hito</span><span class="detail-value">Salida_Definitiva</span></div>
+                </div>
+                <div class="device-card">
+                  <div class="device-status">
+                    <div class="status-dot online"></div>
+                    <span>Lector 3 — Entrada Torniquete</span>
+                  </div>
+                  <div class="device-detail"><span class="detail-label">Puerto</span><span class="detail-value">Wiegand D0/D1 - Entrada 3</span></div>
+                  <div class="device-detail"><span class="detail-label">Dirección</span><span class="detail-value">IN (Ingreso)</span></div>
+                  <div class="device-detail"><span class="detail-label">Relé</span><span class="detail-value">Relé 2 (Torniquete IN)</span></div>
+                  <div class="device-detail"><span class="detail-label">Hito</span><span class="detail-value">Ingreso_Oficial</span></div>
+                </div>
+                <div class="device-card">
+                  <div class="device-status">
+                    <div class="status-dot online"></div>
+                    <span>Lector 4 — Salida Torniquete</span>
+                  </div>
+                  <div class="device-detail"><span class="detail-label">Puerto</span><span class="detail-value">Wiegand D0/D1 - Entrada 4</span></div>
+                  <div class="device-detail"><span class="detail-label">Dirección</span><span class="detail-value">OUT (Salida)</span></div>
+                  <div class="device-detail"><span class="detail-label">Relé</span><span class="detail-value">Relé 3 (Torniquete OUT)</span></div>
+                  <div class="device-detail"><span class="detail-label">Hito</span><span class="detail-value">Salida_Oficial</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Relay Test Panel -->
+            <div class="card full-width">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-flask-vial"></i>
+                  Test de Pulso — Apertura Forzada de Relés
+                </div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:1rem;">
+                Ejecute el comando Force Open en cada relé para verificar que el cableado hacia la chapa y el torniquete esté correcto antes de pasar a producción.
+              </p>
+              <div class="relay-indicators">
+                <div class="relay-indicator">
+                  <div class="relay-led" id="test-relay-1-led"></div>
+                  <span>Relé 1 — Portón</span>
+                  <button class="btn btn-warning btn-sm" id="btn-test-relay-1">
+                    <i class="fa-solid fa-bolt"></i> Force Open (3s)
+                  </button>
+                </div>
+                <div class="relay-indicator">
+                  <div class="relay-led" id="test-relay-2-led"></div>
+                  <span>Relé 2 — Torniquete IN</span>
+                  <button class="btn btn-warning btn-sm" id="btn-test-relay-2">
+                    <i class="fa-solid fa-bolt"></i> Force Open (3s)
+                  </button>
+                </div>
+                <div class="relay-indicator">
+                  <div class="relay-led" id="test-relay-3-led"></div>
+                  <span>Relé 3 — Torniquete OUT</span>
+                  <button class="btn btn-warning btn-sm" id="btn-test-relay-3">
+                    <i class="fa-solid fa-bolt"></i> Force Open (3s)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Offline Sync Panel -->
+            <div class="card full-width">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  Sincronización Offline (Failsafe)
+                </div>
+              </div>
+              <div class="sync-status-widget">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p style="font-size:0.78rem;color:var(--text-secondary);font-weight:600;">Estado de Conexión</p>
+                    <p style="font-size:0.75rem;color:var(--text-muted);">
+                      Cuando el internet se cae, los eventos se encolan localmente. Al reconectar, se suben en lote (batch).
+                    </p>
+                  </div>
+                  <div class="text-center">
+                    <div class="pending-count" id="offline-pending-count">0</div>
+                    <p style="font-size:0.68rem;color:var(--text-muted);">Pendientes</p>
+                  </div>
+                </div>
+                <div class="sync-progress-bar">
+                  <div class="progress-fill" id="sync-progress-fill"></div>
+                </div>
+                <div class="flex gap-1">
+                  <button class="btn btn-primary btn-sm" id="btn-force-batch-sync" disabled>
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Forzar Sincronización
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="btn-export-data">
+                    <i class="fa-solid fa-download"></i> Exportar Datos
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PAGE: ALERTS
+             ============================================ -->
+        <div class="view-page" id="view-alerts">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Registro de Alertas de Seguridad
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btn-clear-alerts">
+                <i class="fa-solid fa-trash"></i> Limpiar
+              </button>
+            </div>
+            <div class="event-log" id="alerts-log" style="max-height:600px;">
+              <div class="empty-state">
+                <i class="fa-solid fa-shield-check"></i>
+                <h3>Sin alertas</h3>
+                <p>No se han registrado alertas de seguridad</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-content -->
+    </main>
+  </div><!-- /app-wrapper -->
+
+  <!-- JS Modules -->
+  <script src="modules/run-validator.js"></script>
+  <script src="modules/id-parser.js"></script>
+  <script src="modules/anti-passback.js"></script>
+  <script src="modules/analytics.js"></script>
+  <script src="modules/relay-simulator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
