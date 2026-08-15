@@ -55,6 +55,7 @@ const App = {
     this.setupAlerts();
     this.setupOfflineToggle();
     this.setupEmailModal();
+    this.setupCameraScanner();
 
     // Start live clock
     this.startClock();
@@ -564,6 +565,82 @@ const App = {
     select.innerHTML = users.map(u =>
       `<option value="${u.run}">${u.name} (${window.RUNValidator?.formatRUN(u.run) || u.run}) — ${u.role}</option>`
     ).join('');
+  },
+
+  // ============================================
+  // CAMERA QR SCANNER (Html5Qrcode)
+  // ============================================
+  setupCameraScanner() {
+    const startBtn = document.getElementById('btn-start-camera-scan');
+    const stopBtn = document.getElementById('btn-stop-camera-scan');
+    const viewport = document.getElementById('camera-reader-viewport');
+    const badge = document.getElementById('camera-status-badge');
+    const resultDiv = document.getElementById('camera-scan-result');
+
+    if (!startBtn || !viewport) return;
+
+    let html5QrCode = null;
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          alert('La biblioteca Html5Qrcode se está cargando. Verifique conexión a internet.');
+          return;
+        }
+
+        viewport.classList.remove('hidden');
+        startBtn.classList.add('hidden');
+        stopBtn?.classList.remove('hidden');
+        if (badge) {
+          badge.textContent = '🟢 CÁMARA ESCANEANDO...';
+          badge.className = 'card-badge live';
+        }
+
+        html5QrCode = new Html5Qrcode("camera-reader-viewport");
+        const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText) => {
+            console.log(`[Cámara QR] Leído: ${decodedText}`);
+
+            let scannedRun = decodedText;
+            if (window.IDParser) {
+              const parsed = window.IDParser.autoDetectAndParse(decodedText);
+              if (parsed.success) scannedRun = parsed.run;
+            }
+
+            if (resultDiv) {
+              resultDiv.innerHTML = `<div class="alert-banner info"><i class="fa-solid fa-qrcode"></i> Leído por Cámara Móvil: <strong>${scannedRun}</strong></div>`;
+            }
+
+            // Verify and trigger automatic P1 door opening
+            this.processReaderScan('L1', scannedRun);
+          },
+          () => {}
+        );
+      } catch (err) {
+        console.error('[Cámara QR Error]', err);
+        alert(`No se pudo acceder a la cámara del dispositivo: ${err.message || err}`);
+        viewport.classList.add('hidden');
+        startBtn.classList.remove('hidden');
+        stopBtn?.classList.add('hidden');
+      }
+    });
+
+    stopBtn?.addEventListener('click', async () => {
+      if (html5QrCode) {
+        try { await html5QrCode.stop(); } catch (e) {}
+      }
+      viewport.classList.add('hidden');
+      startBtn.classList.remove('hidden');
+      stopBtn.classList.add('hidden');
+      if (badge) {
+        badge.textContent = 'CÁMARA LISTA';
+        badge.className = 'card-badge';
+      }
+    });
   },
 
   // ============================================

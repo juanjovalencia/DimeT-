@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="style.css">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- HTML5 QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
 
@@ -230,12 +232,36 @@
         <div class="view-page" id="view-airlock">
 
           <div class="airlock-container">
-            <!-- Scan Input -->
+            <!-- Phone Camera QR Scanner Card -->
+            <div class="card" style="border: 1px solid var(--accent-primary); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.95));">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fa-solid fa-camera" style="color:var(--accent-hover);"></i>
+                  Escáner con Cámara del Teléfono / Móvil (En Tiempo Real)
+                </div>
+                <div class="card-badge live" id="camera-status-badge">CÁMARA LISTA</div>
+              </div>
+              <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:1rem;">
+                Presione el botón para activar la cámara de su teléfono o webcam. Apunte hacia el código QR (recibido por email, impreso o en pantalla). Si el usuario figura en la base de datos SQLite, la Puerta P1 se abrirá automáticamente.
+              </p>
+              <div class="flex gap-1 mb-1">
+                <button class="btn btn-primary" id="btn-start-camera-scan">
+                  <i class="fa-solid fa-camera"></i> Activar Cámara del Teléfono
+                </button>
+                <button class="btn btn-secondary hidden" id="btn-stop-camera-scan">
+                  <i class="fa-solid fa-video-slash"></i> Apagar Cámara
+                </button>
+              </div>
+              <div id="camera-reader-viewport" style="width:100%; max-width:440px; margin:0.5rem auto; border-radius:12px; overflow:hidden; border:2px dashed var(--accent-primary);" class="hidden"></div>
+              <div id="camera-scan-result" class="mt-1"></div>
+            </div>
+
+            <!-- Manual / Barcode Scan Input -->
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
                   <i class="fa-solid fa-qrcode"></i>
-                  Lector QR P1 — Verificación y Apertura Automática
+                  Lector QR P1 — Verificación y Apertura Manual
                 </div>
               </div>
               <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:1rem;">
