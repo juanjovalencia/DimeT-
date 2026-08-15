@@ -97,6 +97,9 @@
           <span class="page-desc" id="page-desc">Vista general del recinto en tiempo real</span>
         </div>
         <div class="top-bar-right">
+          <button class="btn btn-sm btn-primary" id="btn-send-qr-p1" style="display:flex;align-items:center;gap:0.4rem;padding:0.45rem 0.85rem;font-weight:600;" title="Enviar Email con QR para P1 (Juan Pérez)">
+            <i class="fa-solid fa-paper-plane"></i> Enviar QR P1
+          </button>
           <span class="clock-display" id="live-clock">--:--:--</span>
           <button class="top-bar-btn" id="btn-refresh" title="Actualizar datos">
             <i class="fa-solid fa-arrows-rotate"></i>
@@ -448,6 +451,20 @@
              PAGE: PRE-ENROLLMENT FORM
              ============================================ -->
         <div class="view-page" id="view-enrollment">
+          <div class="card mb-1" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.08)); border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem;">
+            <div style="display:flex; align-items:center; gap:0.85rem;">
+              <div style="width:42px; height:42px; border-radius:10px; background:var(--accent-primary); display:flex; align-items:center; justify-content:center; color:white; font-size:1.2rem; flex-shrink:0;">
+                <i class="fa-solid fa-qrcode"></i>
+              </div>
+              <div>
+                <h4 style="font-weight:700; margin:0 0 2px 0; font-size:0.92rem;">Envío Directo de Pase QR — P1 (Juan Pérez)</h4>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin:0;">Genera y simula el correo electrónico con el código QR de acceso oficial para el usuario P1.</p>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btn-quick-send-p1" style="white-space:nowrap; flex-shrink:0;">
+              <i class="fa-solid fa-paper-plane"></i> Enviar Mail con QR (P1)
+            </button>
+          </div>
           <div class="dashboard-grid">
             <div class="card enrollment-form-card">
               <div class="card-header">
@@ -810,6 +827,115 @@ Ejemplo PDF417: 0123456789CLPÉREZGONZÁLEZJUAN..."
       </div><!-- /page-content -->
     </main>
   </div><!-- /app-wrapper -->
+
+  <!-- ============================================
+       MODAL: EMAIL VISUALIZER WITH QR CODE
+       ============================================ -->
+  <div class="modal-backdrop hidden" id="modal-email-qr">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-envelope-open-text" style="color:var(--accent-primary);"></i>
+          <span>Notificación Enviada — Pase Digital de Acceso QR</span>
+        </div>
+        <button class="modal-close-btn" id="modal-email-close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="email-preview-container">
+          <!-- Email Meta Header -->
+          <div class="email-meta-card">
+            <div class="email-meta-row">
+              <span class="email-meta-label">De:</span>
+              <span class="email-meta-val">Valtek Security &lt;notificaciones@valteksecurity.cl&gt;</span>
+            </div>
+            <div class="email-meta-row">
+              <span class="email-meta-label">Para:</span>
+              <span class="email-meta-val" id="email-to-val">Juan Pérez González &lt;juan.perez@colegio.cl&gt;</span>
+            </div>
+            <div class="email-meta-row">
+              <span class="email-meta-label">Asunto:</span>
+              <span class="email-meta-val highlight" id="email-subject-val">🔑 Tu Pase Digital de Acceso QR - Valtek Security</span>
+            </div>
+            <div class="email-meta-row">
+              <span class="email-meta-label">Estado:</span>
+              <span class="email-meta-val text-success"><i class="fa-solid fa-circle-check"></i> Enviado con éxito vía SMTP SaaS</span>
+            </div>
+          </div>
+
+          <!-- Email Content Body -->
+          <div class="email-paper">
+            <div class="email-paper-brand">
+              <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+              <div>
+                <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text-primary);">Valtek Security</h3>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Sistema de Control de Acceso Escolar</span>
+              </div>
+            </div>
+
+            <div class="email-paper-content">
+              <h4 id="email-greeting" style="font-size:1rem; margin-top:0;">Estimado(a) Juan Pérez González,</h4>
+              <p style="color:var(--text-secondary); font-size:0.85rem; line-height:1.5;">
+                Te confirmamos tu enrolamiento en el sistema de seguridad y control de acceso. Adjunto encontrarás tu <strong>Pase Digital de Acceso QR</strong> para ingresar y salir de las instalaciones.
+              </p>
+
+              <!-- QR Pass Card Container -->
+              <div class="pass-card">
+                <div class="pass-card-header">
+                  <span>COLEGIO VALTEK</span>
+                  <span class="badge-role" id="pass-role-badge">ALUMNO</span>
+                </div>
+
+                <div class="pass-card-body">
+                  <div class="qr-code-wrapper" id="pass-qr-wrapper">
+                    <!-- Dynamic QR code img or SVG -->
+                    <img id="pass-qr-img" src="" alt="Código QR de Acceso" style="width:160px; height:160px; border-radius:8px; border:3px solid white; background:white; padding:4px;">
+                  </div>
+
+                  <div class="pass-user-info">
+                    <h3 id="pass-user-name" style="margin:0 0 4px 0; font-weight:800; font-size:1.1rem; color:var(--text-primary);">Juan Pérez González</h3>
+                    <div style="font-family:var(--font-mono); font-size:0.88rem; color:var(--accent-hover); font-weight:700;" id="pass-user-run">RUN: 12.345.678-5</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;" id="pass-user-email">juan.perez@colegio.cl</div>
+
+                    <div style="margin-top:12px; display:inline-flex; align-items:center; gap:6px; padding:4px 10px; background:rgba(16,185,129,0.12); border:1px solid var(--success); border-radius:20px; color:var(--success); font-size:0.72rem; font-weight:700;">
+                      <i class="fa-solid fa-shield-check"></i> ACCESO AUTORIZADO
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pass-card-footer">
+                  <span>Muestre este código en el lector L1 (Portón) y L3 (Torniquete)</span>
+                </div>
+              </div>
+
+              <p style="font-size:0.78rem; color:var(--text-muted); text-align:center; margin-top:1.25rem;">
+                Si tienes problemas con tu código QR, contacta a la administración de conserjería.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="flex gap-1 flex-wrap justify-between w-full" style="width:100%;">
+          <div class="flex gap-1 flex-wrap">
+            <button class="btn btn-primary btn-sm" id="btn-modal-scan-l1">
+              <i class="fa-solid fa-right-to-bracket"></i> Simular Escaneo L1 (Portón)
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-modal-scan-l3">
+              <i class="fa-solid fa-rotate"></i> Simular Escaneo L3 (Torniquete)
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-modal-resend">
+              <i class="fa-solid fa-arrow-rotate-right"></i> Reenviar Mail
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-modal-close-footer">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- JS Modules -->
   <script src="modules/run-validator.js"></script>

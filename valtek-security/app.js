@@ -54,6 +54,7 @@ const App = {
     this.setupHardware();
     this.setupAlerts();
     this.setupOfflineToggle();
+    this.setupEmailModal();
 
     // Start live clock
     this.startClock();
@@ -615,9 +616,14 @@ const App = {
 
     if (result.success) {
       resultDiv.innerHTML = `
-        <div class="alert-banner success">
-          <i class="fa-solid fa-check-circle"></i>
-          Usuario <strong>${result.user.name}</strong> enrolado exitosamente con RUN ${window.RUNValidator?.formatRUN(result.user.run) || result.user.run}
+        <div class="alert-banner success" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
+          <div>
+            <i class="fa-solid fa-check-circle"></i>
+            Usuario <strong>${result.user.name}</strong> enrolado exitosamente con RUN ${window.RUNValidator?.formatRUN(result.user.run) || result.user.run}
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="App.sendQREmailForUser('${result.user.run}')">
+            <i class="fa-solid fa-envelope-open-text"></i> Ver Email Enviado con Pase QR
+          </button>
         </div>
       `;
       document.getElementById('enrollment-form')?.reset();
@@ -912,6 +918,9 @@ const App = {
           <td>${user.email || 'N/A'}</td>
           <td><span style="font-size:0.75rem;">${enrolledDate}</span></td>
           <td>
+            <button class="btn btn-sm btn-secondary" style="margin-right:4px;" title="Ver/Enviar Email con QR" onclick="App.sendQREmailForUser('${user.run}')">
+              <i class="fa-solid fa-envelope"></i> QR
+            </button>
             <button class="btn btn-sm btn-danger btn-icon" title="Eliminar" onclick="App.removeUser('${user.run}')">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -1089,6 +1098,131 @@ const App = {
   removeGlobalAlert(id) {
     const el = document.getElementById(id);
     if (el) el.remove();
+  },
+
+  // ============================================
+  // EMAIL & QR CODE PASS MODAL
+  // ============================================
+  setupEmailModal() {
+    // Quick triggers for P1 (Juan Pérez)
+    document.getElementById('btn-send-qr-p1')?.addEventListener('click', () => {
+      this.sendQREmailForUser('12345678-5');
+    });
+
+    document.getElementById('btn-quick-send-p1')?.addEventListener('click', () => {
+      this.sendQREmailForUser('12345678-5');
+    });
+
+    // Close buttons
+    const closeBtn = document.getElementById('modal-email-close');
+    const closeFooter = document.getElementById('btn-modal-close-footer');
+    const modalBackdrop = document.getElementById('modal-email-qr');
+
+    const closeModal = () => modalBackdrop?.classList.add('hidden');
+
+    closeBtn?.addEventListener('click', closeModal);
+    closeFooter?.addEventListener('click', closeModal);
+    modalBackdrop?.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    // Resend email button
+    document.getElementById('btn-modal-resend')?.addEventListener('click', () => {
+      const currentRun = document.getElementById('pass-user-run')?.dataset.run || '12345678-5';
+      this.sendQREmailForUser(currentRun, true);
+    });
+  },
+
+  sendQREmailForUser(run, isResend = false) {
+    if (!run) run = '12345678-5';
+
+    // Retrieve user from Analytics or default to P1 (Juan Pérez)
+    let user = window.Analytics ? window.Analytics.getUser(run) : null;
+    if (!user && (run.includes('12345678') || run === 'P1' || run === 'p1')) {
+      user = {
+        name: 'Juan Pérez González',
+        run: '12345678-5',
+        email: 'juan.perez@colegio.cl',
+        phone: '+56 9 1234 5678',
+        role: 'Alumno'
+      };
+    } else if (!user) {
+      user = {
+        name: 'Usuario P1 (Demo)',
+        run: run,
+        email: 'usuario@colegio.cl',
+        phone: '+56 9 1234 5678',
+        role: 'Alumno'
+      };
+    }
+
+    const cleanRun = window.RUNValidator ? window.RUNValidator.sanitizeRUN(user.run) : user.run.replace(/[^0-9kK]/g, '');
+    const formattedRun = window.RUNValidator ? window.RUNValidator.formatRUN(user.run) : user.run;
+
+    // Generate QR Code image URL via QRServer API
+    const qrData = `https://portal.sidiv.registrocivil.cl/docstatus?RUN=${cleanRun}&type=CI`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+
+    // Update Email Modal fields
+    const toEl = document.getElementById('email-to-val');
+    const greetingEl = document.getElementById('email-greeting');
+    const passNameEl = document.getElementById('pass-user-name');
+    const passRunEl = document.getElementById('pass-user-run');
+    const passEmailEl = document.getElementById('pass-user-email');
+    const passRoleEl = document.getElementById('pass-role-badge');
+    const qrImgEl = document.getElementById('pass-qr-img');
+
+    if (toEl) toEl.textContent = `${user.name} <${user.email}>`;
+    if (greetingEl) greetingEl.textContent = `Estimado(a) ${user.name},`;
+    if (passNameEl) passNameEl.textContent = user.name;
+    if (passRunEl) {
+      passRunEl.textContent = `RUN: ${formattedRun}`;
+      passRunEl.dataset.run = user.run;
+    }
+    if (passEmailEl) passEmailEl.textContent = user.email;
+    if (passRoleEl) passRoleEl.textContent = (user.role || 'ALUMNO').toUpperCase();
+    if (qrImgEl) {
+      qrImgEl.src = qrUrl;
+    }
+
+    // Attach simulation scan buttons in email modal
+    const scanL1Btn = document.getElementById('btn-modal-scan-l1');
+    const scanL3Btn = document.getElementById('btn-modal-scan-l3');
+
+    if (scanL1Btn) {
+      scanL1Btn.onclick = () => {
+        document.getElementById('modal-email-qr')?.classList.add('hidden');
+        this.switchView('airlock');
+        const input = document.getElementById('airlock-run-input');
+        const select = document.getElementById('airlock-reader-select');
+        if (input) input.value = user.run;
+        if (select) select.value = 'L1';
+        this.processScan('L1', user.run);
+      };
+    }
+
+    if (scanL3Btn) {
+      scanL3Btn.onclick = () => {
+        document.getElementById('modal-email-qr')?.classList.add('hidden');
+        this.switchView('airlock');
+        const input = document.getElementById('airlock-run-input');
+        const select = document.getElementById('airlock-reader-select');
+        if (input) input.value = user.run;
+        if (select) select.value = 'L3';
+        this.processScan('L3', user.run);
+      };
+    }
+
+    // Show Global Alert banner
+    const actionText = isResend ? 'Reenviado' : 'Enviado con éxito';
+    this.addGlobalAlert(
+      'success',
+      `📧 <strong>Email con Código QR (${actionText}):</strong> Pase Digital entregado a <strong>${user.email}</strong> para ${user.name} (${formattedRun}).`,
+      'fa-paper-plane'
+    );
+
+    // Open Modal
+    document.getElementById('modal-email-qr')?.classList.remove('hidden');
   }
 };
 
