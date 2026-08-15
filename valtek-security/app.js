@@ -510,42 +510,50 @@ const App = {
   },
 
   processReaderScan(readerId, run) {
-    if (!window.RelaySimulator || !window.Analytics) return;
+    if (!window.Analytics) return;
 
     const resultMsg = document.getElementById('scan-result-msg');
-
-    // Check enrollment
     const cleanRun = window.RUNValidator ? window.RUNValidator.sanitizeRUN(run) : run;
-    if (!window.Analytics.isEnrolled(cleanRun)) {
+    const user = window.Analytics.getUser(cleanRun);
+    const isEnrolled = window.Analytics.isEnrolled(cleanRun);
+
+    if (!isEnrolled) {
       if (resultMsg) {
-        resultMsg.textContent = `❌ RUN ${run} no está enrolado en el sistema`;
-        resultMsg.className = 'form-hint error';
+        resultMsg.innerHTML = `<span style="color:var(--danger); font-weight:700;"><i class="fa-solid fa-lock"></i> ⛔ ACCESO DENEGADO — RUN ${run} NO figura en la lista de enrolados. La Puerta P1 permanece bloqueada.</span>`;
       }
-      this.addRelayActivity(`❌ RUN ${run} no enrolado — Acceso denegado`, 'alert');
+      this.addRelayActivity(`⛔ ACCESO DENEGADO (P1) — RUN ${run} NO ENROLADO`, 'alert');
+      this.addEventLog(`⛔ Intento de acceso denegado en P1 — RUN ${run} no enrolado`, 'exit');
+      this.showGlobalAlert('danger', 'fa-lock', `⛔ <strong>Acceso Denegado (P1):</strong> RUN <strong>${run}</strong> no enrolado. Puerta P1 BLOQUEADA.`);
       return;
     }
 
-    const result = window.RelaySimulator.processReaderScan(readerId, cleanRun);
+    // Is Enrolled! Log access event and trigger RELAY_1 signal automatically to open Puerta P1!
+    window.Analytics.logAccess(cleanRun, 'Ingreso_P1', 'P1_Puerta_Principal', 'RELAY_1');
+    window.Analytics.saveToLocalStorage();
 
-    if (result && result.success) {
-      if (resultMsg) {
-        resultMsg.textContent = `✅ ${result.message || 'Acceso concedido'}`;
-        resultMsg.className = 'form-hint success';
-      }
-
-      // Animate the corresponding arrow
-      const arrowId = `arrow-${readerId.toLowerCase()}`;
-      const arrow = document.getElementById(arrowId);
-      if (arrow) {
-        arrow.classList.add('active');
-        setTimeout(() => arrow.classList.remove('active'), 1000);
-      }
-    } else {
-      if (resultMsg) {
-        resultMsg.textContent = `🚫 ${result?.message || 'Acceso denegado'}`;
-        resultMsg.className = 'form-hint error';
-      }
+    // Automatically trigger Relé 1 (Puerta P1) for 4 seconds
+    if (window.RelaySimulator) {
+      window.RelaySimulator.activateRelay('RELAY_1', 4000);
     }
+
+    const userName = user ? user.name : cleanRun;
+    const formattedRun = window.RUNValidator ? window.RUNValidator.formatRUN(cleanRun) : cleanRun;
+
+    if (resultMsg) {
+      resultMsg.innerHTML = `<span style="color:var(--success); font-weight:700;"><i class="fa-solid fa-door-open"></i> 🔓 ACCESO AUTORIZADO — Puerta P1 ABIERTA para <strong>${userName}</strong> (${user.role}). Señal enviada automáticamente a Relé 1.</span>`;
+    }
+
+    this.addEventLog(`🔓 <strong>Acceso Autorizado P1</strong> — ${userName} (${formattedRun}) — Señal enviada a Relé 1 (Puerta Abierta)`, 'entry');
+    this.addRelayActivity(`🔓 APERTURA P1: ${userName} — Enrolado Válido (${user.role}). Relé 1 Activo (4s)`, 'entry');
+
+    this.showGlobalAlert(
+      'success',
+      'fa-door-open',
+      `🔓 <strong>PUERTA P1 ABIERTA:</strong> Usuario <strong>${userName}</strong> enrolado como ${user.role}. Señal de apertura enviada a Relé 1.`
+    );
+
+    // Refresh metrics & dashboard tables
+    this.refreshDashboard();
   },
 
   populateSimUserSelect() {
@@ -1187,29 +1195,14 @@ const App = {
 
     // Attach simulation scan buttons in email modal
     const scanL1Btn = document.getElementById('btn-modal-scan-l1');
-    const scanL3Btn = document.getElementById('btn-modal-scan-l3');
 
     if (scanL1Btn) {
       scanL1Btn.onclick = () => {
         document.getElementById('modal-email-qr')?.classList.add('hidden');
         this.switchView('airlock');
         const input = document.getElementById('airlock-run-input');
-        const select = document.getElementById('airlock-reader-select');
         if (input) input.value = user.run;
-        if (select) select.value = 'L1';
-        this.processScan('L1', user.run);
-      };
-    }
-
-    if (scanL3Btn) {
-      scanL3Btn.onclick = () => {
-        document.getElementById('modal-email-qr')?.classList.add('hidden');
-        this.switchView('airlock');
-        const input = document.getElementById('airlock-run-input');
-        const select = document.getElementById('airlock-reader-select');
-        if (input) input.value = user.run;
-        if (select) select.value = 'L3';
-        this.processScan('L3', user.run);
+        this.processReaderScan('L1', user.run);
       };
     }
 

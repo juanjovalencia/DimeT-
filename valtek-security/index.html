@@ -38,7 +38,7 @@
           </button>
           <button class="nav-item" data-view="airlock" id="nav-airlock">
             <i class="fa-solid fa-door-open"></i>
-            <span>Esclusa & Lectores</span>
+            <span>Lector P1 & Puerta</span>
           </button>
           <button class="nav-item" data-view="users" id="nav-users">
             <i class="fa-solid fa-users"></i>
@@ -225,7 +225,7 @@
         </div>
 
         <!-- ============================================
-             PAGE: AIRLOCK & READERS
+             PAGE: P1 READER & DOOR CONTROL
              ============================================ -->
         <div class="view-page" id="view-airlock">
 
@@ -234,85 +234,51 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  <i class="fa-solid fa-id-card"></i>
-                  Escanear / Ingresar RUN
+                  <i class="fa-solid fa-qrcode"></i>
+                  Lector QR P1 — Verificación y Apertura Automática
                 </div>
               </div>
+              <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:1rem;">
+                Escanee o ingrese un RUN. El sistema verificará si el usuario está enrolado en la lista; de estar válido, registrará el evento y enviará la señal automática al Relé 1 para abrir la Puerta P1.
+              </p>
               <div class="scan-input-group">
                 <input type="text" class="form-input mono" id="airlock-run-input"
-                       placeholder="Ingrese o escanee RUN (ej: 12.345.678-9)"
+                       placeholder="Ingrese o escanee RUN / Código QR (ej: 12.345.678-5)"
                        autocomplete="off">
                 <select class="form-select" id="airlock-reader-select" style="max-width: 220px;">
-                  <option value="L1">L1 — Entrada Portón</option>
-                  <option value="L2">L2 — Salida Portón</option>
-                  <option value="L3">L3 — Entrada Torniquete</option>
-                  <option value="L4">L4 — Salida Torniquete</option>
+                  <option value="L1">Lector P1 — Puerta Principal</option>
                 </select>
                 <button class="btn btn-primary" id="btn-process-scan">
-                  <i class="fa-solid fa-barcode"></i> Procesar
+                  <i class="fa-solid fa-bolt"></i> Leer QR y Abrir P1
                 </button>
               </div>
-              <div id="scan-result-msg" class="form-hint" style="min-height:1.2em;"></div>
+              <div id="scan-result-msg" class="form-hint" style="min-height:1.2em; margin-top:0.75rem;"></div>
             </div>
 
-            <!-- Visual Airlock Diagram -->
+            <!-- Visual P1 Door Diagram -->
             <div class="card">
               <div class="card-header">
                 <div class="card-title">
-                  <i class="fa-solid fa-vector-square"></i>
-                  Diagrama de Esclusa Bidireccional
+                  <i class="fa-solid fa-door-open"></i>
+                  Estado del Punto de Acceso P1 (Puerta Principal)
                 </div>
               </div>
               <div class="airlock-visual">
-                <div class="airlock-diagram">
-                  <!-- Row 1: Exterior Gate -->
-                  <div class="airlock-zone">
-                    <div class="zone-label">
-                      <i class="fa-solid fa-road"></i> CALLE
+                <div class="airlock-diagram" style="gap:2rem;">
+                  <!-- Flow diagram P1 -->
+                  <div class="airlock-zone" style="max-width:800px; gap:1.2rem;">
+                    <div class="zone-label" style="min-width:140px; background:var(--bg-primary);">
+                      <i class="fa-solid fa-qrcode"></i> LECTOR QR P1
                     </div>
-                    <span class="arrow-flow" id="arrow-l1">→</span>
-                    <div class="gate-element" id="gate-porton">
-                      <i class="fa-solid fa-warehouse gate-icon"></i>
-                      <span class="gate-name">PORTÓN EXT</span>
-                      <span class="gate-name text-muted" style="font-size:0.6rem;">Relé 1</span>
+                    <span class="arrow-flow" id="arrow-l1" style="font-size:1.4rem;">➔</span>
+                    <div class="zone-label highlight" style="min-width:160px;">
+                      <i class="fa-solid fa-database"></i> BASE ENROLADOS
                     </div>
-                    <span class="arrow-flow" id="arrow-l2">→</span>
-                    <div class="zone-label">
-                      <i class="fa-solid fa-road"></i> CALLE
-                    </div>
-                  </div>
-
-                  <!-- Connector -->
-                  <div style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;">
-                    <span class="arrow-flow">↕</span>
-                    <div class="zone-label highlight">
-                      <i class="fa-solid fa-tree"></i> PATIO INTERMEDIO
-                    </div>
-                    <span class="arrow-flow">↕</span>
-                  </div>
-
-                  <!-- Row 2: Turnstile -->
-                  <div class="airlock-zone">
-                    <div class="zone-label">
-                      <i class="fa-solid fa-tree"></i> PATIO
-                    </div>
-                    <span class="arrow-flow" id="arrow-l3">→</span>
-                    <div class="gate-element" id="gate-torniquete">
-                      <i class="fa-solid fa-rotate gate-icon"></i>
-                      <span class="gate-name">TORNIQUETE</span>
-                      <span class="gate-name text-muted" style="font-size:0.6rem;">Relé 2 / 3</span>
-                    </div>
-                    <span class="arrow-flow" id="arrow-l4">→</span>
-                    <div class="zone-label">
-                      <i class="fa-solid fa-tree"></i> PATIO
-                    </div>
-                  </div>
-
-                  <!-- Interior -->
-                  <div style="display:flex;flex-direction:column;align-items:center;">
-                    <span class="arrow-flow">↕</span>
-                    <div class="zone-label highlight">
-                      <i class="fa-solid fa-school"></i> INTERIOR COLEGIO
+                    <span class="arrow-flow" style="font-size:1.4rem;">➔</span>
+                    <div class="gate-element" id="gate-porton" style="min-width:180px; padding:1.25rem 1.5rem;">
+                      <i class="fa-solid fa-door-closed gate-icon" id="gate-porton-icon" style="font-size:2rem; color:var(--accent-hover);"></i>
+                      <span class="gate-name" style="font-weight:800; font-size:1rem; margin-top:6px;">PUERTA P1</span>
+                      <span class="gate-name text-muted" style="font-size:0.75rem;">Chapa Eléctrica (Relé 1)</span>
                     </div>
                   </div>
                 </div>
@@ -325,38 +291,23 @@
                 <div class="card-header">
                   <div class="card-title">
                     <i class="fa-solid fa-hand-pointer"></i>
-                    Simulación Rápida de Lectores
+                    Simulador de Lectura QR en P1
                   </div>
                 </div>
                 <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                  Seleccione un usuario enrolado y haga clic en un lector para simular el escaneo:
+                  Seleccione un usuario enrolado y haga clic para simular la lectura de su QR en el Lector P1:
                 </p>
                 <div class="form-group">
-                  <label class="form-label">Usuario para simular:</label>
+                  <label class="form-label">Usuario para simular lectura:</label>
                   <select class="form-select" id="sim-user-select">
                     <!-- Populated by JS -->
                   </select>
                 </div>
-                <div class="readers-grid">
-                  <button class="reader-btn entry" data-reader="L1">
-                    <div class="reader-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
-                    <span class="reader-label">L1: Entrada</span>
-                    <span class="reader-sublabel">Portón Ext.</span>
-                  </button>
-                  <button class="reader-btn exit" data-reader="L2">
-                    <div class="reader-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
-                    <span class="reader-label">L2: Salida</span>
-                    <span class="reader-sublabel">Portón Ext.</span>
-                  </button>
-                  <button class="reader-btn entry" data-reader="L3">
-                    <div class="reader-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
-                    <span class="reader-label">L3: Entrada</span>
-                    <span class="reader-sublabel">Torniquete</span>
-                  </button>
-                  <button class="reader-btn exit" data-reader="L4">
-                    <div class="reader-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
-                    <span class="reader-label">L4: Salida</span>
-                    <span class="reader-sublabel">Torniquete</span>
+                <div class="readers-grid" style="grid-template-columns: 1fr;">
+                  <button class="reader-btn entry" data-reader="L1" style="padding:1.25rem;">
+                    <div class="reader-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <span class="reader-label" style="font-size:1rem; font-weight:800;">Simular Lectura QR en Lector P1</span>
+                    <span class="reader-sublabel">Verifica Enrolamiento ➔ Registra ➔ Envía señal al Relé 1 para abrir Puerta P1</span>
                   </button>
                 </div>
               </div>
@@ -366,29 +317,18 @@
                 <div class="card-header">
                   <div class="card-title">
                     <i class="fa-solid fa-bolt"></i>
-                    Estado de Relés
+                    Control del Relé de Chapa (P1)
                   </div>
                 </div>
                 <div class="relay-indicators" style="flex-direction:column;">
-                  <div class="relay-indicator" id="relay-1-indicator">
+                  <div class="relay-indicator" id="relay-1-indicator" style="padding:1rem;">
                     <div class="relay-led" id="relay-1-led"></div>
-                    <span>Relé 1 — Portón Exterior</span>
+                    <div>
+                      <strong style="display:block; font-size:0.92rem;">Relé 1 — Chapa Eléctrica P1</strong>
+                      <span style="font-size:0.72rem; color:var(--text-muted);">Controla la apertura física de la Puerta Principal P1</span>
+                    </div>
                     <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_1" data-action="force">
-                      <i class="fa-solid fa-bolt"></i> Force Open
-                    </button>
-                  </div>
-                  <div class="relay-indicator" id="relay-2-indicator">
-                    <div class="relay-led" id="relay-2-led"></div>
-                    <span>Relé 2 — Torniquete Entrada</span>
-                    <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_2" data-action="force">
-                      <i class="fa-solid fa-bolt"></i> Force Open
-                    </button>
-                  </div>
-                  <div class="relay-indicator" id="relay-3-indicator">
-                    <div class="relay-led" id="relay-3-led"></div>
-                    <span>Relé 3 — Torniquete Salida</span>
-                    <button class="btn btn-sm btn-secondary" style="margin-left:auto;" data-relay="RELAY_3" data-action="force">
-                      <i class="fa-solid fa-bolt"></i> Force Open
+                      <i class="fa-solid fa-bolt"></i> Abrir Manual (Force)
                     </button>
                   </div>
                 </div>
@@ -396,7 +336,7 @@
                 <div class="card-header mt-2">
                   <div class="card-title" style="font-size:0.82rem;">
                     <i class="fa-solid fa-list-check"></i>
-                    Actividad Reciente
+                    Historial de Escaneos P1
                   </div>
                 </div>
                 <div class="event-log" id="relay-activity-log" style="max-height:200px;">
@@ -920,10 +860,7 @@ Ejemplo PDF417: 0123456789CLPÉREZGONZÁLEZJUAN..."
         <div class="flex gap-1 flex-wrap justify-between w-full" style="width:100%;">
           <div class="flex gap-1 flex-wrap">
             <button class="btn btn-primary btn-sm" id="btn-modal-scan-l1">
-              <i class="fa-solid fa-right-to-bracket"></i> Simular Escaneo L1 (Portón)
-            </button>
-            <button class="btn btn-primary btn-sm" id="btn-modal-scan-l3">
-              <i class="fa-solid fa-rotate"></i> Simular Escaneo L3 (Torniquete)
+              <i class="fa-solid fa-bolt"></i> Simular Lectura QR en P1 (Apertura Automática)
             </button>
             <button class="btn btn-secondary btn-sm" id="btn-modal-resend">
               <i class="fa-solid fa-arrow-rotate-right"></i> Reenviar Mail
