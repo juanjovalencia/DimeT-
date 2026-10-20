@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUÉ HUEVONES: ¡Hay que tener de estos!
-   Estilos personalizados, micro-interacciones y animaciones
+   Estilos personalizados, micro-interacciones, Carrito y Dashboard Admin
    Paleta oficial:
    - Azul Oscuro Principal: #1E293B
    - Marrón Huevo de Campo: #C1844D
@@ -39,6 +39,7 @@ h1, h2, h3, h4, .font-display {
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: var(--qh-navy-dark);
@@ -126,20 +127,20 @@ h1, h2, h3, h4, .font-display {
 
 @keyframes pulseWhatsapp {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
   }
 }
 
 @keyframes yolkBounce {
   0% {
-    transform: scale(0.7);
+    transform: scale(0.85);
     opacity: 0;
   }
   60% {
-    transform: scale(1.08);
+    transform: scale(1.04);
     opacity: 1;
   }
   100% {
@@ -175,11 +176,11 @@ h1, h2, h3, h4, .font-display {
 }
 
 .pulse-whatsapp {
-  animation: pulseWhatsapp 2.4s infinite;
+  animation: pulseWhatsapp 2.2s infinite;
 }
 
 .animate-yolk-pop {
-  animation: yolkBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: yolkBounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Interactive Card Hover Transitions */
@@ -240,15 +241,12 @@ h1, h2, h3, h4, .font-display {
               0 12px 24px -6px rgba(30, 41, 59, 0.2);
 }
 
-/* Custom Range / Comparison Progress Bar */
-.progress-fill {
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+/* Slide-over Cart Drawer */
+#cart-drawer-panel {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Glassmorphic dark cards */
-.glass-dark {
-  background: rgba(30, 41, 59, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(243, 244, 246, 0.12);
+/* Progress bar smooth fill */
+.analytics-bar-fill {
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }

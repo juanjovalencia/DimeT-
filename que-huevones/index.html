@@ -46,30 +46,23 @@
   <!-- ========================================================================
        1. HEADER / BARRA DE NAVEGACIÓN FIJA
        ======================================================================== -->
-  <header id="main-header" class="fixed top-0 left-0 right-0 z-50 bg-qh-navy/95 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+  <header id="main-header" class="fixed top-0 left-0 right-0 z-40 bg-qh-navy/95 backdrop-blur-md border-b border-white/10 transition-all duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
       
       <!-- Logotipo Gráfico + Textual: QUÉ HUEVONES -->
-      <a href="#inicio" class="flex items-center gap-3 group focus:outline-none">
+      <a href="#inicio" data-track-btn="Logo Header" class="flex items-center gap-3 group focus:outline-none">
         <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-qh-brown to-amber-700 p-1.5 shadow-lg shadow-qh-brown/30 group-hover:scale-105 transition-transform flex items-center justify-center">
-          <!-- Mini SVG Huevos Boxeadores -->
           <svg viewBox="0 0 64 64" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <!-- Huevo de Campo -->
             <ellipse cx="23" cy="35" rx="13" ry="17" fill="#E6B587" stroke="#1E293B" stroke-width="2.5"/>
-            <!-- Huevo Blanco -->
             <ellipse cx="42" cy="35" rx="13" ry="17" fill="#F3F4F6" stroke="#1E293B" stroke-width="2.5"/>
-            <!-- Cejas decididas -->
             <path d="M17 28L23 31M28 29L24 31" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
             <path d="M37 31L42 29M47 28L43 31" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
-            <!-- Ojos -->
             <circle cx="20" cy="33" r="1.8" fill="#1E293B"/>
             <circle cx="26" cy="33" r="1.8" fill="#1E293B"/>
             <circle cx="39" cy="33" r="1.8" fill="#1E293B"/>
             <circle cx="45" cy="33" r="1.8" fill="#1E293B"/>
-            <!-- Guantes de Boxeo chocando -->
             <circle cx="31" cy="42" r="5.5" fill="#DC2626" stroke="#1E293B" stroke-width="2"/>
             <circle cx="35" cy="42" r="5.5" fill="#C1844D" stroke="#1E293B" stroke-width="2"/>
-            <!-- Chispa superior -->
             <path d="M32 10L34 16L40 14L35 19L32 24L29 19L24 14L30 16L32 10Z" fill="#F59E0B"/>
           </svg>
           <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-qh-navy"></span>
@@ -86,45 +79,56 @@
 
       <!-- Navegación Desktop -->
       <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-qh-bone/90" aria-label="Navegación principal">
-        <a href="#inicio" class="nav-link active hover:text-white transition-colors">Inicio</a>
-        <a href="#historia" class="nav-link hover:text-white transition-colors">Nuestra Historia</a>
-        <a href="#beneficios" class="nav-link hover:text-white transition-colors">Nuestros Huevos</a>
-        <a href="#catalogo" class="nav-link hover:text-white transition-colors">Precios/Formatos</a>
-        <a href="#contacto" class="nav-link hover:text-white transition-colors">Contacto</a>
+        <a href="#inicio" data-track-btn="Nav: Inicio" class="nav-link active hover:text-white transition-colors">Inicio</a>
+        <a href="#historia" data-track-btn="Nav: Nuestra Historia" class="nav-link hover:text-white transition-colors">Nuestra Historia</a>
+        <a href="#beneficios" data-track-btn="Nav: Nuestros Huevos" class="nav-link hover:text-white transition-colors">Nuestros Huevos</a>
+        <a href="#catalogo" data-track-btn="Nav: Precios/Formatos" class="nav-link hover:text-white transition-colors">Precios/Formatos</a>
+        <a href="#contacto" data-track-btn="Nav: Mi Carrito / Contacto" class="nav-link hover:text-white transition-colors">Contacto</a>
       </nav>
 
-      <!-- Acciones Derecha: Resumen Bandejas + CTA WhatsApp -->
-      <div class="hidden sm:flex items-center gap-3">
-        <!-- Botón Mi Canasta Huevona -->
-        <button id="header-cart-btn" type="button" onclick="scrollToOrderForm()" class="relative inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-qh-bone text-xs font-bold border border-white/15 transition-all" title="Ver mi selección de bandejas">
+      <!-- Acciones Derecha: Botón Carrito + CTA WhatsApp + Acceso Discreto Dueños -->
+      <div class="hidden sm:flex items-center gap-2.5">
+        <!-- Botón Abrir Carrito Desplegable -->
+        <button id="header-cart-btn" type="button" onclick="openCartDrawer()" data-track-btn="Header: Abrir Carrito"
+                class="relative inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-qh-bone text-xs font-bold border border-white/15 transition-all"
+                title="Abrir mi carrito de compras">
           <svg class="w-4 h-4 text-qh-brownLight" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
-          <span id="header-cart-text">Mi Pedido</span>
-          <span id="header-cart-badge" class="px-2 py-0.5 text-[11px] rounded-full bg-qh-brown text-white font-extrabold">0</span>
+          <span id="header-cart-text">Carrito</span>
+          <span id="header-cart-badge" class="px-2 py-0.5 text-[11px] rounded-full bg-qh-brown text-white font-extrabold">1</span>
         </button>
 
-        <!-- Botón directo destacado: Pide por WhatsApp -->
-        <a href="https://wa.me/56987654321?text=%C2%A1Hola!%20Quiero%20pedir%20mis%20bandejas%20de%20Qu%C3%A9%20Huevones%20%F0%9F%A5%9A%F0%9F%A5%8A"
-           target="_blank" rel="noopener noreferrer"
-           class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-bold text-sm shadow-lg shadow-qh-brown/30 hover:scale-[1.02] active:scale-95 transition-all pulse-brown">
+        <!-- Botón directo destacado: Pide por WhatsApp (Ejecuta Checkout con lo del carrito) -->
+        <button type="button" onclick="triggerDirectWhatsAppCheckout('Header: Pide por WhatsApp')" data-track-btn="Header: Pide por WhatsApp"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-bold text-xs sm:text-sm shadow-lg shadow-qh-brown/30 hover:scale-[1.02] active:scale-95 transition-all pulse-brown">
           <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.126.556 4.124 1.533 5.859l-1.533 5.601 5.741-1.506c1.693.922 3.633 1.446 5.698 1.446 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/>
           </svg>
           <span>Pide por WhatsApp</span>
-        </a>
-      </div>
-
-      <!-- Botón Menú Móvil -->
-      <div class="flex items-center gap-2 lg:hidden">
-        <button type="button" onclick="scrollToOrderForm()" class="sm:hidden relative p-2.5 rounded-xl bg-white/10 text-qh-bone border border-white/15" aria-label="Ver pedido">
-          <svg class="w-5 h-5 text-qh-brownLight" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-          </svg>
-          <span id="mobile-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-qh-brown text-white text-[10px] font-extrabold flex items-center justify-center">0</span>
         </button>
 
-        <button id="mobile-menu-btn" type="button" class="p-2.5 rounded-xl bg-white/10 text-qh-bone hover:bg-white/20 focus:outline-none" aria-label="Abrir menú de navegación" aria-expanded="false">
+        <!-- Botón muy discreto "Entrar" para los dueños (Juanjo / Morensex) -->
+        <button type="button" onclick="openAdminLoginModal()" id="navbar-admin-btn"
+                class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center gap-1"
+                title="Acceso Dueños">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span id="navbar-admin-label">Entrar</span>
+        </button>
+      </div>
+
+      <!-- Botones Móvil -->
+      <div class="flex items-center gap-2 lg:hidden">
+        <button type="button" onclick="openCartDrawer()" data-track-btn="Mobile: Abrir Carrito" class="sm:hidden relative p-2.5 rounded-xl bg-white/10 text-qh-bone border border-white/15" aria-label="Ver carrito">
+          <svg class="w-5 h-5 text-qh-brownLight" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span id="mobile-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-qh-brown text-white text-[10px] font-extrabold flex items-center justify-center">1</span>
+        </button>
+
+        <button id="mobile-menu-btn" type="button" data-track-btn="Mobile: Toggle Menu" class="p-2.5 rounded-xl bg-white/10 text-qh-bone hover:bg-white/20 focus:outline-none" aria-label="Abrir menú de navegación" aria-expanded="false">
           <svg id="menu-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
@@ -137,689 +141,612 @@
 
     <!-- Menú Desplegable Móvil -->
     <div id="mobile-menu" class="hidden lg:hidden bg-qh-navyDark/98 border-t border-white/10 px-4 pt-3 pb-6 space-y-2 shadow-2xl">
-      <a href="#inicio" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🥚 Inicio</a>
-      <a href="#historia" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🌿 Nuestra Historia</a>
-      <a href="#beneficios" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🥊 Nuestros Huevos</a>
-      <a href="#catalogo" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">📦 Precios / Formatos</a>
-      <a href="#contacto" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">📍 Contacto y Pedidos</a>
-      <div class="pt-3 border-t border-white/10">
-        <a href="https://wa.me/56987654321?text=%C2%A1Hola!%20Quiero%20pedir%20mis%20bandejas%20de%20Qu%C3%A9%20Huevones%20%F0%9F%A5%9A%F0%9F%A5%8A"
-           target="_blank" rel="noopener noreferrer"
-           class="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-qh-brown text-white font-bold shadow-lg">
-          <span>💬 Pide por WhatsApp Ahora</span>
-        </a>
+      <a href="#inicio" data-track-btn="Mobile Nav: Inicio" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🥚 Inicio</a>
+      <a href="#historia" data-track-btn="Mobile Nav: Historia" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🌿 Nuestra Historia</a>
+      <a href="#beneficios" data-track-btn="Mobile Nav: Huevos" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🥊 Nuestros Huevos</a>
+      <a href="#catalogo" data-track-btn="Mobile Nav: Catalogo" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">📦 Precios / Formatos</a>
+      <a href="#contacto" data-track-btn="Mobile Nav: Carrito" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🛒 Mi Carrito y Contacto</a>
+      <div class="pt-3 border-t border-white/10 flex flex-col gap-2">
+        <button type="button" onclick="triggerDirectWhatsAppCheckout('Mobile Menu: WhatsApp')"
+                class="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-emerald-500 text-qh-navyDark font-extrabold shadow-lg">
+          <span>📲 Quiero pedir mi bandeja directo</span>
+        </button>
+        <button type="button" onclick="openAdminLoginModal()" class="w-full py-2 text-xs text-slate-400 hover:text-white text-center">
+          🔒 Entrar (Acceso Dueños)
+        </button>
       </div>
     </div>
   </header>
 
   <!-- ========================================================================
-       2. HERO SECTION (IMPACTANTE)
+       CONTENEDOR DE LA TIENDA PÚBLICA (SE OCULTA AL ABRIR EL DASHBOARD ADMIN)
        ======================================================================== -->
-  <section id="inicio" class="relative pt-28 pb-20 lg:pt-36 lg:pb-28 bg-qh-navy text-qh-bone overflow-hidden bg-grid-pattern">
-    <!-- Luces de fondo ambientales -->
-    <div class="absolute -top-24 -left-24 w-96 h-96 bg-qh-brown/25 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute top-1/2 right-0 w-[28rem] h-[28rem] bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+  <main id="storefront-view">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-        
-        <!-- Columna Izquierda: Copy Potente, Eslogan Interactivo y CTAs -->
-        <div class="lg:col-span-7 space-y-6 text-left">
+    <!-- ======================================================================
+         2. HERO SECTION (IMPACTANTE)
+         ====================================================================== -->
+    <section id="inicio" class="relative pt-28 pb-20 lg:pt-36 lg:pb-28 bg-qh-navy text-qh-bone overflow-hidden bg-grid-pattern">
+      <div class="absolute -top-24 -left-24 w-96 h-96 bg-qh-brown/25 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute top-1/2 right-0 w-[28rem] h-[28rem] bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          <!-- Badge / Quote Interactivo del 80% -->
-          <div id="hero-quote-badge" onclick="cycleCustomerQuote()" role="button" tabindex="0"
-               class="inline-flex flex-wrap items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-qh-brown/50 cursor-pointer transition-all group shadow-lg"
-               title="Haz clic para ver más reacciones de clientes">
-            <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-qh-brown text-white text-sm shadow">⭐</span>
-            <p class="text-xs sm:text-sm font-bold text-qh-bone">
-              El <span class="text-amber-400 underline decoration-qh-brown decoration-2 underline-offset-2">80% de nuestros clientes</span> dice:
-              <span id="dynamic-quote-text" class="text-qh-brownLight font-extrabold ml-1">"¡Tremendo huevo al conocer!"</span>
-            </p>
-            <span class="text-[11px] px-2 py-0.5 rounded-full bg-qh-brown/30 text-qh-brownLight group-hover:bg-qh-brown group-hover:text-white transition">
-              ↻ Ver otra opinión
-            </span>
-          </div>
-
-          <!-- Título Principal Potente -->
-          <h1 class="font-display font-extrabold text-4xl sm:text-6xl lg:text-[4.1rem] leading-[1.04] tracking-tight text-white">
-            QUÉ HUEVONES: <br class="hidden sm:inline" />
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-qh-brownLight via-qh-brown to-amber-400">
-              ¡Hay que tener de estos!
-            </span>
-          </h1>
-
-          <!-- Subtítulo -->
-          <p class="text-base sm:text-lg lg:text-xl text-slate-300 max-w-2xl leading-relaxed font-normal">
-            Huevos de gallinas <strong class="text-white font-semibold">100% libres, felices y alimentadas de forma natural</strong>.
-            Frescura del día, yema dorada intensa y tamaño peso pesado directo del campo a tu puerta.
-          </p>
-
-          <!-- Botones CTA -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-            <a href="#catalogo"
-               class="inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-base sm:text-lg shadow-xl shadow-qh-brown/30 hover:-translate-y-0.5 transition-all">
-              <span>Ver Bandejas Disponibles</span>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-              </svg>
-            </a>
-
-            <a href="#contacto"
-               class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-qh-bone hover:bg-white text-qh-navy font-display font-bold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
-              <span>⚡ Hacer Pedido Rápido</span>
-            </a>
-          </div>
-
-          <!-- Mini Estadísticas de Confianza -->
-          <div class="pt-6 grid grid-cols-3 gap-4 border-t border-white/10 max-w-xl">
-            <div>
-              <span class="font-display font-extrabold text-2xl sm:text-3xl text-qh-brownLight block">100%</span>
-              <span class="text-xs sm:text-sm text-slate-300">Gallinas Libres de Jaula</span>
-            </div>
-            <div>
-              <span class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400 block">Calibre XL</span>
-              <span class="text-xs sm:text-sm text-slate-300">63g–69g Puro Peso Pesado</span>
-            </div>
-            <div>
-              <span class="font-display font-extrabold text-2xl sm:text-3xl text-emerald-400 block">24/48 hrs</span>
-              <span class="text-xs sm:text-sm text-slate-300">Del Nido a tu Cocina</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Columna Derecha: Escena Visual Dinámica (Huevos Boxeando + Tarjetas Flotantes + Prueba de Yema) -->
-        <div class="lg:col-span-5 relative">
-          
-          <!-- Tarjeta Flotante Superior Izquierda: Huevo de Campo -->
-          <div class="hidden sm:flex items-center gap-3 px-4 py-3 rounded-2xl bg-qh-bone text-qh-navy shadow-2xl border-2 border-qh-brown absolute -top-6 -left-6 z-20 animate-float-slow">
-            <div class="w-9 h-11 egg-shape-campo flex-shrink-0"></div>
-            <div>
-              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-brown/15 text-qh-brown block w-fit">Esquina Marrón</span>
-              <p class="font-display font-extrabold text-sm leading-tight mt-0.5">Huevo de Campo</p>
-              <p class="text-[11px] text-slate-600">Cáscara firme • Yema Sol</p>
-            </div>
-          </div>
-
-          <!-- Tarjeta Flotante Inferior Derecha: Huevo Blanco Seleccionado -->
-          <div class="hidden sm:flex items-center gap-3 px-4 py-3 rounded-2xl bg-qh-bone text-qh-navy shadow-2xl border-2 border-slate-300 absolute -bottom-5 -right-4 z-20 animate-float-reverse">
-            <div class="w-9 h-11 egg-shape-blanco flex-shrink-0"></div>
-            <div>
-              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-navy/10 text-qh-navy block w-fit">Esquina Blanca</span>
-              <p class="font-display font-extrabold text-sm leading-tight mt-0.5">Blanco Seleccionado</p>
-              <p class="text-[11px] text-slate-600">Extra Grande • Sabor Puro</p>
-            </div>
-          </div>
-
-          <!-- Contenedor Principal del Ring "QUÉ HUEVONES" -->
-          <div class="relative rounded-3xl bg-gradient-to-b from-slate-800/90 to-qh-navyDark p-6 sm:p-7 border border-white/15 shadow-2xl overflow-hidden">
+          <!-- Columna Izquierda -->
+          <div class="lg:col-span-7 space-y-6 text-left">
             
-            <!-- Encabezado del Ring -->
-            <div class="flex items-center justify-between mb-3">
-              <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-qh-brown/25 text-qh-brownLight border border-qh-brown/40">
-                🥊 Categoría Peso Pesado
+            <!-- Badge / Quote Interactivo del 80% -->
+            <div id="hero-quote-badge" onclick="cycleCustomerQuote()" data-track-btn="Hero: Badge 80% Clientes" role="button" tabindex="0"
+                 class="inline-flex flex-wrap items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-qh-brown/50 cursor-pointer transition-all group shadow-lg"
+                 title="Haz clic para ver más reacciones de clientes">
+              <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-qh-brown text-white text-sm shadow">⭐</span>
+              <p class="text-xs sm:text-sm font-bold text-qh-bone">
+                El <span class="text-amber-400 underline decoration-qh-brown decoration-2 underline-offset-2">80% de nuestros clientes</span> dice:
+                <span id="dynamic-quote-text" class="text-qh-brownLight font-extrabold ml-1">"¡Tremendo huevo al conocer!"</span>
+              </p>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-qh-brown/30 text-qh-brownLight group-hover:bg-qh-brown group-hover:text-white transition">
+                ↻ Ver otra opinión
               </span>
-              <span class="text-xs font-bold text-amber-400">Calibre Extra Garantizado</span>
             </div>
 
-            <!-- Ilustración SVG Animada: Huevos Boxeando con Personalidad -->
-            <div class="relative flex items-center justify-center py-2">
-              <svg viewBox="0 0 420 270" class="w-full max-w-[390px] h-auto drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración de dos huevos con guantes de boxeo: Huevo de Campo vs Huevo Blanco Seleccionado">
-                <!-- Sombra de lona del ring -->
-                <ellipse cx="210" cy="242" rx="165" ry="18" fill="#0F172A" fill-opacity="0.75"/>
-                <!-- Cuerdas del Ring al fondo -->
-                <line x1="25" y1="150" x2="395" y2="150" stroke="#C1844D" stroke-opacity="0.3" stroke-width="3" stroke-dasharray="8 6"/>
-                <line x1="25" y1="185" x2="395" y2="185" stroke="#F3F4F6" stroke-opacity="0.2" stroke-width="3" stroke-dasharray="8 6"/>
+            <!-- Título Principal Potente -->
+            <h1 class="font-display font-extrabold text-4xl sm:text-6xl lg:text-[4.1rem] leading-[1.04] tracking-tight text-white">
+              QUÉ HUEVONES: <br class="hidden sm:inline" />
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-qh-brownLight via-qh-brown to-amber-400">
+                ¡Hay que tener de estos!
+              </span>
+            </h1>
 
-                <!-- HUEVO DE CAMPO (IZQUIERDA) -->
-                <g class="animate-boxer-left">
-                  <!-- Piernas -->
-                  <path d="M115 210L108 236M145 210L152 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
-                  <ellipse cx="104" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-                  <ellipse cx="156" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-                  
-                  <!-- Cuerpo Huevo Marrón de Campo -->
-                  <path d="M130 58C96 58 74 106 74 148C74 188 98 214 130 214C162 214 186 188 186 148C186 106 164 58 130 58Z" fill="url(#campoGrad)" stroke="#0F172A" stroke-width="4"/>
-                  <!-- Brillo cáscara -->
-                  <path d="M98 92C90 108 87 125 87 140" stroke="#FDE68A" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round"/>
+            <!-- Subtítulo -->
+            <p class="text-base sm:text-lg lg:text-xl text-slate-300 max-w-2xl leading-relaxed font-normal">
+              Huevos de gallinas <strong class="text-white font-semibold">100% libres, felices y alimentadas de forma natural</strong>.
+              Frescura del día, yema dorada intensa y tamaño peso pesado directo del campo a tu puerta.
+            </p>
 
-                  <!-- Cinturón de Campeón -->
-                  <path d="M77 175Q130 190 183 175L180 194Q130 208 80 194Z" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5"/>
-                  <circle cx="130" cy="186" r="12" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
-                  <text x="130" y="190" text-anchor="middle" fill="#0F172A" font-size="9" font-weight="900" font-family="sans-serif">XL</text>
+            <!-- Botones CTA -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+              <a href="#catalogo" data-track-btn="Hero CTA: Ver Bandejas Disponibles"
+                 class="inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-base sm:text-lg shadow-xl shadow-qh-brown/30 hover:-translate-y-0.5 transition-all">
+                <span>Ver Bandejas Disponibles</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </a>
 
-                  <!-- Expresión Audaz Buena Onda -->
-                  <path d="M106 108L126 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                  <path d="M158 108L138 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                  <circle cx="116" cy="124" r="5.5" fill="#0F172A"/>
-                  <circle cx="118" cy="122" r="2" fill="#FFFFFF"/>
-                  <circle cx="146" cy="124" r="5.5" fill="#0F172A"/>
-                  <circle cx="148" cy="122" r="2" fill="#FFFFFF"/>
-                  <!-- Sonrisa confiada -->
-                  <path d="M116 142Q132 155 148 140" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
-
-                  <!-- Guante Izquierdo Guardia -->
-                  <g>
-                    <circle cx="84" cy="152" r="17" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
-                    <path d="M76 145C79 140 86 140 90 144" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
-                  </g>
-                  <!-- Guante Derecho Jab -->
-                  <g class="animate-glove-jab">
-                    <circle cx="182" cy="138" r="20" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
-                    <path d="M172 128C178 123 188 124 192 130" stroke="#FCA5A5" stroke-width="3.5" stroke-linecap="round"/>
-                  </g>
-                </g>
-
-                <!-- HUEVO BLANCO SELECCIONADO (DERECHA) -->
-                <g class="animate-boxer-right">
-                  <!-- Piernas -->
-                  <path d="M275 210L268 236M305 210L312 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
-                  <ellipse cx="264" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
-                  <ellipse cx="316" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
-
-                  <!-- Cuerpo Huevo Blanco -->
-                  <path d="M290 58C256 58 234 106 234 148C234 188 258 214 290 214C322 214 346 188 346 148C346 106 324 58 290 58Z" fill="url(#blancoGrad)" stroke="#0F172A" stroke-width="4"/>
-                  <!-- Brillo cáscara -->
-                  <path d="M256 92C248 108 245 125 245 140" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
-
-                  <!-- Cinta de Campeón en la frente -->
-                  <path d="M244 95Q290 106 336 95L333 82Q290 92 247 82Z" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-
-                  <!-- Ojos y sonrisa -->
-                  <path d="M264 110L282 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                  <path d="M314 110L296 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                  <circle cx="273" cy="125" r="5.5" fill="#0F172A"/>
-                  <circle cx="275" cy="123" r="2" fill="#FFFFFF"/>
-                  <circle cx="303" cy="125" r="5.5" fill="#0F172A"/>
-                  <circle cx="305" cy="123" r="2" fill="#FFFFFF"/>
-                  <path d="M274 143Q289 154 305 142" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
-
-                  <!-- Guante choque central -->
-                  <g>
-                    <circle cx="236" cy="138" r="20" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
-                    <path d="M227 128C233 123 242 124 246 130" stroke="#FDE68A" stroke-width="3.5" stroke-linecap="round"/>
-                  </g>
-                  <!-- Guante Guardia Derecho -->
-                  <g>
-                    <circle cx="336" cy="152" r="17" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
-                    <path d="M328 145C331 140 338 140 342 144" stroke="#FDE68A" stroke-width="3" stroke-linecap="round"/>
-                  </g>
-                </g>
-
-                <!-- CHISPA DE PODER CENTRAL -->
-                <g>
-                  <path d="M210 20L215 38L233 32L221 47L235 60L216 58L210 76L204 58L185 60L199 47L187 32L205 38L210 20Z" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
-                  <text x="210" y="53" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="900" font-family="sans-serif">VS</text>
-                </g>
-
-                <defs>
-                  <radialGradient id="campoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(112 105) rotate(65) scale(115 95)">
-                    <stop offset="0%" stop-color="#EBB98B"/>
-                    <stop offset="55%" stop-color="#C1844D"/>
-                    <stop offset="100%" stop-color="#8A5627"/>
-                  </radialGradient>
-                  <radialGradient id="blancoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(272 105) rotate(65) scale(115 95)">
-                    <stop offset="0%" stop-color="#FFFFFF"/>
-                    <stop offset="65%" stop-color="#F3F4F6"/>
-                    <stop offset="100%" stop-color="#CBD5E1"/>
-                  </radialGradient>
-                </defs>
-              </svg>
+              <button type="button" onclick="openCartDrawer()" data-track-btn="Hero CTA: Hacer Pedido Rápido"
+                      class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-qh-bone hover:bg-white text-qh-navy font-display font-bold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
+                <span>🛒 Hacer Pedido Rápido</span>
+              </button>
             </div>
 
-            <!-- Widget Interactivo en el Hero: "¡Haz la Prueba de la Yema!" -->
-            <div class="mt-2 pt-4 border-t border-white/10">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <div>
-                  <p class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">🔬 Micro-Laboratorio en Vivo</p>
-                  <h2 class="font-display font-bold text-sm sm:text-base text-white">Prueba de Sartén: ¿Qué pasa al quebrar uno?</h2>
+            <!-- Mini Estadísticas de Confianza -->
+            <div class="pt-6 grid grid-cols-3 gap-4 border-t border-white/10 max-w-xl">
+              <div>
+                <span class="font-display font-extrabold text-2xl sm:text-3xl text-qh-brownLight block">100%</span>
+                <span class="text-xs sm:text-sm text-slate-300">Gallinas Libres de Jaula</span>
+              </div>
+              <div>
+                <span class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400 block">Calibre XL</span>
+                <span class="text-xs sm:text-sm text-slate-300">63g–69g Puro Peso Pesado</span>
+              </div>
+              <div>
+                <span class="font-display font-extrabold text-2xl sm:text-3xl text-emerald-400 block">24/48 hrs</span>
+                <span class="text-xs sm:text-sm text-slate-300">Del Nido a tu Cocina</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Escena Visual Dinámica -->
+          <div class="lg:col-span-5 relative">
+            
+            <!-- Tarjeta Flotante Superior Izquierda: Huevo de Campo -->
+            <div class="hidden sm:flex items-center gap-3 px-4 py-3 rounded-2xl bg-qh-bone text-qh-navy shadow-2xl border-2 border-qh-brown absolute -top-6 -left-6 z-20 animate-float-slow">
+              <div class="w-9 h-11 egg-shape-campo flex-shrink-0"></div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-brown/15 text-qh-brown block w-fit">Esquina Marrón</span>
+                <p class="font-display font-extrabold text-sm leading-tight mt-0.5">Huevo de Campo</p>
+                <p class="text-[11px] text-slate-600">Cáscara firme • Yema Sol</p>
+              </div>
+            </div>
+
+            <!-- Tarjeta Flotante Inferior Derecha: Huevo Blanco Seleccionado -->
+            <div class="hidden sm:flex items-center gap-3 px-4 py-3 rounded-2xl bg-qh-bone text-qh-navy shadow-2xl border-2 border-slate-300 absolute -bottom-5 -right-4 z-20 animate-float-reverse">
+              <div class="w-9 h-11 egg-shape-blanco flex-shrink-0"></div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-navy/10 text-qh-navy block w-fit">Esquina Blanca</span>
+                <p class="font-display font-extrabold text-sm leading-tight mt-0.5">Blanco Seleccionado</p>
+                <p class="text-[11px] text-slate-600">Extra Grande • Sabor Puro</p>
+              </div>
+            </div>
+
+            <!-- Contenedor Principal del Ring "QUÉ HUEVONES" -->
+            <div class="relative rounded-3xl bg-gradient-to-b from-slate-800/90 to-qh-navyDark p-6 sm:p-7 border border-white/15 shadow-2xl overflow-hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-qh-brown/25 text-qh-brownLight border border-qh-brown/40">
+                  🥊 Categoría Peso Pesado
+                </span>
+                <span class="text-xs font-bold text-amber-400">Calibre Extra Garantizado</span>
+              </div>
+
+              <!-- Ilustración SVG Animada: Huevos Boxeando -->
+              <div class="relative flex items-center justify-center py-2">
+                <svg viewBox="0 0 420 270" class="w-full max-w-[390px] h-auto drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración de dos huevos con guantes de boxeo: Huevo de Campo vs Huevo Blanco Seleccionado">
+                  <ellipse cx="210" cy="242" rx="165" ry="18" fill="#0F172A" fill-opacity="0.75"/>
+                  <line x1="25" y1="150" x2="395" y2="150" stroke="#C1844D" stroke-opacity="0.3" stroke-width="3" stroke-dasharray="8 6"/>
+                  <line x1="25" y1="185" x2="395" y2="185" stroke="#F3F4F6" stroke-opacity="0.2" stroke-width="3" stroke-dasharray="8 6"/>
+
+                  <!-- HUEVO DE CAMPO (IZQUIERDA) -->
+                  <g class="animate-boxer-left">
+                    <path d="M115 210L108 236M145 210L152 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+                    <ellipse cx="104" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
+                    <ellipse cx="156" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
+                    <path d="M130 58C96 58 74 106 74 148C74 188 98 214 130 214C162 214 186 188 186 148C186 106 164 58 130 58Z" fill="url(#campoGrad)" stroke="#0F172A" stroke-width="4"/>
+                    <path d="M98 92C90 108 87 125 87 140" stroke="#FDE68A" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M77 175Q130 190 183 175L180 194Q130 208 80 194Z" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5"/>
+                    <circle cx="130" cy="186" r="12" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
+                    <text x="130" y="190" text-anchor="middle" fill="#0F172A" font-size="9" font-weight="900" font-family="sans-serif">XL</text>
+                    <path d="M106 108L126 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
+                    <path d="M158 108L138 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
+                    <circle cx="116" cy="124" r="5.5" fill="#0F172A"/>
+                    <circle cx="118" cy="122" r="2" fill="#FFFFFF"/>
+                    <circle cx="146" cy="124" r="5.5" fill="#0F172A"/>
+                    <circle cx="148" cy="122" r="2" fill="#FFFFFF"/>
+                    <path d="M116 142Q132 155 148 140" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <g>
+                      <circle cx="84" cy="152" r="17" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
+                      <path d="M76 145C79 140 86 140 90 144" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <g class="animate-glove-jab">
+                      <circle cx="182" cy="138" r="20" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
+                      <path d="M172 128C178 123 188 124 192 130" stroke="#FCA5A5" stroke-width="3.5" stroke-linecap="round"/>
+                    </g>
+                  </g>
+
+                  <!-- HUEVO BLANCO SELECCIONADO (DERECHA) -->
+                  <g class="animate-boxer-right">
+                    <path d="M275 210L268 236M305 210L312 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+                    <ellipse cx="264" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
+                    <ellipse cx="316" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
+                    <path d="M290 58C256 58 234 106 234 148C234 188 258 214 290 214C322 214 346 188 346 148C346 106 324 58 290 58Z" fill="url(#blancoGrad)" stroke="#0F172A" stroke-width="4"/>
+                    <path d="M256 92C248 108 245 125 245 140" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M244 95Q290 106 336 95L333 82Q290 92 247 82Z" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
+                    <path d="M264 110L282 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
+                    <path d="M314 110L296 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
+                    <circle cx="273" cy="125" r="5.5" fill="#0F172A"/>
+                    <circle cx="275" cy="123" r="2" fill="#FFFFFF"/>
+                    <circle cx="303" cy="125" r="5.5" fill="#0F172A"/>
+                    <circle cx="305" cy="123" r="2" fill="#FFFFFF"/>
+                    <path d="M274 143Q289 154 305 142" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <g>
+                      <circle cx="236" cy="138" r="20" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
+                      <path d="M227 128C233 123 242 124 246 130" stroke="#FDE68A" stroke-width="3.5" stroke-linecap="round"/>
+                    </g>
+                    <g>
+                      <circle cx="336" cy="152" r="17" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
+                      <path d="M328 145C331 140 338 140 342 144" stroke="#FDE68A" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                  </g>
+
+                  <!-- CHISPA DE PODER CENTRAL -->
+                  <g>
+                    <path d="M210 20L215 38L233 32L221 47L235 60L216 58L210 76L204 58L185 60L199 47L187 32L205 38L210 20Z" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
+                    <text x="210" y="53" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="900" font-family="sans-serif">VS</text>
+                  </g>
+
+                  <defs>
+                    <radialGradient id="campoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(112 105) rotate(65) scale(115 95)">
+                      <stop offset="0%" stop-color="#EBB98B"/>
+                      <stop offset="55%" stop-color="#C1844D"/>
+                      <stop offset="100%" stop-color="#8A5627"/>
+                    </radialGradient>
+                    <radialGradient id="blancoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(272 105) rotate(65) scale(115 95)">
+                      <stop offset="0%" stop-color="#FFFFFF"/>
+                      <stop offset="65%" stop-color="#F3F4F6"/>
+                      <stop offset="100%" stop-color="#CBD5E1"/>
+                    </radialGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              <!-- Widget Interactivo en el Hero: "¡Haz la Prueba de la Yema!" -->
+              <div class="mt-2 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <div>
+                    <p class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">🔬 Micro-Laboratorio en Vivo</p>
+                    <h2 class="font-display font-bold text-sm sm:text-base text-white">Prueba de Sartén: ¿Qué pasa al quebrar uno?</h2>
+                  </div>
+                  <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-white/10">
+                    <button type="button" id="yolk-btn-qh" onclick="switchYolkTest('qh')" data-track-btn="Laboratorio Yema: Qué Huevones"
+                            class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-qh-brown text-white transition">
+                      Qué Huevones
+                    </button>
+                    <button type="button" id="yolk-btn-ind" onclick="switchYolkTest('ind')" data-track-btn="Laboratorio Yema: Industrial"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+                      Industrial
+                    </button>
+                  </div>
                 </div>
-                <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-white/10">
-                  <button type="button" id="yolk-btn-qh" onclick="switchYolkTest('qh')"
-                          class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-qh-brown text-white transition">
-                    Qué Huevones
-                  </button>
-                  <button type="button" id="yolk-btn-ind" onclick="switchYolkTest('ind')"
-                          class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-                    Industrial
-                  </button>
+
+                <div id="yolk-test-display" class="rounded-2xl bg-slate-900/80 p-3.5 border border-white/10 flex items-center gap-4">
+                  <div class="relative w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-inner flex-shrink-0">
+                    <div id="yolk-circle" class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 shadow-lg shadow-orange-500/50 flex items-center justify-center animate-yolk-pop">
+                      <span class="w-3 h-2 rounded-full bg-white/60 -mt-3 -ml-2"></span>
+                    </div>
+                  </div>
+                  <div class="text-xs space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span id="yolk-title" class="font-display font-extrabold text-sm text-amber-400">Yema Dorada Firme y Alta</span>
+                      <span id="yolk-tag" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">100% Campo Libre</span>
+                    </div>
+                    <p id="yolk-desc" class="text-slate-300 leading-snug">
+                      Clara densa que no se desparrama en la paila y yema color naranja intenso gracias al pastoreo libre al sol.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <!-- Resultado visual de la yema -->
-              <div id="yolk-test-display" class="rounded-2xl bg-slate-900/80 p-3.5 border border-white/10 flex items-center gap-4">
-                <div class="relative w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-inner flex-shrink-0">
-                  <div id="yolk-circle" class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 shadow-lg shadow-orange-500/50 flex items-center justify-center animate-yolk-pop">
-                    <span class="w-3 h-2 rounded-full bg-white/60 -mt-3 -ml-2"></span>
-                  </div>
-                </div>
-                <div class="text-xs space-y-1">
-                  <div class="flex items-center gap-2">
-                    <span id="yolk-title" class="font-display font-extrabold text-sm text-amber-400">Yema Dorada Firme y Alta</span>
-                    <span id="yolk-tag" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">100% Campo Libre</span>
-                  </div>
-                  <p id="yolk-desc" class="text-slate-300 leading-snug">
-                    Clara densa que no se desparrama en la paila y yema color naranja intenso gracias al pastoreo libre al sol.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Cinta Dinámica Separadora -->
+    <div class="bg-qh-brown text-white py-3 overflow-hidden border-y border-qh-navy/15">
+      <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-around gap-4 text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider">
+        <span>🥊 ¡PURO PESO PESADO EN TU DESAYUNO!</span>
+        <span class="hidden md:inline">•</span>
+        <span>🐓 GALLINAS 100% LIBRES Y FELICES</span>
+        <span class="hidden md:inline">•</span>
+        <span>🥚 CALIBRE EXTRA SELECCIONADO A MANO</span>
+        <span class="hidden md:inline">•</span>
+        <span>🚚 REPARTO EN 24/48 HRS DIRECTO A TU PUERTA</span>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         3. SECCIÓN "NUESTRA HISTORIA & HUEVOS FELICES"
+         ====================================================================== -->
+    <section id="historia" class="py-20 lg:py-28 bg-qh-bone bg-light-dots relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-14">
+          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-qh-navy text-qh-brownLight text-xs font-extrabold uppercase tracking-widest mb-4">
+            🌿 El Origen de la Granja
+          </span>
+          <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-qh-navy leading-tight">
+            Nuestra Historia &amp; <span class="text-qh-brown">Huevos Felices</span>
+          </h2>
+          <p class="mt-4 text-base sm:text-lg text-slate-600">
+            En <strong class="text-qh-navy">Qué Huevones</strong> partimos con una convicción simple: para tener huevos de verdad —de esos que dan gusto partir en la paila— primero hay que respetar a las verdaderas campeonas: nuestras gallinas.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <div class="lg:col-span-5 flex flex-col justify-between gap-4" role="tablist" aria-label="Etapas de nuestra historia">
+            <button type="button" onclick="selectStoryStep(0)" id="story-tab-0" data-track-btn="Historia: Etapa 1 Pastoreo Libre"
+                    class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white shadow-xl transition-all">
+              <div class="flex items-start gap-4">
+                <span class="w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">01</span>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-qh-brownLight">07:00 AM • Pradera Abierta</span>
+                  <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Gallinas sin jaula, pastoreo libre y sol diario</h3>
+                  <p class="text-xs sm:text-sm text-slate-300 mt-1.5">
+                    Cero encierro. Corretean libremente por praderas verdes, toman baños de sol y tierra como dicta su naturaleza.
                   </p>
                 </div>
               </div>
-            </div>
+            </button>
 
+            <button type="button" onclick="selectStoryStep(1)" id="story-tab-1" data-track-btn="Historia: Etapa 2 Bienestar Animal"
+                    class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-slate-200 bg-white text-qh-navy hover:border-qh-brown/60 shadow-sm transition-all">
+              <div class="flex items-start gap-4">
+                <span class="w-11 h-11 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">02</span>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-qh-brown">12:00 PM • Nutrición Natural</span>
+                  <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Bienestar animal real: yemas más intensas y cáscaras firmes</h3>
+                  <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
+                    La felicidad de las gallinas y su dieta rica en maíz, granos y pasto fresco se traduce en una calidad nutricional superior.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button type="button" onclick="selectStoryStep(2)" id="story-tab-2" data-track-btn="Historia: Etapa 3 Recolección Artesanal"
+                    class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-slate-200 bg-white text-qh-navy hover:border-qh-brown/60 shadow-sm transition-all">
+              <div class="flex items-start gap-4">
+                <span class="w-11 h-11 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">03</span>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-qh-brown">05:00 PM • Del Nido a tu Mesa</span>
+                  <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Prácticas sostenibles y recolección artesanal diaria</h3>
+                  <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
+                    Recolectados a mano cada día, seleccionados por tamaño Extra y empacados en bandejas ecológicas 100% reciclables.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div id="story-detail-card" class="h-full rounded-3xl bg-qh-navy text-qh-bone p-7 sm:p-10 shadow-2xl border border-qh-brown/30 flex flex-col justify-between relative overflow-hidden">
+              <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-qh-brown/15 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                  <span id="story-detail-badge" class="px-3.5 py-1.5 rounded-full bg-qh-brown text-white text-xs font-extrabold uppercase tracking-wider">
+                    Etapa 1 de 3 • Libertad Total
+                  </span>
+                  <span id="story-detail-stat" class="text-xs sm:text-sm font-bold text-amber-400">
+                    ☀️ +8 horas diarias de pastoreo al aire libre
+                  </span>
+                </div>
+
+                <h3 id="story-detail-title" class="font-display font-extrabold text-2xl sm:text-4xl text-white leading-tight">
+                  Gallinas que viven como gallinas, no en jaulas
+                </h3>
+
+                <p id="story-detail-description" class="mt-4 text-slate-300 text-base sm:text-lg leading-relaxed">
+                  Abren las puertas del gallinero al amanecer y nuestras aves salen a caminar, escarbar la tierra, picotear tréboles y tomar sol. Sin hacinamiento ni luz artificial forzada. Una gallina sin estrés tiene un sistema inmunológico fuerte y pone huevos naturalmente extraordinarios.
+                </p>
+
+                <div id="story-detail-bullets" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p class="font-display font-bold text-qh-brownLight text-sm">🌱 Pastoreo Rotativo</p>
+                    <p class="text-xs text-slate-300 mt-1">Praderas frescas regeneradas naturalmente sin pesticidas.</p>
+                  </div>
+                  <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p class="font-display font-bold text-qh-brownLight text-sm">☀️ Sol y Baños de Tierra</p>
+                    <p class="text-xs text-slate-300 mt-1">Aportan vitamina D natural y plumaje sano todo el año.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-8 pt-6 border-t border-white/15">
+                <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">
+                  Impacto directo en cada huevo que llega a tu casa:
+                </p>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                  <div class="p-3 rounded-xl bg-white/5">
+                    <span id="story-metric-1" class="font-display font-extrabold text-xl sm:text-2xl text-amber-400 block">+40%</span>
+                    <span class="text-[11px] text-slate-300">Intensidad de Yema</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-white/5">
+                    <span id="story-metric-2" class="font-display font-extrabold text-xl sm:text-2xl text-qh-brownLight block">Extra Firme</span>
+                    <span class="text-[11px] text-slate-300">Grosor de Cáscara</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-white/5">
+                    <span id="story-metric-3" class="font-display font-extrabold text-xl sm:text-2xl text-emerald-400 block">&lt; 24 hrs</span>
+                    <span class="text-[11px] text-slate-300">Recolección a Despacho</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Cinta Dinámica Separadora -->
-  <div class="bg-qh-brown text-white py-3 overflow-hidden border-y border-qh-navy/15">
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-around gap-4 text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider">
-      <span>🥊 ¡PURO PESO PESADO EN TU DESAYUNO!</span>
-      <span class="hidden md:inline">•</span>
-      <span>🐓 GALLINAS 100% LIBRES Y FELICES</span>
-      <span class="hidden md:inline">•</span>
-      <span>🥚 CALIBRE EXTRA SELECCIONADO A MANO</span>
-      <span class="hidden md:inline">•</span>
-      <span>🚚 REPARTO EN 24/48 HRS DIRECTO A TU PUERTA</span>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       3. SECCIÓN "NUESTRA HISTORIA & HUEVOS FELICES"
-       ======================================================================== -->
-  <section id="historia" class="py-20 lg:py-28 bg-qh-bone bg-light-dots relative">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Encabezado de Sección -->
-      <div class="text-center max-w-3xl mx-auto mb-14">
-        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-qh-navy text-qh-brownLight text-xs font-extrabold uppercase tracking-widest mb-4">
-          🌿 El Origen de la Granja
-        </span>
-        <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-qh-navy leading-tight">
-          Nuestra Historia &amp; <span class="text-qh-brown">Huevos Felices</span>
-        </h2>
-        <p class="mt-4 text-base sm:text-lg text-slate-600">
-          En <strong class="text-qh-navy">Qué Huevones</strong> partimos con una convicción simple: para tener huevos de verdad —de esos que dan gusto partir en la paila— primero hay que respetar a las verdaderas campeonas: nuestras gallinas.
-        </p>
-      </div>
-
-      <!-- Línea de Tiempo / Selector de Etapas Interactivo -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-16">
+    <!-- ======================================================================
+         4. CATÁLOGO DE VENTA / FORMATOS (TARJETAS INTERACTIVAS)
+         ====================================================================== -->
+    <section id="catalogo" class="py-20 lg:py-28 bg-white border-y border-slate-200 relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Botones de la Línea de Tiempo (Izquierda) -->
-        <div class="lg:col-span-5 flex flex-col justify-between gap-4" role="tablist" aria-label="Etapas de nuestra historia">
-          
-          <!-- Paso 1 -->
-          <button type="button" onclick="selectStoryStep(0)" id="story-tab-0"
-                  class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white shadow-xl transition-all">
-            <div class="flex items-start gap-4">
-              <span class="w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">
-                01
-              </span>
-              <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-qh-brownLight">07:00 AM • Pradera Abierta</span>
-                <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Gallinas sin jaula, pastoreo libre y sol diario</h3>
-                <p class="text-xs sm:text-sm text-slate-300 mt-1.5">
-                  Cero encierro. Corretean libremente por praderas verdes, toman baños de sol y tierra como dicta su naturaleza.
-                </p>
-              </div>
-            </div>
-          </button>
-
-          <!-- Paso 2 -->
-          <button type="button" onclick="selectStoryStep(1)" id="story-tab-1"
-                  class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-slate-200 bg-white text-qh-navy hover:border-qh-brown/60 shadow-sm transition-all">
-            <div class="flex items-start gap-4">
-              <span class="w-11 h-11 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">
-                02
-              </span>
-              <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-qh-brown">12:00 PM • Nutrición Natural</span>
-                <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Bienestar animal real: yemas más intensas y cáscaras firmes</h3>
-                <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
-                  La felicidad de las gallinas y su dieta rica en maíz, granos y pasto fresco se traduce en una calidad nutricional superior.
-                </p>
-              </div>
-            </div>
-          </button>
-
-          <!-- Paso 3 -->
-          <button type="button" onclick="selectStoryStep(2)" id="story-tab-2"
-                  class="story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-slate-200 bg-white text-qh-navy hover:border-qh-brown/60 shadow-sm transition-all">
-            <div class="flex items-start gap-4">
-              <span class="w-11 h-11 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0">
-                03
-              </span>
-              <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-qh-brown">05:00 PM • Del Nido a tu Mesa</span>
-                <h3 class="font-display font-extrabold text-lg sm:text-xl mt-0.5">Prácticas sostenibles y recolección artesanal diaria</h3>
-                <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
-                  Recolectados a mano cada día, seleccionados por tamaño Extra y empacados en bandejas ecológicas 100% reciclables.
-                </p>
-              </div>
-            </div>
-          </button>
-
-        </div>
-
-        <!-- Panel Detallado Interactivo (Derecha) -->
-        <div class="lg:col-span-7">
-          <div id="story-detail-card" class="h-full rounded-3xl bg-qh-navy text-qh-bone p-7 sm:p-10 shadow-2xl border border-qh-brown/30 flex flex-col justify-between relative overflow-hidden">
-            <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-qh-brown/15 rounded-full blur-2xl pointer-events-none"></div>
-
-            <div>
-              <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-                <span id="story-detail-badge" class="px-3.5 py-1.5 rounded-full bg-qh-brown text-white text-xs font-extrabold uppercase tracking-wider">
-                  Etapa 1 de 3 • Libertad Total
-                </span>
-                <span id="story-detail-stat" class="text-xs sm:text-sm font-bold text-amber-400">
-                  ☀️ +8 horas diarias de pastoreo al aire libre
-                </span>
-              </div>
-
-              <h3 id="story-detail-title" class="font-display font-extrabold text-2xl sm:text-4xl text-white leading-tight">
-                Gallinas que viven como gallinas, no en jaulas
-              </h3>
-
-              <p id="story-detail-description" class="mt-4 text-slate-300 text-base sm:text-lg leading-relaxed">
-                Abren las puertas del gallinero al amanecer y nuestras aves salen a caminar, escarbar la tierra, picotear tréboles y tomar sol. Sin hacinamiento ni luz artificial forzada. Una gallina sin estrés tiene un sistema inmunológico fuerte y pone huevos naturalmente extraordinarios.
-              </p>
-
-              <!-- Puntos destacados dinámicos -->
-              <div id="story-detail-bullets" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <p class="font-display font-bold text-qh-brownLight text-sm">🌱 Pastoreo Rotativo</p>
-                  <p class="text-xs text-slate-300 mt-1">Praderas frescas regeneradas naturalmente sin pesticidas.</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <p class="font-display font-bold text-qh-brownLight text-sm">☀️ Sol y Baños de Tierra</p>
-                  <p class="text-xs text-slate-300 mt-1">Aportan vitamina D natural y plumaje sano todo el año.</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Barra comparativa en vivo de Calidad del Huevo -->
-            <div class="mt-8 pt-6 border-t border-white/15">
-              <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">
-                Impacto directo en cada huevo que llega a tu casa:
-              </p>
-              <div class="grid grid-cols-3 gap-3 text-center">
-                <div class="p-3 rounded-xl bg-white/5">
-                  <span id="story-metric-1" class="font-display font-extrabold text-xl sm:text-2xl text-amber-400 block">+40%</span>
-                  <span class="text-[11px] text-slate-300">Intensidad de Yema</span>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5">
-                  <span id="story-metric-2" class="font-display font-extrabold text-xl sm:text-2xl text-qh-brownLight block">Extra Firme</span>
-                  <span class="text-[11px] text-slate-300">Grosor de Cáscara</span>
-                </div>
-                <div class="p-3 rounded-xl bg-white/5">
-                  <span id="story-metric-3" class="font-display font-extrabold text-xl sm:text-2xl text-emerald-400 block">&lt; 24 hrs</span>
-                  <span class="text-[11px] text-slate-300">Recolección a Despacho</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================================================
-       4. CATÁLOGO DE VENTA / FORMATOS (TARJETAS INTERACTIVAS)
-       ======================================================================== -->
-  <section id="catalogo" class="py-20 lg:py-28 bg-white border-y border-slate-200 relative">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Encabezado y Tabs de Filtro -->
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-        <div>
-          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-qh-brown/15 text-qh-brown text-xs font-extrabold uppercase tracking-widest mb-3">
-            🥚 Catálogo Directo de Granja
-          </span>
-          <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-qh-navy leading-tight">
-            Elige tus <span class="text-qh-brown">Bandejas Huevonas</span>
-          </h2>
-          <p class="mt-3 text-slate-600 text-base sm:text-lg max-w-2xl">
-            Todos nuestros formatos vienen seleccionados en <strong class="text-qh-navy">Calibre Extra ("Tremendo Huevo")</strong>. Ajusta la cantidad, mira tu subtotal en tiempo real y pide al tiro.
-          </p>
-        </div>
-
-        <!-- Tabs Interactivos: Todos / Huevos de Campo (Color) / Huevos Seleccionados (Blancos) -->
-        <div class="inline-flex flex-wrap gap-2 p-1.5 rounded-2xl bg-qh-bone border border-slate-200 self-start lg:self-end" role="tablist" aria-label="Filtrar catálogo por tipo de huevo">
-          <button type="button" onclick="filterCatalog('all')" id="filter-btn-all"
-                  class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm bg-qh-navy text-white shadow transition-all">
-            Todos (6)
-          </button>
-          <button type="button" onclick="filterCatalog('campo')" id="filter-btn-campo"
-                  class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-qh-brown inline-block"></span>
-            <span>Huevos de Campo (Color)</span>
-          </button>
-          <button type="button" onclick="filterCatalog('blanco')" id="filter-btn-blanco"
-                  class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-white border-2 border-qh-navy inline-block"></span>
-            <span>Huevos Seleccionados (Blancos)</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid de Tarjetas de Producto (Renderizado e hidratado por JS) -->
-      <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-        <!-- Las 6 tarjetas interactivas se inyectan desde app.js para manejo reactivo de cantidades y subtotales -->
-      </div>
-
-      <!-- Barra Resumen de Pedido Combinado -->
-      <div id="catalog-summary-banner" class="mt-12 rounded-3xl bg-qh-navy text-qh-bone p-6 sm:p-8 shadow-2xl border-2 border-qh-brown/50 flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-qh-brown text-white flex items-center justify-center text-2xl font-extrabold flex-shrink-0 shadow-lg">
-            🧺
-          </div>
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">Armador de Pedido en Tiempo Real</span>
-            <h3 id="summary-banner-title" class="font-display font-extrabold text-xl sm:text-2xl text-white">
-              ¿Quieres combinar Campo y Blancos en un mismo despacho?
-            </h3>
-            <p id="summary-banner-subtitle" class="text-xs sm:text-sm text-slate-300 mt-0.5">
-              Usa el botón <strong class="text-white">"Pedir al tiro"</strong> en cualquier tarjeta o agrega varios formatos a tu pedido.
+            <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-qh-brown/15 text-qh-brown text-xs font-extrabold uppercase tracking-widest mb-3">
+              🥚 Catálogo Directo de Granja
+            </span>
+            <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-qh-navy leading-tight">
+              Elige tus <span class="text-qh-brown">Bandejas Huevonas</span>
+            </h2>
+            <p class="mt-3 text-slate-600 text-base sm:text-lg max-w-2xl">
+              Todos nuestros formatos vienen seleccionados en <strong class="text-qh-navy">Calibre Extra ("Tremendo Huevo")</strong>. Ajusta la cantidad, súmalas al carrito y pide directo por WhatsApp.
             </p>
           </div>
-        </div>
 
-        <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-4 lg:pt-0 border-white/10">
-          <div class="text-left lg:text-right">
-            <span class="text-xs text-slate-400 block">Total acumulado en tu canasta:</span>
-            <span id="summary-banner-total" class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400">$0</span>
-          </div>
-          <button type="button" onclick="scrollToOrderForm()"
-                  class="px-6 py-3.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-sm sm:text-base shadow-lg transition-all flex items-center gap-2">
-            <span>Finalizar Pedido</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ========================================================================
-       5. BENEFICIOS CLAVE (GRID INTERACTIVO CON HOVER EFFECTS)
-       ======================================================================== -->
-  <section id="beneficios" class="py-20 lg:py-28 bg-qh-navy text-qh-bone relative overflow-hidden bg-grid-pattern">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <!-- Encabezado -->
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-qh-brownLight text-xs font-extrabold uppercase tracking-widest mb-4 border border-white/10">
-          🏆 Calidad Sin Rodeos
-        </span>
-        <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-white leading-tight">
-          ¿Por qué dicen <span class="text-qh-brownLight">"¡Qué Huevones!"</span> al probarlos?
-        </h2>
-        <p class="mt-4 text-slate-300 text-base sm:text-lg">
-          No todos los huevos dan el ancho en el sartén. Aquí están las razones por las que nuestros clientes no vuelven al huevo de supermercado.
-        </p>
-      </div>
-
-      <!-- Grid Interactivo de Beneficios -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-7">
-        
-        <!-- Beneficio Principal 1 -->
-        <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
-          <div class="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-qh-navy transition-all">
-            🍳
-          </div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Sabor &amp; Nutrición Real</span>
-          <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
-            Yema firme y color dorado natural
-          </h3>
-          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Olvídate de las yemas pálidas que se rompen solas. Nuestras gallinas se alimentan con maíz seleccionado, granos limpios y pasto verde fresco, logrando una yema alta, cremosa y llena de betacarotenos naturales.
-          </p>
-          <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-qh-brownLight">
-            <span>Sin pigmentos artificiales</span>
-            <span class="group-hover:translate-x-1 transition-transform">100% Natural →</span>
-          </div>
-        </article>
-
-        <!-- Beneficio Principal 2 -->
-        <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
-          <div class="w-14 h-14 rounded-2xl bg-qh-brown/20 border border-qh-brown/40 text-qh-brownLight flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-qh-brown group-hover:text-white transition-all">
-            🐓
-          </div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">Ética de Campo</span>
-          <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
-            0% jaulas, 100% bienestar animal
-          </h3>
-          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Nuestras aves viven sueltas en praderas abiertas, con espacio real para caminar, perchar y anidar tranquilas. Gallinas libres de estrés ponen huevos con cáscara más firme y mayor densidad proteica.
-          </p>
-          <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-qh-brownLight">
-            <span>Pastoreo libre certificado</span>
-            <span class="group-hover:translate-x-1 transition-transform">Gallinas Felices →</span>
-          </div>
-        </article>
-
-        <!-- Beneficio Principal 3 -->
-        <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
-          <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-qh-navy transition-all">
-            🚚
-          </div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">Logística Anti-Golpes</span>
-          <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
-            Despacho rápido en 24/48 hrs con embalaje ecológico
-          </h3>
-          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Entregamos directo en tu puerta en bandejas de pulpa moldeada 100% biodegradable de alta absorción de impacto. Además, si entregas tus bandejas limpias en el próximo pedido, las reutilizamos o reciclamos.
-          </p>
-          <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-emerald-400">
-            <span>Garantía Cero Quebrados</span>
-            <span class="group-hover:translate-x-1 transition-transform">Eco-Packing →</span>
-          </div>
-        </article>
-
-      </div>
-
-      <!-- Cinta de Garantía Huevona -->
-      <div class="mt-12 rounded-2xl bg-white/5 border border-white/10 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <span class="text-3xl">🛡️</span>
-          <div>
-            <h4 class="font-display font-bold text-white text-base sm:text-lg">Garantía Huevona 100%: Cero Quebrados</h4>
-            <p class="text-xs sm:text-sm text-slate-300">Revisamos cada bandeja a mano antes de entregar. Si algún huevo llega trizado, te reponemos el doble al tiro.</p>
+          <!-- Tabs Interactivos -->
+          <div class="inline-flex flex-wrap gap-2 p-1.5 rounded-2xl bg-qh-bone border border-slate-200 self-start lg:self-end" role="tablist" aria-label="Filtrar catálogo por tipo de huevo">
+            <button type="button" onclick="filterCatalog('all')" id="filter-btn-all" data-track-btn="Filtro Catálogo: Todos"
+                    class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm bg-qh-navy text-white shadow transition-all">
+              Todos (6)
+            </button>
+            <button type="button" onclick="filterCatalog('campo')" id="filter-btn-campo" data-track-btn="Filtro Catálogo: Huevos de Campo"
+                    class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-qh-brown inline-block"></span>
+              <span>Huevos de Campo (Color)</span>
+            </button>
+            <button type="button" onclick="filterCatalog('blanco')" id="filter-btn-blanco" data-track-btn="Filtro Catálogo: Huevos Blancos"
+                    class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-white border-2 border-qh-navy inline-block"></span>
+              <span>Huevos Seleccionados (Blancos)</span>
+            </button>
           </div>
         </div>
-        <a href="#catalogo" class="px-5 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-bold text-xs sm:text-sm whitespace-nowrap transition">
-          Elegir mi Bandeja →
-        </a>
-      </div>
 
-    </div>
-  </section>
+        <!-- Grid de Tarjetas de Producto -->
+        <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+          <!-- Renderizado por app.js -->
+        </div>
 
-  <!-- ========================================================================
-       6. SECCIÓN DE CONTACTO Y PEDIDOS DIRECTOS
-       ======================================================================== -->
-  <section id="contacto" class="py-20 lg:py-28 bg-qh-bone relative">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        
-        <!-- Columna Izquierda (7 cols): Formulario Rápido de Pedido -->
-        <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200">
-          <div class="flex items-center justify-between gap-2 mb-6">
+        <!-- Barra Resumen del Carrito debajo del catálogo -->
+        <div id="catalog-summary-banner" class="mt-12 rounded-3xl bg-qh-navy text-qh-bone p-6 sm:p-8 shadow-2xl border-2 border-qh-brown/50 flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-qh-brown text-white flex items-center justify-center text-2xl font-extrabold flex-shrink-0 shadow-lg">
+              🛒
+            </div>
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brown">⚡ Despacho Directo a Domicilio</span>
-              <h2 class="font-display font-extrabold text-2xl sm:text-4xl text-qh-navy mt-1">
-                Formulario Rápido de Pedido
-              </h2>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">Tu Carrito Huevón en Vivo</span>
+              <h3 id="summary-banner-title" class="font-display font-extrabold text-xl sm:text-2xl text-white">
+                Combina formatos de Campo y Blancos sin formularios largos
+              </h3>
+              <p id="summary-banner-subtitle" class="text-xs sm:text-sm text-slate-300 mt-0.5">
+                Elige <strong class="text-white">Pedido Único</strong> o <strong class="text-amber-400">Pedido Fijo Semanal</strong> y envíalo con un clic a WhatsApp.
+              </p>
             </div>
-            <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-              Reparto Activo Hoy
-            </span>
           </div>
 
-          <form id="quick-order-form" onsubmit="handleOrderSubmit(event)" class="space-y-5">
+          <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-4 lg:pt-0 border-white/10">
+            <div class="text-left lg:text-right">
+              <span class="text-xs text-slate-400 block">Subtotal en tu carrito:</span>
+              <span id="summary-banner-total" class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400">$8.900</span>
+            </div>
+            <button type="button" onclick="openCartDrawer()" data-track-btn="Banner Catálogo: Abrir Carrito"
+                    class="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-lg transition-all flex items-center gap-2">
+              <span>📲 Ir al Carrito / Pedir Directo</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         5. BENEFICIOS CLAVE (GRID INTERACTIVO CON HOVER EFFECTS)
+         ====================================================================== -->
+    <section id="beneficios" class="py-20 lg:py-28 bg-qh-navy text-qh-bone relative overflow-hidden bg-grid-pattern">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-qh-brownLight text-xs font-extrabold uppercase tracking-widest mb-4 border border-white/10">
+            🏆 Calidad Sin Rodeos
+          </span>
+          <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-white leading-tight">
+            ¿Por qué dicen <span class="text-qh-brownLight">"¡Qué Huevones!"</span> al probarlos?
+          </h2>
+          <p class="mt-4 text-slate-300 text-base sm:text-lg">
+            No todos los huevos dan el ancho en el sartén. Aquí están las razones por las que nuestros clientes no vuelven al huevo de supermercado.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-7">
+          <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-qh-navy transition-all">
+              🍳
+            </div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Sabor &amp; Nutrición Real</span>
+            <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
+              Yema firme y color dorado natural
+            </h3>
+            <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+              Olvídate de las yemas pálidas que se rompen solas. Nuestras gallinas se alimentan con maíz seleccionado, granos limpios y pasto verde fresco, logrando una yema alta, cremosa y llena de betacarotenos naturales.
+            </p>
+            <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-qh-brownLight">
+              <span>Sin pigmentos artificiales</span>
+              <span class="group-hover:translate-x-1 transition-transform">100% Natural →</span>
+            </div>
+          </article>
+
+          <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
+            <div class="w-14 h-14 rounded-2xl bg-qh-brown/20 border border-qh-brown/40 text-qh-brownLight flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-qh-brown group-hover:text-white transition-all">
+              🐓
+            </div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">Ética de Campo</span>
+            <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
+              0% jaulas, 100% bienestar animal
+            </h3>
+            <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+              Nuestras aves viven sueltas en praderas abiertas, con espacio real para caminar, perchar y anidar tranquilas. Gallinas libres de estrés ponen huevos con cáscara más firme y mayor densidad proteica.
+            </p>
+            <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-qh-brownLight">
+              <span>Pastoreo libre certificado</span>
+              <span class="group-hover:translate-x-1 transition-transform">Gallinas Felices →</span>
+            </div>
+          </article>
+
+          <article class="benefit-card group rounded-3xl bg-slate-800/80 hover:bg-slate-800 p-8 border border-white/10 hover:border-qh-brown shadow-xl relative overflow-hidden">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-qh-navy transition-all">
+              🚚
+            </div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">Logística Anti-Golpes</span>
+            <h3 class="font-display font-extrabold text-2xl text-white mt-1 mb-3">
+              Despacho rápido en 24/48 hrs con embalaje ecológico
+            </h3>
+            <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+              Entregamos directo en tu puerta en bandejas de pulpa moldeada 100% biodegradable de alta absorción de impacto. Además, si entregas tus bandejas limpias en el próximo pedido, las reutilizamos o reciclamos.
+            </p>
+            <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-bold text-emerald-400">
+              <span>Garantía Cero Quebrados</span>
+              <span class="group-hover:translate-x-1 transition-transform">Eco-Packing →</span>
+            </div>
+          </article>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         6. SECCIÓN DE CARRITO DE COMPRAS, CHECKOUT WHATSAPP Y CONTACTO DIRECTO
+         (Sin formularios extensos: Carrito interactivo + Selector Único/Semanal + Botón Verde Directo)
+         ====================================================================== -->
+    <section id="contacto" class="py-20 lg:py-28 bg-qh-bone relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          <!-- Columna Izquierda (7 cols): Carrito de Compras Interactivo y Checkout Directo -->
+          <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200 space-y-6">
             
-            <!-- Nombre y Teléfono -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-5">
               <div>
-                <label for="order-name" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-                  Tu Nombre *
-                </label>
-                <input type="text" id="order-name" required placeholder="Ej: Juanjo Pérez"
-                       class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white transition" />
+                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brown">🛒 Checkout Rápido Sin Formularios</span>
+                <h2 class="font-display font-extrabold text-2xl sm:text-4xl text-qh-navy mt-1">
+                  Tu Carrito de Bandejas
+                </h2>
               </div>
-              <div>
-                <label for="order-phone" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-                  Teléfono / WhatsApp *
-                </label>
-                <input type="tel" id="order-phone" required placeholder="+56 9 1234 5678"
-                       class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white transition" />
+              <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                Despacho 24/48 hrs
+              </span>
+            </div>
+
+            <!-- 1. Selector de Tipo de Pedido: "Pedido Único" vs "Pedido Fijo Semanal" -->
+            <div>
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-2.5">
+                1. Elige la modalidad de tu pedido:
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Tipo de pedido">
+                <button type="button" onclick="setOrderType('Pedido Único')" id="type-btn-unico-main" data-track-btn="Selector Tipo: Pedido Único"
+                        class="p-4 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex items-start gap-3 shadow-md">
+                  <span class="w-8 h-8 rounded-xl bg-qh-brown text-white font-display font-extrabold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">1️⃣</span>
+                  <div>
+                    <p class="font-display font-extrabold text-base leading-tight">Pedido Único</p>
+                    <p class="text-xs text-slate-300 mt-0.5">Compra puntual con entrega en 24/48 hrs en tu puerta.</p>
+                  </div>
+                </button>
+
+                <button type="button" onclick="setOrderType('Pedido Fijo Semanal')" id="type-btn-semanal-main" data-track-btn="Selector Tipo: Pedido Fijo Semanal"
+                        class="p-4 rounded-2xl border-2 border-slate-200 bg-qh-bone text-qh-navy hover:border-qh-brown/60 text-left transition-all flex items-start gap-3">
+                  <span class="w-8 h-8 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">🔁</span>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <p class="font-display font-extrabold text-base leading-tight">Pedido Fijo Semanal</p>
+                      <span class="px-2 py-0.5 rounded-full bg-amber-400/25 text-amber-900 text-[10px] font-extrabold">Ruta Prioritaria</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-0.5">Reservamos tus bandejas frescas todas las semanas sin que te quedes sin huevos.</p>
+                  </div>
+                </button>
               </div>
             </div>
 
-            <!-- Dirección y Comuna/Zona -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="sm:col-span-2">
-                <label for="order-address" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-                  Dirección de Entrega (Calle, N°, Depto) *
-                </label>
-                <input type="text" id="order-address" required placeholder="Ej: Av. Los Carrera 1450, Depto 402"
-                       class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white transition" />
-              </div>
-              <div>
-                <label for="order-zone" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-                  Zona / Comuna *
-                </label>
-                <select id="order-zone" required
-                        class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white transition">
-                  <option value="Sector Centro / Oriente">Sector Centro / Oriente</option>
-                  <option value="Sector Norte / Chicureo">Sector Norte / Chicureo</option>
-                  <option value="Sector Sur / Poniente">Sector Sur / Poniente</option>
-                  <option value="Retiro en Punto Granja">Retiro en Punto Granja</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Selector Interactivo de Bandejas en el Formulario -->
+            <!-- 2. Lista de Bandejas en el Carrito (Sumar / Restar cantidades) -->
             <div class="p-4 sm:p-5 rounded-2xl bg-qh-bone border border-slate-200 space-y-4">
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <label for="order-QuickSelect" class="text-xs font-extrabold uppercase tracking-wider text-qh-navy">
-                  🥚 Selección de Bandejas *
-                </label>
-                <button type="button" onclick="clearOrderCart()" class="text-xs font-bold text-slate-500 hover:text-red-600 transition">
-                  Limpiar selección
+                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-navy">
+                  2. Tus Bandejas Seleccionadas (Suma o resta cantidades):
+                </span>
+                <button type="button" onclick="clearOrderCart()" data-track-btn="Carrito: Vaciar Todo" class="text-xs font-bold text-slate-500 hover:text-red-600 transition">
+                  Vaciar carrito
                 </button>
               </div>
 
-              <!-- Selector rápido para añadir o cambiar formato directamente desde el formulario -->
+              <!-- Selector rápido para añadir otro formato al carrito -->
               <div class="flex flex-col sm:flex-row gap-2.5">
-                <select id="order-QuickSelect" class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-qh-navy text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown">
+                <select id="order-QuickSelect" aria-label="Seleccionar formato de bandeja para añadir al carrito"
+                        class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-qh-navy text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown">
                   <option value="campo-30">Bandeja Familiar 30 un. - Huevo de Campo ($8.900)</option>
                   <option value="campo-12">Docena 12 un. - Huevo de Campo ($4.200)</option>
                   <option value="campo-60">Caja Mayorista 60 un. - Huevo de Campo ($16.900)</option>
@@ -827,139 +754,386 @@
                   <option value="blanco-12">Docena 12 un. - Blanco Seleccionado ($3.600)</option>
                   <option value="blanco-60">Caja Mayorista 60 un. - Blanco Seleccionado ($14.500)</option>
                 </select>
-                <button type="button" onclick="addFromFormSelect()"
+                <button type="button" onclick="addFromFormSelect()" data-track-btn="Carrito: + Sumar Formato desde Selector"
                         class="px-4 py-2.5 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-bold text-xs sm:text-sm whitespace-nowrap transition">
-                  + Agregar al Pedido
+                  + Sumar al Carrito
                 </button>
               </div>
 
-              <!-- Lista de Bandejas Seleccionadas -->
+              <!-- Items del carrito con botones [-] y [+] -->
               <div id="order-items-container" class="space-y-2.5">
-                <!-- Se actualiza dinámicamente desde app.js -->
+                <!-- Renderizado dinámico por app.js -->
               </div>
 
-              <!-- Subtotal / Total en vivo -->
-              <div class="pt-3 border-t border-slate-300 flex items-center justify-between">
+              <!-- Subtotal y Resumen en tiempo real -->
+              <div class="pt-4 border-t border-slate-300 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <span class="text-xs font-bold text-slate-600 block">Total estimado del pedido:</span>
-                  <span id="order-total-eggs" class="text-[11px] font-semibold text-qh-brown">0 huevos calibre Extra</span>
+                  <span id="order-mode-pill" class="inline-block px-2.5 py-0.5 rounded-md bg-qh-navy text-qh-brownLight text-[11px] font-extrabold uppercase tracking-wider mb-1">
+                    Modalidad: Pedido Único
+                  </span>
+                  <span id="order-total-eggs" class="text-xs font-bold text-slate-600 block">30 huevos calibre Extra</span>
                 </div>
-                <span id="order-form-total" class="font-display font-extrabold text-2xl text-qh-navy">$0</span>
+                <div class="text-right">
+                  <span class="text-xs font-bold text-slate-500 block">Subtotal Estimado:</span>
+                  <span id="order-form-total" class="font-display font-extrabold text-3xl text-qh-navy">$8.900</span>
+                </div>
               </div>
             </div>
 
-            <!-- Comentarios -->
-            <div>
-              <label for="order-notes" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-                Comentarios o Instrucciones de Entrega (Opcional)
-              </label>
-              <textarea id="order-notes" rows="2" placeholder="Ej: Dejar en conserjería, timbre 402, prefiero entrega por la mañana..."
-                        class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white transition"></textarea>
+            <!-- 3. RECUADRO DESTACADO DE CHECKOUT DIRECTO POR WHATSAPP SIN LLENAR FORMULARIOS -->
+            <div class="rounded-3xl bg-gradient-to-br from-qh-navy via-slate-800 to-qh-navyDark text-white p-6 sm:p-8 border-2 border-emerald-500/60 shadow-2xl relative overflow-hidden">
+              <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div class="flex items-center gap-2.5 mb-2">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-extrabold uppercase tracking-wider border border-emerald-400/30">
+                  ⚡ Cero Formularios Largos
+                </span>
+                <span class="text-xs font-bold text-amber-400">WhatsApp Oficial +56 9 5393 0491</span>
+              </div>
+
+              <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
+                ¿Prefieres pedir directo por WhatsApp sin llenar nada?
+              </h3>
+              <p class="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Tu mensaje ya lleva armadas tus bandejas, cantidades, modalidad (<strong id="wa-box-mode-text" class="text-amber-400">Pedido Único</strong>) y el subtotal. Solo presiona el botón verde y completa tu nombre y dirección directo en el chat:
+              </p>
+
+              <!-- Botón Verde Grande de WhatsApp Solicitado -->
+              <button type="button"
+                      onclick="triggerDirectWhatsAppCheckout('Carrito Principal: Quiero pedir mi bandeja directo')"
+                      data-track-btn="Botón Verde WhatsApp: Quiero pedir mi bandeja directo"
+                      class="mt-5 w-full py-4 sm:py-5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-base sm:text-xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-95 transition-all pulse-whatsapp">
+                <span>📲 Quiero pedir mi bandeja directo</span>
+              </button>
+
+              <!-- Vista Previa en Vivo del Mensaje Autogenerado -->
+              <div class="mt-4 p-3.5 rounded-2xl bg-black/30 border border-white/10 text-xs text-slate-300">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block mb-1">
+                  Vista previa automática de tu mensaje a WhatsApp (+56 9 5393 0491):
+                </span>
+                <pre id="whatsapp-live-preview" class="whitespace-pre-wrap font-sans text-xs text-slate-200 leading-relaxed"></pre>
+              </div>
             </div>
 
-            <!-- Botones de Envío del Formulario -->
-            <div class="flex flex-col sm:flex-row gap-3 pt-2">
-              <button type="submit"
-                      class="flex-1 py-4 px-6 rounded-2xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-extrabold text-base shadow-xl shadow-qh-brown/30 flex items-center justify-center gap-2.5 hover:-translate-y-0.5 transition-all">
-                <span>📲 Enviar Pedido por WhatsApp</span>
-              </button>
-              <button type="button" onclick="confirmWebOrder()"
-                      class="py-4 px-5 rounded-2xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-bold text-sm transition-all">
-                Generar Comprobante Web
+          </div>
+
+          <!-- Columna Derecha (5 cols): Canales Visibles, Horarios y Zonas de Reparto -->
+          <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Tarjeta de Beneficio Pedido Fijo Semanal -->
+            <div class="rounded-3xl bg-qh-navy text-qh-bone p-7 border border-qh-brown/40 shadow-xl">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-qh-brown/25 text-qh-brownLight text-xs font-extrabold uppercase tracking-wider mb-3">
+                🔁 Club Huevón Semanal
+              </span>
+              <h3 class="font-display font-extrabold text-2xl text-white leading-tight">
+                ¿Por qué elegir "Pedido Fijo Semanal"?
+              </h3>
+              <p class="mt-2 text-sm text-slate-300 leading-relaxed">
+                Más del 65% de las familias que nos compran activan su entrega semanal fija. Aseguras stock de huevos recién recolectados todos los lunes o jueves sin tener que acordarte de pedir.
+              </p>
+              <button type="button" onclick="setOrderType('Pedido Fijo Semanal')" data-track-btn="Card Derecha: Activar Pedido Fijo Semanal"
+                      class="mt-4 w-full py-3 px-4 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-xs sm:text-sm transition">
+                🔁 Cambiar mi carrito a Pedido Fijo Semanal
               </button>
             </div>
-          </form>
+
+            <!-- Canales Oficiales y Zonas de Reparto -->
+            <div class="rounded-3xl bg-white p-7 border border-slate-200 shadow-lg space-y-5">
+              <h3 class="font-display font-extrabold text-xl text-qh-navy">
+                Canales Oficiales &amp; Reparto
+              </h3>
+
+              <ul class="space-y-4 text-sm">
+                <li class="flex items-start gap-3.5">
+                  <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">📞</span>
+                  <div>
+                    <span class="text-xs font-bold uppercase text-slate-400 block">WhatsApp Oficial de Pedidos</span>
+                    <button type="button" onclick="triggerDirectWhatsAppCheckout('Contacto Info: Numero Telefono')" data-track-btn="Contacto: Clic Número +56953930491"
+                            class="font-display font-bold text-base text-qh-navy hover:text-qh-brown transition text-left">
+                      +56 9 5393 0491
+                    </button>
+                  </div>
+                </li>
+
+                <li class="flex items-start gap-3.5">
+                  <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">✉️</span>
+                  <div>
+                    <span class="text-xs font-bold uppercase text-slate-400 block">Correo de Contacto y Mayoristas</span>
+                    <a href="mailto:pedidos@quehuevones.cl" data-track-btn="Contacto: Clic Correo" class="font-display font-bold text-base text-qh-navy hover:text-qh-brown transition">pedidos@quehuevones.cl</a>
+                  </div>
+                </li>
+
+                <li class="flex items-start gap-3.5">
+                  <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">⏰</span>
+                  <div>
+                    <span class="text-xs font-bold uppercase text-slate-400 block">Horario de Atención y Ruta</span>
+                    <p class="font-bold text-qh-navy">Lunes a Sábado: 08:30 a 19:30 hrs</p>
+                    <p class="text-xs text-slate-500">Pedidos antes de las 13:00 hrs entran en ruta prioritaria.</p>
+                  </div>
+                </li>
+
+                <li class="flex items-start gap-3.5">
+                  <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">📍</span>
+                  <div>
+                    <span class="text-xs font-bold uppercase text-slate-400 block">Zonas de Reparto (24/48 hrs)</span>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                      <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Providencia / Ñuñoa</span>
+                      <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Las Condes / Vitacura</span>
+                      <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">La Reina / Peñalolén</span>
+                      <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Santiago Centro / San Miguel</span>
+                      <span class="px-2.5 py-1 rounded-lg bg-qh-brown/15 text-qh-brown text-xs font-bold">Envío Gratis sobre 2 Bandejas</span>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       VISTA DEL DASHBOARD ADMINISTRATIVO (PARA JUANJO Y MORENSEX)
+       ======================================================================== -->
+  <section id="admin-dashboard-view" class="hidden min-h-screen pt-24 pb-20 bg-qh-navyDark text-qh-bone">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <!-- Top Bar del Dashboard -->
+      <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-qh-brown to-amber-600 text-white flex items-center justify-center text-2xl font-extrabold shadow-lg">
+            📊
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
+                ● Panel Administrativo Activo
+              </span>
+              <span id="admin-session-badge" class="text-xs font-bold text-qh-brownLight">Sesión: Juanjo</span>
+            </div>
+            <h1 class="font-display font-extrabold text-2xl sm:text-4xl text-white mt-1">
+              Centro de Control • QUÉ HUEVONES
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400">
+              Monitoreo en tiempo real de ventas estimadas, pedidos hacia WhatsApp (+56953930491) y analítica de comportamiento de usuarios.
+            </p>
+          </div>
         </div>
 
-        <!-- Columna Derecha (5 cols): Acceso Directo a WhatsApp y Canales Visibles -->
-        <div class="lg:col-span-5 space-y-6">
-          
-          <!-- Tarjeta Destacada de WhatsApp Directo -->
-          <div class="rounded-3xl bg-qh-navy text-qh-bone p-7 sm:p-8 shadow-2xl border border-qh-brown/40 relative overflow-hidden">
-            <div class="absolute -right-8 -top-8 w-36 h-36 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-extrabold uppercase tracking-wider mb-4">
-              💬 Atención Inmediata
-            </span>
-            <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
-              ¿Prefieres pedir directo por WhatsApp sin llenar nada?
-            </h3>
-            <p class="mt-2.5 text-sm text-slate-300 leading-relaxed">
-              Escríbenos con un clic y te respondemos al tiro para coordinar tus bandejas de huevos de campo o blancos seleccionados.
-            </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" onclick="simulateSampleTraffic()"
+                  class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-qh-brownLight text-xs font-bold border border-white/10 transition">
+            ⚡ + Simular Visita/Pedido Demo
+          </button>
+          <button type="button" onclick="closeAdminDashboard()"
+                  class="px-4 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white text-xs sm:text-sm font-bold shadow transition">
+            👁️ Volver a ver la Tienda
+          </button>
+          <button type="button" onclick="logoutAdmin()"
+                  class="px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500 hover:text-white text-red-300 text-xs sm:text-sm font-bold border border-red-500/30 transition">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
 
-            <a href="https://wa.me/56987654321?text=%C2%A1Hola!%20Quiero%20pedir%20mis%20bandejas%20de%20Qu%C3%A9%20Huevones"
-               target="_blank" rel="noopener noreferrer"
-               class="mt-6 w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-qh-navyDark font-display font-extrabold text-base shadow-lg flex items-center justify-center gap-3 transition-all pulse-whatsapp">
-              <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.126.556 4.124 1.533 5.859l-1.533 5.601 5.741-1.506c1.693.922 3.633 1.446 5.698 1.446 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/>
-              </svg>
-              <span>¡Hola! Quiero pedir mis bandejas</span>
-            </a>
+      <!-- 1. KPIs DE VENTAS ESTIMADAS Y CONVERSIÓN -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Ventas Estimadas (Pedidos)</span>
+            <span class="text-lg">💰</span>
+          </div>
+          <p id="kpi-total-revenue" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-2">$0</p>
+          <p id="kpi-monthly-projection" class="text-xs text-emerald-400 font-semibold mt-1">
+            Proyección mensual c/semanales: $0
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Pedidos Generados</span>
+            <span class="text-lg">📲</span>
+          </div>
+          <p id="kpi-total-orders" class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-2">0</p>
+          <p id="kpi-orders-breakdown" class="text-xs text-qh-brownLight font-semibold mt-1">
+            0 Fijos Semanales • 0 Únicos
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Tasa de Conversión</span>
+            <span class="text-lg">🎯</span>
+          </div>
+          <p id="kpi-conversion-rate" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">0%</p>
+          <p id="kpi-funnel-summary" class="text-xs text-slate-300 mt-1">
+            De visitas a checkout WhatsApp
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Interacciones Capturadas</span>
+            <span class="text-lg">🖱️</span>
+          </div>
+          <p id="kpi-total-clicks" class="font-display font-extrabold text-3xl sm:text-4xl text-qh-brownLight mt-2">0</p>
+          <p id="kpi-top-product-mini" class="text-xs text-slate-300 mt-1 truncate">
+            Más visto: —
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. SEGUIMIENTO DE PEDIDOS (TABLA ORDENADA CON FILTROS) -->
+      <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📦 Seguimiento Comercial</span>
+            <h2 class="font-display font-extrabold text-2xl text-white mt-0.5">
+              Historial de Pedidos Generados hacia WhatsApp
+            </h2>
           </div>
 
-          <!-- Canales de Contacto, Horarios y Zonas de Reparto -->
-          <div class="rounded-3xl bg-white p-7 border border-slate-200 shadow-lg space-y-5">
-            <h3 class="font-display font-extrabold text-xl text-qh-navy">
-              Canales Oficiales &amp; Reparto
-            </h3>
+          <!-- Filtros para ordenar y filtrar la tabla de pedidos -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <label for="admin-filter-order-type" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtrar Modalidad</label>
+              <select id="admin-filter-order-type" onchange="renderAdminDashboard()"
+                      class="px-3.5 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white focus:outline-none focus:border-qh-brown">
+                <option value="all">Todos los Pedidos</option>
+                <option value="Pedido Fijo Semanal">🔁 Solo Pedido Fijo Semanal</option>
+                <option value="Pedido Único">1️⃣ Solo Pedido Único</option>
+              </select>
+            </div>
 
-            <ul class="space-y-4 text-sm">
-              <li class="flex items-start gap-3.5">
-                <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">📞</span>
-                <div>
-                  <span class="text-xs font-bold uppercase text-slate-400 block">Teléfono / WhatsApp</span>
-                  <a href="tel:+56987654321" class="font-display font-bold text-base text-qh-navy hover:text-qh-brown transition">+56 9 8765 4321</a>
-                </div>
-              </li>
+            <div>
+              <label for="admin-sort-orders" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Por</label>
+              <select id="admin-sort-orders" onchange="renderAdminDashboard()"
+                      class="px-3.5 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white focus:outline-none focus:border-qh-brown">
+                <option value="newest">Más recientes primero</option>
+                <option value="amount-desc">Mayor monto ($)</option>
+                <option value="amount-asc">Menor monto ($)</option>
+                <option value="eggs-desc">Mayor cantidad de huevos</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-              <li class="flex items-start gap-3.5">
-                <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">✉️</span>
-                <div>
-                  <span class="text-xs font-bold uppercase text-slate-400 block">Correo de Contacto y Mayoristas</span>
-                  <a href="mailto:pedidos@quehuevones.cl" class="font-display font-bold text-base text-qh-navy hover:text-qh-brown transition">pedidos@quehuevones.cl</a>
-                </div>
-              </li>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4">ID / Fecha</th>
+                <th class="py-3 px-4">Tipo de Pedido</th>
+                <th class="py-3 px-4">Detalle de Bandejas</th>
+                <th class="py-3 px-4">Total Huevos</th>
+                <th class="py-3 px-4">Subtotal</th>
+                <th class="py-3 px-4">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+              <!-- Filas inyectadas por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-              <li class="flex items-start gap-3.5">
-                <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">⏰</span>
-                <div>
-                  <span class="text-xs font-bold uppercase text-slate-400 block">Horario de Atención y Ruta</span>
-                  <p class="font-bold text-qh-navy">Lunes a Sábado: 08:30 a 19:30 hrs</p>
-                  <p class="text-xs text-slate-500">Pedidos recibidos antes de las 13:00 hrs entran en ruta prioritaria.</p>
-                </div>
-              </li>
-
-              <li class="flex items-start gap-3.5">
-                <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">📍</span>
-                <div>
-                  <span class="text-xs font-bold uppercase text-slate-400 block">Zonas de Reparto (24/48 hrs)</span>
-                  <div class="flex flex-wrap gap-1.5 mt-1.5">
-                    <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Providencia / Ñuñoa</span>
-                    <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Las Condes / Vitacura</span>
-                    <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">La Reina / Peñalolén</span>
-                    <span class="px-2.5 py-1 rounded-lg bg-qh-bone text-qh-navy text-xs font-bold">Santiago Centro / San Miguel</span>
-                    <span class="px-2.5 py-1 rounded-lg bg-qh-brown/15 text-qh-brown text-xs font-bold">Envío Gratis sobre 2 Bandejas</span>
-                  </div>
-                </div>
-              </li>
-            </ul>
+      <!-- 3. ESTADÍSTICAS DE COMPORTAMIENTO (FRONTEND ANALYTICS) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Rendimiento de Productos: Qué pincha la gente vs Qué productos ignoran (7 cols) -->
+        <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🥚 Comportamiento en Catálogo</span>
+              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                Productos Más Pinchados vs. Ignorados
+              </h3>
+            </div>
+            <div>
+              <label for="admin-sort-products" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Productos</label>
+              <select id="admin-sort-products" onchange="renderAdminDashboard()"
+                      class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
+                <option value="clicks-desc">🔥 Más pinchados primero</option>
+                <option value="clicks-asc">⚠️ Ignorados / Menos pinchados primero</option>
+                <option value="cart-desc">🛒 Más añadidos al carrito</option>
+              </select>
+            </div>
           </div>
 
+          <!-- Lista analítica de productos -->
+          <div id="admin-products-analytics" class="space-y-3.5">
+            <!-- Renderizado por app.js -->
+          </div>
+        </div>
+
+        <!-- Ranking de Clics en Botones y Elementos Ignorados (5 cols) -->
+        <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🖱️ Mapa de Clics</span>
+              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                Botones Pinchados vs. Sin Clics
+              </h3>
+            </div>
+            <div>
+              <label for="admin-sort-buttons" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro</label>
+              <select id="admin-sort-buttons" onchange="renderAdminDashboard()"
+                      class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
+                <option value="most">Más clicados</option>
+                <option value="ignored">No pinchados / Menos clics</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="admin-buttons-analytics" class="space-y-3 max-h-[430px] overflow-y-auto pr-1">
+            <!-- Renderizado por app.js -->
+          </div>
         </div>
 
       </div>
+
+      <!-- 4. EMBUDO DE CONVERSIÓN Y LOG DE EVENTOS EN TIEMPO REAL -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Embudo (5 cols) -->
+        <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📈 Embudo de Conversión</span>
+          <h3 class="font-display font-extrabold text-xl text-white">Flujo de Usuario en la Página</h3>
+          <div id="admin-funnel-bars" class="space-y-4 pt-2">
+            <!-- Renderizado por app.js -->
+          </div>
+        </div>
+
+        <!-- Últimas Interacciones Registradas (7 cols) -->
+        <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">⚡ Telemetría LocalStorage</span>
+              <h3 class="font-display font-extrabold text-xl text-white">Registro en Vivo de Eventos</h3>
+            </div>
+            <button type="button" onclick="resetAnalyticsToClean()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
+              Reiniciar contadores
+            </button>
+          </div>
+          <div id="admin-event-stream" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
+            <!-- Renderizado por app.js -->
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 
   <!-- ========================================================================
-       7. FOOTER
+       7. FOOTER (CON BOTÓN DISCRETO "ENTRAR" PARA DUEÑOS)
        ======================================================================== -->
   <footer class="bg-qh-navyDark text-qh-bone pt-16 pb-12 border-t border-white/10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-white/10">
         
-        <!-- Resumen de Marca (5 cols) -->
         <div class="lg:col-span-5 space-y-4">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-qh-brown flex items-center justify-center font-display font-extrabold text-white text-lg">
@@ -982,7 +1156,6 @@
           </div>
         </div>
 
-        <!-- Enlaces Rápidos (3 cols) -->
         <div class="lg:col-span-3 space-y-3">
           <h4 class="font-display font-extrabold text-sm uppercase tracking-wider text-qh-brownLight">
             Navegación
@@ -992,11 +1165,10 @@
             <li><a href="#historia" class="hover:text-white transition">Nuestra Historia &amp; Granja</a></li>
             <li><a href="#catalogo" class="hover:text-white transition">Catálogo de Bandejas</a></li>
             <li><a href="#beneficios" class="hover:text-white transition">Beneficios Clave</a></li>
-            <li><a href="#contacto" class="hover:text-white transition">Pedir por WhatsApp</a></li>
+            <li><a href="#contacto" class="hover:text-white transition">Mi Carrito &amp; WhatsApp</a></li>
           </ul>
         </div>
 
-        <!-- Políticas de Frescura y Redes Sociales (4 cols) -->
         <div class="lg:col-span-4 space-y-4">
           <h4 class="font-display font-extrabold text-sm uppercase tracking-wider text-qh-brownLight">
             Política de Frescura Garantizada
@@ -1007,70 +1179,193 @@
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Síguenos en el Ring Social:</span>
             <div class="flex items-center gap-3">
-              <a href="#contacto" onclick="showToast('📸 Síguenos en Instagram: @quehuevones.cl')" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-qh-brown text-xs font-bold text-white border border-white/10 transition">
+              <button type="button" data-track-btn="Footer Social: Instagram" onclick="showToast('📸 Síguenos en Instagram: @quehuevones.cl')" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-qh-brown text-xs font-bold text-white border border-white/10 transition">
                 Instagram
-              </a>
-              <a href="#contacto" onclick="showToast('🎵 Mira nuestras gallinas libres en TikTok: @quehuevones.cl')" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-qh-brown text-xs font-bold text-white border border-white/10 transition">
+              </button>
+              <button type="button" data-track-btn="Footer Social: TikTok" onclick="showToast('🎵 Mira nuestras gallinas libres en TikTok: @quehuevones.cl')" class="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-qh-brown text-xs font-bold text-white border border-white/10 transition">
                 TikTok
-              </a>
-              <a href="https://wa.me/56987654321?text=%C2%A1Hola!%20Quiero%20pedir%20mis%20bandejas%20de%20Qu%C3%A9%20Huevones" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 hover:text-qh-navyDark text-xs font-bold text-emerald-300 border border-emerald-500/30 transition">
+              </button>
+              <button type="button" data-track-btn="Footer Social: WhatsApp" onclick="triggerDirectWhatsAppCheckout('Footer: Botón WhatsApp')" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 hover:text-qh-navyDark text-xs font-bold text-emerald-300 border border-emerald-500/30 transition">
                 WhatsApp
-              </a>
+              </button>
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Derechos Reservados -->
+      <!-- Derechos Reservados + Botón Discreto "Entrar" en la esquina del Footer -->
       <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
         <p>© 2026 <strong class="text-white">QUÉ HUEVONES: ¡Hay que tener de estos!</strong> Todos los derechos reservados.</p>
-        <p>Hecho con huevos de verdad 🥚🥊 • Gallinas 100% Libres • Chile</p>
+        <div class="flex items-center gap-4">
+          <span>Hecho con huevos de verdad 🥚🥊 • Chile</span>
+          <button type="button" onclick="openAdminLoginModal()"
+                  class="text-[11px] text-slate-500 hover:text-qh-brownLight underline decoration-dotted underline-offset-4 transition flex items-center gap-1">
+            <span>🔒 Entrar</span>
+          </button>
+        </div>
       </div>
     </div>
   </footer>
 
   <!-- ========================================================================
-       MODAL INTERACTIVO DE CONFIRMACIÓN RÁPIDA ("PEDIR AL TIRO" / COMPROBANTE)
+       DRAWER LATERAL DEL CARRITO DE COMPRAS Y CHECKOUT WHATSAPP DIRECTO
        ======================================================================== -->
-  <div id="order-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/80 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-2 border-qh-brown relative animate-yolk-pop">
-      <button type="button" onclick="closeOrderModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-qh-bone hover:bg-slate-200 text-qh-navy font-bold flex items-center justify-center" aria-label="Cerrar modal">
+  <div id="cart-drawer-backdrop" class="fixed inset-0 z-50 hidden bg-qh-navyDark/75 backdrop-blur-sm">
+    <aside id="cart-drawer-panel" class="ml-auto w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto border-l-2 border-qh-brown">
+      
+      <!-- Cabecera del Drawer -->
+      <div class="p-5 sm:p-6 bg-qh-navy text-white flex items-center justify-between sticky top-0 z-10 border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-qh-brown text-white flex items-center justify-center text-xl shadow">🛒</span>
+          <div>
+            <h3 class="font-display font-extrabold text-lg leading-tight">Tu Carrito Huevón</h3>
+            <p id="drawer-subtitle-count" class="text-xs text-qh-brownLight">1 bandeja seleccionada</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCartDrawer()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar carrito">
+          ✕
+        </button>
+      </div>
+
+      <!-- Cuerpo del Carrito -->
+      <div class="p-5 sm:p-6 space-y-5 flex-1">
+        
+        <!-- Selector de Tipo de Pedido en el Carrito: Pedido Único vs Pedido Fijo Semanal -->
+        <div>
+          <span class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+            Tipo de Pedido:
+          </span>
+          <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-qh-bone border border-slate-200">
+            <button type="button" id="type-btn-unico-drawer" onclick="setOrderType('Pedido Único')" data-track-btn="Drawer: Pedido Único"
+                    class="py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-qh-navy text-white shadow transition">
+              1️⃣ Pedido Único
+            </button>
+            <button type="button" id="type-btn-semanal-drawer" onclick="setOrderType('Pedido Fijo Semanal')" data-track-btn="Drawer: Pedido Fijo Semanal"
+                    class="py-2.5 px-3 rounded-xl font-display font-bold text-xs text-qh-navy hover:bg-white transition">
+              🔁 Pedido Fijo Semanal
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de Productos en el Carrito -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Bandejas en tu pedido:</span>
+            <button type="button" onclick="clearOrderCart()" class="text-[11px] font-bold text-slate-400 hover:text-red-600">Vaciar</button>
+          </div>
+          <div id="drawer-items-container" class="space-y-2.5">
+            <!-- Renderizado por app.js -->
+          </div>
+        </div>
+
+        <!-- Agregar otra bandeja rápido desde el Drawer -->
+        <div class="p-3.5 rounded-2xl bg-qh-bone border border-slate-200">
+          <label for="drawer-quick-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
+            + Sumar otro formato al carrito:
+          </label>
+          <div class="flex gap-2">
+            <select id="drawer-quick-select" class="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-300 text-qh-navy text-xs font-semibold">
+              <option value="campo-30">Campo 30 un. ($8.900)</option>
+              <option value="campo-12">Campo 12 un. ($4.200)</option>
+              <option value="campo-60">Campo 60 un. ($16.900)</option>
+              <option value="blanco-30">Blanco 30 un. ($7.600)</option>
+              <option value="blanco-12">Blanco 12 un. ($3.600)</option>
+              <option value="blanco-60">Blanco 60 un. ($14.500)</option>
+            </select>
+            <button type="button" onclick="addFromDrawerSelect()" data-track-btn="Drawer: + Añadir Formato"
+                    class="px-3.5 py-2 rounded-xl bg-qh-navy text-white font-bold text-xs whitespace-nowrap">
+              + Sumar
+            </button>
+          </div>
+        </div>
+
+        <!-- Subtotal del Carrito -->
+        <div class="p-4 rounded-2xl bg-qh-bone border border-slate-200 flex items-center justify-between">
+          <div>
+            <span id="drawer-mode-label" class="text-[11px] font-extrabold uppercase text-qh-brown block">Pedido Único</span>
+            <span id="drawer-total-eggs" class="text-xs font-bold text-slate-600">30 huevos calibre Extra</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[11px] text-slate-500 block">Subtotal:</span>
+            <span id="drawer-subtotal" class="font-display font-extrabold text-2xl text-qh-navy">$8.900</span>
+          </div>
+        </div>
+
+        <!-- Recuadro Destacado de WhatsApp Directo sin llenar formularios -->
+        <div class="rounded-2xl bg-qh-navy text-white p-5 border-2 border-emerald-500 shadow-xl space-y-3">
+          <p class="font-display font-extrabold text-base sm:text-lg text-white leading-snug">
+            ¿Prefieres pedir directo por WhatsApp sin llenar nada?
+          </p>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Te abrimos el chat con tu pedido listo. Solo completas tu nombre y dirección al enviarlo:
+          </p>
+          <button type="button"
+                  onclick="triggerDirectWhatsAppCheckout('Drawer Carrito: Quiero pedir mi bandeja directo')"
+                  data-track-btn="Drawer Botón Verde: Quiero pedir mi bandeja directo"
+                  class="w-full py-4 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-lg flex items-center justify-center gap-2 transition-all pulse-whatsapp">
+            <span>📲 Quiero pedir mi bandeja directo</span>
+          </button>
+        </div>
+
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE LOGIN ADMINISTRATIVO (JUANJO / MORENSEX)
+       ======================================================================== -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-qh-brown relative animate-yolk-pop">
+      <button type="button" onclick="closeAdminLoginModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-qh-bone hover:bg-slate-200 text-qh-navy font-bold flex items-center justify-center" aria-label="Cerrar login">
         ✕
       </button>
 
-      <div class="flex items-center gap-3 mb-4">
-        <span class="w-12 h-12 rounded-2xl bg-qh-brown text-white flex items-center justify-center text-2xl shadow">🥊</span>
+      <div class="flex items-center gap-3 mb-5">
+        <span class="w-12 h-12 rounded-2xl bg-qh-navy text-qh-brownLight flex items-center justify-center text-2xl shadow">🔐</span>
         <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brown">¡Tremendo Pedido!</span>
-          <h3 id="modal-title" class="font-display font-extrabold text-2xl text-qh-navy">Resumen Listo para Despacho</h3>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-qh-brown">Acceso Exclusivo Socios</span>
+          <h3 class="font-display font-extrabold text-2xl text-qh-navy">Entrar al Dashboard</h3>
         </div>
       </div>
 
-      <div id="modal-body" class="p-4 rounded-2xl bg-qh-bone border border-slate-200 text-sm text-qh-navy space-y-2 mb-6">
-        <!-- Detalles del pedido inyectados por JS -->
-      </div>
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label for="admin-username" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1">
+            Usuario
+          </label>
+          <input type="text" id="admin-username" required autocomplete="username" placeholder="Juanjo o Morensex"
+                 class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white" />
+        </div>
 
-      <div class="flex flex-col sm:flex-row gap-3">
-        <a id="modal-whatsapp-link" href="#" target="_blank" rel="noopener noreferrer"
-           class="flex-1 py-3.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-qh-navyDark font-display font-extrabold text-sm text-center shadow-lg transition">
-          💬 Confirmar Ahora en WhatsApp
-        </a>
-        <button type="button" onclick="closeOrderModalAndScrollForm()"
-                class="py-3.5 px-5 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-bold text-sm transition">
-          Editar Datos de Envío
+        <div>
+          <label for="admin-password" class="block text-xs font-extrabold uppercase tracking-wider text-qh-navy mb-1">
+            Contraseña
+          </label>
+          <input type="password" id="admin-password" required autocomplete="current-password" placeholder="1 2 3"
+                 class="w-full px-4 py-3 rounded-xl bg-qh-bone border border-slate-300 text-qh-navy text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown focus:bg-white" />
+        </div>
+
+        <p id="admin-login-error" class="hidden text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+          Credenciales incorrectas. Acceso exclusivo para Juanjo y Morensex.
+        </p>
+
+        <button type="submit"
+                class="w-full py-3.5 px-6 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-extrabold text-sm shadow-lg transition">
+          Iniciar Sesión en Dashboard →
         </button>
-      </div>
+      </form>
     </div>
   </div>
 
   <!-- Toast de Notificación Flotante -->
   <div id="toast-notification" class="fixed bottom-5 right-5 z-50 hidden items-center gap-3 px-5 py-3.5 rounded-2xl bg-qh-navy text-white shadow-2xl border border-qh-brown">
     <span class="text-xl">🥚</span>
-    <span id="toast-message" class="text-xs sm:text-sm font-bold">Bandeja agregada a tu pedido</span>
+    <span id="toast-message" class="text-xs sm:text-sm font-bold">Bandeja agregada a tu carrito</span>
   </div>
 
-  <!-- Script Principal -->
+  <!-- Script Fullstack Principal -->
   <script src="app.js"></script>
 </body>
 </html>
