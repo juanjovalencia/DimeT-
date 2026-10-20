@@ -24,8 +24,8 @@ const PRODUCTS = [
     name: 'Docena de Campo',
     format: 'Docena (12 un.)',
     eggsCount: 12,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '63g – 68g por huevo',
+    caliberBadge: 'Calibre Primera / Tamaño Grande',
+    qualityNote: 'Huevos de Selección Grande • Yema dorada y cáscara firme',
     price: 4200,
     badge: 'Ideal para Probar',
     popular: false,
@@ -39,13 +39,13 @@ const PRODUCTS = [
     name: 'Bandeja Familiar de Campo',
     format: 'Bandeja Familiar (30 un.)',
     eggsCount: 30,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '64g – 69g por huevo',
+    caliberBadge: 'Calibre Primera / Tamaño Grande',
+    qualityNote: 'Huevos de Selección Grande • Yema dorada y cáscara firme',
     price: 8900,
     badge: '🔥 El Más Vendido',
     popular: true,
-    description: 'Nuestra bandeja campeona de 30 huevos de campo calibre Extra. El formato favorito para desayunos potentes toda la semana.',
-    features: ['Mejor relación precio/calidad', 'Calibre Extra seleccionado', 'Recolección del día (<24 hrs)']
+    description: 'Nuestra bandeja campeona de 30 huevos de campo de Selección Grande. El formato favorito para desayunos potentes toda la semana.',
+    features: ['Mejor relación precio/calidad', 'Calibre Primera / Tamaño Grande', 'Recolección del día (<24 hrs)']
   },
   {
     id: 'campo-60',
@@ -54,12 +54,12 @@ const PRODUCTS = [
     name: 'Caja Mayorista de Campo',
     format: 'Caja Mayorista (60 un.)',
     eggsCount: 60,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '64g – 69g por huevo',
+    caliberBadge: 'Huevos de Selección Grande',
+    qualityNote: 'Calibre Primera / Tamaño Grande • Cáscara marrón firme',
     price: 16900,
     badge: '🚚 Envío Gratis Incluido',
     popular: false,
-    description: '2 bandejas completas (60 unidades) de huevos de campo peso pesado. Pensado para familias deportistas, repostería o negocios.',
+    description: '2 bandejas completas (60 unidades) de huevos de campo de Selección Grande. Pensado para familias deportistas, repostería o negocios.',
     features: ['Ahorro mayorista directo', 'Despacho prioritario gratis', 'Garantía Cero Quebrados']
   },
   {
@@ -69,12 +69,12 @@ const PRODUCTS = [
     name: 'Docena Blanca Seleccionada',
     format: 'Docena (12 un.)',
     eggsCount: 12,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '63g – 68g por huevo',
+    caliberBadge: 'Calibre Primera / Tamaño Grande',
+    qualityNote: 'Huevos de Selección Grande • Clara densa y cáscara limpia',
     price: 3600,
     badge: 'Frescura Total',
     popular: false,
-    description: '12 huevos blancos seleccionados uno a uno por tamaño y frescura. Clara densa ideal para batidos, merengues y sartén.',
+    description: '12 huevos blancos seleccionados uno a uno por calidad y frescura. Clara densa ideal para batidos, merengues y sartén.',
     features: ['Alimentación 100% grano natural', 'Clara firme de alta proteína', 'Empaque protector reciclable']
   },
   {
@@ -84,13 +84,13 @@ const PRODUCTS = [
     name: 'Bandeja Familiar Blanca',
     format: 'Bandeja Familiar (30 un.)',
     eggsCount: 30,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '63g – 68g por huevo',
+    caliberBadge: 'Calibre Primera / Tamaño Grande',
+    qualityNote: 'Huevos de Selección Grande • Yema firme y sabor puro',
     price: 7600,
     badge: '⭐ Favorito en Cocina',
     popular: false,
-    description: '30 huevos blancos calibre Extra con yema firme y sabor limpio. Rinden el doble que un huevo pequeño de supermercado.',
-    features: ['30 unidades peso pesado', 'Sin jaulas ni hormonas', 'Frescura garantizada 24/48h']
+    description: '30 huevos blancos de Selección Grande con yema firme y sabor limpio. Ideales para la cocina familiar de todos los días.',
+    features: ['30 unidades de Selección Grande', 'Sin jaulas ni hormonas', 'Frescura garantizada 24/48h']
   },
   {
     id: 'blanco-60',
@@ -99,12 +99,12 @@ const PRODUCTS = [
     name: 'Caja Mayorista Blanca',
     format: 'Caja Mayorista (60 un.)',
     eggsCount: 60,
-    caliberBadge: 'Tamaño Extra / Tremendo Huevo',
-    weightRange: '63g – 68g por huevo',
+    caliberBadge: 'Huevos de Selección Grande',
+    qualityNote: 'Calibre Primera / Tamaño Grande • Clara firme y fresca',
     price: 14500,
     badge: '💪 Rendimiento Máximo',
     popular: false,
-    description: 'Pack ahorro de 60 huevos blancos seleccionados calibre Extra (2 bandejas de 30 un.) con despacho gratis a tu puerta.',
+    description: 'Pack ahorro de 60 huevos blancos de Selección Grande (2 bandejas de 30 un.) con despacho gratis a tu puerta.',
     features: ['Precio mayorista conveniente', 'Despacho gratis incluido', 'Reposición 2x1 ante roturas']
   }
 ];
@@ -203,10 +203,10 @@ const STORY_STEPS = [
   },
   {
     badge: 'Etapa 3 de 3 • Recolección Artesanal & Eco-Despacho',
-    stat: '🧺 Recolección manual cada mañana y selección calibre XL',
+    stat: '🧺 Recolección manual cada mañana y Selección Grande',
     title: 'Del nido a tu puerta en 24/48 horas sin intermediarios',
     description:
-      'Mientras un huevo industrial puede pasar semanas en bodegas antes de llegar a tu mesa, en Qué Huevones recolectamos a mano cada mañana, seleccionamos solo los de tamaño Extra ("Tremendo Huevo") y despachamos en bandejas biodegradables.',
+      'Mientras un huevo industrial puede pasar semanas en bodegas antes de llegar a tu mesa, en Qué Huevones recolectamos a mano cada mañana, escogemos Huevos de Selección Grande (Calibre Primera) y despachamos en bandejas biodegradables.',
     bullets: [
       {
         title: '♻️ Bandejas de Pulpa Retornables',
@@ -217,7 +217,7 @@ const STORY_STEPS = [
         text: 'Trato directo con nuestra granja familiar y garantía de reposición inmediata.'
       }
     ],
-    metrics: ['Calibre XL', '100% Eco', '24/48 hrs']
+    metrics: ['1ª Selección', '100% Eco', '24/48 hrs']
   }
 ];
 
@@ -560,7 +560,7 @@ function buildWhatsAppDirectMessage() {
     `Quiero pedir mis bandejas directo:\n\n` +
     `🛒 *DETALLE DEL PEDIDO:*\n` +
     `${lines.join('\n')}\n\n` +
-    `🥚 *Total Huevos:* ${totalEggs} un. (Calibre Extra)\n` +
+    `🥚 *Total Huevos:* ${totalEggs} un. (Calibre Primera / Selección Grande)\n` +
     `🔄 *Tipo de Pedido:* ${currentOrderType}\n` +
     `💰 *Subtotal:* ${formatCLP(subtotal)}\n\n` +
     `--- Completo mis datos aquí ---\n` +
@@ -825,11 +825,11 @@ function renderCatalog() {
               <span class="text-base">🥊</span>
               <div>
                 <span class="text-xs font-extrabold text-qh-navy block">${product.caliberBadge}</span>
-                <span class="text-[11px] text-slate-500">Peso certificado: ${product.weightRange}</span>
+                <span class="text-[11px] text-slate-600">${product.qualityNote}</span>
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-900 font-display font-extrabold text-xs">
-              XL
+            <span class="px-2.5 py-1 rounded-lg bg-amber-400/25 text-amber-950 font-display font-extrabold text-[11px] whitespace-nowrap">
+              1ª Selección
             </span>
           </div>
 
@@ -1075,20 +1075,70 @@ function syncOrderUI() {
   const drawerSubtitle = document.getElementById('drawer-subtitle-count');
   const waPreview = document.getElementById('whatsapp-live-preview');
 
-  // Sincronizar estado visual de los botones "Pedido Único" vs "Pedido Fijo Semanal"
+  // Sincronizar estado visual de las tarjetas "Pedido Único" vs "Pedido Fijo Semanal" (Alto Contraste)
   const isSemanal = currentOrderType === 'Pedido Fijo Semanal';
   const btnUnicoMain = document.getElementById('type-btn-unico-main');
   const btnSemanalMain = document.getElementById('type-btn-semanal-main');
   const btnUnicoDrawer = document.getElementById('type-btn-unico-drawer');
   const btnSemanalDrawer = document.getElementById('type-btn-semanal-drawer');
 
+  const unicoIcon = document.getElementById('unico-icon-box');
+  const unicoStatus = document.getElementById('unico-status-pill');
+  const unicoTitle = document.getElementById('unico-title');
+  const unicoSubbadge = document.getElementById('unico-subbadge');
+  const unicoDesc = document.getElementById('unico-desc');
+
+  const semanalIcon = document.getElementById('semanal-icon-box');
+  const semanalStatus = document.getElementById('semanal-status-pill');
+  const semanalTitle = document.getElementById('semanal-title');
+  const semanalSubbadge = document.getElementById('semanal-subbadge');
+  const semanalDesc = document.getElementById('semanal-desc');
+
   if (btnUnicoMain && btnSemanalMain) {
     if (!isSemanal) {
-      btnUnicoMain.className = 'p-4 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex items-start gap-3 shadow-md';
-      btnSemanalMain.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-qh-bone text-qh-navy hover:border-qh-brown/60 text-left transition-all flex items-start gap-3';
+      // Activo: Pedido Único (Fondo Azul Oscuro #1E293B con textos blancos/dorados de alto contraste)
+      btnUnicoMain.className = 'p-5 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-qh-brown/20';
+      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      if (unicoStatus) {
+        unicoStatus.className = 'px-3 py-1 rounded-full bg-amber-400 text-qh-navyDark text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
+        unicoStatus.textContent = '✓ Seleccionado';
+      }
+      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-white leading-tight';
+      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/15 text-amber-300 text-xs font-extrabold';
+      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed mt-2';
+
+      // Inactivo: Pedido Fijo Semanal (Fondo Blanco con textos oscuros #1E293B/#334155 muy legibles)
+      btnSemanalMain.className = 'p-5 rounded-2xl border-2 border-slate-300 bg-white hover:border-qh-brown text-qh-navy text-left transition-all flex flex-col justify-between gap-3 shadow-md';
+      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-qh-navy text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      if (semanalStatus) {
+        semanalStatus.className = 'px-3 py-1 rounded-full bg-slate-100 text-qh-navy border border-slate-300 text-[11px] font-extrabold uppercase tracking-wider';
+        semanalStatus.textContent = 'Elegir opción';
+      }
+      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-qh-navy leading-tight';
+      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-amber-400/30 text-amber-950 text-xs font-extrabold';
+      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-2';
     } else {
-      btnSemanalMain.className = 'p-4 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex items-start gap-3 shadow-md';
-      btnUnicoMain.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-qh-bone text-qh-navy hover:border-qh-brown/60 text-left transition-all flex items-start gap-3';
+      // Activo: Pedido Fijo Semanal (Fondo Azul Oscuro #1E293B con textos blancos/dorados de alto contraste)
+      btnSemanalMain.className = 'p-5 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-qh-brown/20';
+      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      if (semanalStatus) {
+        semanalStatus.className = 'px-3 py-1 rounded-full bg-amber-400 text-qh-navyDark text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
+        semanalStatus.textContent = '✓ Seleccionado';
+      }
+      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-white leading-tight';
+      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/15 text-amber-300 text-xs font-extrabold';
+      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed mt-2';
+
+      // Inactivo: Pedido Único (Fondo Blanco con textos oscuros #1E293B/#334155 muy legibles)
+      btnUnicoMain.className = 'p-5 rounded-2xl border-2 border-slate-300 bg-white hover:border-qh-brown text-qh-navy text-left transition-all flex flex-col justify-between gap-3 shadow-md';
+      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-qh-navy text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      if (unicoStatus) {
+        unicoStatus.className = 'px-3 py-1 rounded-full bg-slate-100 text-qh-navy border border-slate-300 text-[11px] font-extrabold uppercase tracking-wider';
+        unicoStatus.textContent = 'Elegir opción';
+      }
+      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-qh-navy leading-tight';
+      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-qh-brown/20 text-qh-navy text-xs font-extrabold';
+      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-2';
     }
   }
 
@@ -1158,12 +1208,12 @@ function syncOrderUI() {
   }
 
   if (formTotalEl) formTotalEl.textContent = formatCLP(totalAmount);
-  if (totalEggsEl) totalEggsEl.textContent = `${totalEggs} huevos calibre Extra en ${totalTrays} bandeja(s)`;
+  if (totalEggsEl) totalEggsEl.textContent = `${totalEggs} huevos de Selección Grande en ${totalTrays} bandeja(s)`;
   if (bannerTotalEl) bannerTotalEl.textContent = formatCLP(totalAmount);
   if (headerBadge) headerBadge.textContent = totalTrays;
   if (mobileBadge) mobileBadge.textContent = totalTrays;
   if (drawerSubtotal) drawerSubtotal.textContent = formatCLP(totalAmount);
-  if (drawerEggs) drawerEggs.textContent = `${totalEggs} huevos calibre Extra`;
+  if (drawerEggs) drawerEggs.textContent = `${totalEggs} huevos de Selección Grande`;
   if (drawerSubtitle) drawerSubtitle.textContent = `${totalTrays} bandeja(s) • ${currentOrderType}`;
   if (waPreview) waPreview.textContent = buildWhatsAppDirectMessage();
 }
@@ -1388,7 +1438,7 @@ function renderAdminDashboard() {
                 ${itemsSummary}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap font-bold text-slate-300">
-                ${order.totalEggs} huevos XL
+                ${order.totalEggs} huevos
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap font-display font-extrabold text-base text-amber-400">
                 ${formatCLP(order.subtotal)}
