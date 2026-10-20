@@ -1,5 +1,5 @@
 /**
- * QUÉ HUEVONES: ¡Hay que tener de estos!
+ * QUÉ HUEVONES: Para con los cuentos, prueba los verdaderos huevos.
  * Fullstack Frontend Architecture:
  * 1. Carrito Reactivo (Pedido Único vs Pedido Fijo Semanal) + Checkout Directo a WhatsApp (+56953930491)
  * 2. Sistema Oculto de Frontend Analytics en localStorage (clics en productos, botones, ignorados y conversiones)
@@ -1169,13 +1169,34 @@ function syncOrderUI() {
 }
 
 /* ==========================================================================
-   MÓDULO 3: SISTEMA DE LOGIN Y DASHBOARD ADMINISTRATIVO (JUANJO / MORENSEX)
+   MÓDULO 3: SISTEMA DE LOGIN Y DASHBOARD ADMINISTRATIVO
    ========================================================================== */
 
 const ALLOWED_ADMINS = {
   juanjo: 'Juanjo',
   morensex: 'Morensex'
 };
+
+const AUTH_KEY_HASHES = [
+  '7c8f5059290305cec8323d79521f0353c9ac308b60cb4c1976340d0ce4a121d5',
+  'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'
+];
+
+async function computeSHA256(str) {
+  if (window.crypto && crypto.subtle) {
+    const buffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return String(h);
+}
 
 function openAdminLoginModal() {
   const existingSession = localStorage.getItem(STORAGE_KEYS.ADMIN_SESSION);
@@ -1205,16 +1226,17 @@ function closeAdminLoginModal() {
   }
 }
 
-function handleAdminLogin(event) {
+async function handleAdminLogin(event) {
   event.preventDefault();
   const rawUser = (document.getElementById('admin-username').value || '').trim().toLowerCase();
   const rawPass = (document.getElementById('admin-password').value || '').trim();
   const errEl = document.getElementById('admin-login-error');
 
-  // Validar exclusivamente Juanjo o Morensex con contraseña "1 2 3" (o "123")
   const normalizedPass = rawPass.replace(/\s+/g, '');
+  const [hashA, hashB] = await Promise.all([computeSHA256(rawPass), computeSHA256(normalizedPass)]);
+
   const isValidUser = Object.prototype.hasOwnProperty.call(ALLOWED_ADMINS, rawUser);
-  const isValidPass = rawPass === '1 2 3' || normalizedPass === '123';
+  const isValidPass = AUTH_KEY_HASHES.includes(hashA) || AUTH_KEY_HASHES.includes(hashB);
 
   if (isValidUser && isValidPass) {
     const displayName = ALLOWED_ADMINS[rawUser];
