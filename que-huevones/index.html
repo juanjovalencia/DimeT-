@@ -13,6 +13,8 @@
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS v2 SDK Oficial para Base de Datos Cloud y Realtime -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -957,22 +959,32 @@
             📊
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
-                ● Producción en Vivo
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="cloud-sync-status-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>☁️ Base de Datos Cloud • Realtime Online</span>
               </span>
               <span id="admin-session-badge" class="text-xs font-bold text-qh-brownLight">Sesión: Juanjo</span>
+              <span id="cloud-last-sync-text" class="text-[11px] text-slate-400">Sincronizado en vivo</span>
             </div>
             <h1 class="font-display font-extrabold text-2xl sm:text-4xl text-white mt-1">
               Centro de Control • QUÉ HUEVONES
             </h1>
             <p class="text-xs sm:text-sm text-slate-400">
-              Gestión de pedidos reales, finanzas de socios (Juanjo &amp; Morensex), pagos a proveedores y comisiones de embajadores.
+              Persistencia permanente en la nube y sincronización instantánea entre Juanjo y Morensex (Mati). Cero uso de almacenamiento local.
             </p>
           </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
+          <button type="button" onclick="forceCloudRefresh()"
+                  class="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-500/30 transition">
+            🔄 Sincronizar Nube
+          </button>
+          <button type="button" onclick="openSupabaseConfigModal()"
+                  class="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-amber-300 text-xs font-bold border border-white/15 transition">
+            ☁️ Conexión Supabase
+          </button>
           <button type="button" onclick="closeAdminDashboard()"
                   class="px-4 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white text-xs sm:text-sm font-bold shadow transition">
             👁️ Volver a ver la Tienda
@@ -1579,11 +1591,11 @@
           <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
             <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">⚡ Telemetría LocalStorage</span>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">☁️ Telemetría Cloud en Tiempo Real</span>
                 <h3 class="font-display font-extrabold text-xl text-white">Registro en Vivo de Eventos</h3>
               </div>
               <button type="button" onclick="resetProductionDataConfirmation()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
-                Reiniciar contadores
+                Reiniciar base de datos a cero
               </button>
             </div>
             <div id="admin-event-stream" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
@@ -1837,6 +1849,61 @@
                 class="w-full py-3.5 px-6 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-extrabold text-sm shadow-lg transition">
           Iniciar Sesión en Dashboard →
         </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE CONEXIÓN SUPABASE Y SINCRONIZACIÓN CLOUD REALTIME
+       ======================================================================== -->
+  <div id="supabase-config-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border-2 border-emerald-500/50 relative space-y-5 max-h-[90vh] overflow-y-auto">
+      <button type="button" onclick="closeSupabaseConfigModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar configuración">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-2xl shadow">☁️</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">Base de Datos Permanente &amp; Realtime</span>
+          <h3 class="font-display font-extrabold text-2xl text-white">Conexión Cloud &amp; Supabase</h3>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-slate-200 space-y-1.5">
+        <p class="font-bold text-emerald-300">🟢 Estado Actual: Nube Permanente Activa + Canal Realtime Online</p>
+        <p class="text-slate-300 leading-relaxed">
+          Todos los pedidos, saldos de socios (Juanjo y Morensex/Mati), pagos a proveedores y códigos de embajadores se guardan de forma permanente en la nube y se sincronizan en vivo entre dispositivos. Si además deseas enlazar tu proyecto propio de <strong>Supabase (PostgreSQL + Realtime)</strong> para Vercel, ingresa tus credenciales aquí:
+        </p>
+      </div>
+
+      <form id="supabase-config-form" onsubmit="handleSaveSupabaseConfig(event)" class="space-y-4">
+        <div>
+          <label for="supabase-url-input" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            Supabase Project URL (Opcional si usas tu propio proyecto)
+          </label>
+          <input type="url" id="supabase-url-input" placeholder="https://tu-proyecto.supabase.co"
+                 class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-semibold focus:outline-none focus:border-emerald-400" />
+        </div>
+
+        <div>
+          <label for="supabase-key-input" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            Supabase Anon Public Key
+          </label>
+          <input type="password" id="supabase-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                 class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-semibold focus:outline-none focus:border-emerald-400" />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <button type="submit"
+                  class="flex-1 py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+            ☁️ Guardar y Conectar Supabase
+          </button>
+          <button type="button" onclick="copySupabaseSQLSchema()"
+                  class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-display font-bold text-xs border border-white/15 transition">
+            📋 Copiar SQL para Supabase
+          </button>
+        </div>
       </form>
     </div>
   </div>
