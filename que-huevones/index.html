@@ -96,7 +96,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
           <span id="header-cart-text">Carrito</span>
-          <span id="header-cart-badge" class="px-2 py-0.5 text-[11px] rounded-full bg-qh-brown text-white font-extrabold">1</span>
+          <span id="header-cart-badge" class="px-2 py-0.5 text-[11px] rounded-full bg-qh-brown text-white font-extrabold">0</span>
         </button>
 
         <!-- Botón directo destacado: Pide por WhatsApp (Ejecuta Checkout con lo del carrito) -->
@@ -108,7 +108,7 @@
           <span>Pide por WhatsApp</span>
         </button>
 
-        <!-- Botón muy discreto "Entrar" para los dueños (Juanjo / Morensex) -->
+        <!-- Botón muy discreto "Entrar" para acceso administrativo -->
         <button type="button" onclick="openAdminLoginModal()" id="navbar-admin-btn"
                 class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center gap-1"
                 title="Acceso Dueños">
@@ -125,7 +125,7 @@
           <svg class="w-5 h-5 text-qh-brownLight" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
-          <span id="mobile-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-qh-brown text-white text-[10px] font-extrabold flex items-center justify-center">1</span>
+          <span id="mobile-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-qh-brown text-white text-[10px] font-extrabold flex items-center justify-center">0</span>
         </button>
 
         <button id="mobile-menu-btn" type="button" data-track-btn="Mobile: Toggle Menu" class="p-2.5 rounded-xl bg-white/10 text-qh-bone hover:bg-white/20 focus:outline-none" aria-label="Abrir menú de navegación" aria-expanded="false">
@@ -597,7 +597,7 @@
           <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-4 lg:pt-0 border-white/10">
             <div class="text-left lg:text-right">
               <span class="text-xs text-slate-400 block">Subtotal en tu carrito:</span>
-              <span id="summary-banner-total" class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400">$8.900</span>
+              <span id="summary-banner-total" class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400">$0</span>
             </div>
             <button type="button" onclick="openCartDrawer()" data-track-btn="Banner Catálogo: Abrir Carrito"
                     class="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-lg transition-all flex items-center gap-2">
@@ -807,11 +807,11 @@
                   <span id="order-mode-pill" class="inline-block px-2.5 py-0.5 rounded-md bg-qh-navy text-qh-brownLight text-[11px] font-extrabold uppercase tracking-wider mb-1">
                     Modalidad: Pedido Único
                   </span>
-                  <span id="order-total-eggs" class="text-xs font-bold text-slate-600 block">30 huevos de Selección Grande</span>
+                  <span id="order-total-eggs" class="text-xs font-bold text-slate-600 block">0 huevos de Selección Grande</span>
                 </div>
                 <div class="text-right">
                   <span class="text-xs font-bold text-slate-500 block">Subtotal Estimado:</span>
-                  <span id="order-form-total" class="font-display font-extrabold text-3xl text-qh-navy">$8.900</span>
+                  <span id="order-form-total" class="font-display font-extrabold text-3xl text-qh-navy">$0</span>
                 </div>
               </div>
             </div>
@@ -833,6 +833,18 @@
               <p class="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Tu mensaje ya lleva armadas tus bandejas, cantidades, modalidad (<strong id="wa-box-mode-text" class="text-amber-400">Pedido Único</strong>) y el subtotal. Solo presiona el botón verde y completa tu nombre y dirección directo en el chat:
               </p>
+
+              <!-- Input de Código de Embajador justo antes del botón verde de WhatsApp -->
+              <div class="mt-4 p-4 rounded-2xl bg-white/10 border border-white/15">
+                <label for="ambassador-code-main" class="block text-xs sm:text-sm font-extrabold text-amber-300 mb-2">
+                  🤝 ¿Vienes de parte de un embajador? Ingresa su código aquí
+                </label>
+                <input type="text"
+                       id="ambassador-code-main"
+                       oninput="handleAmbassadorInput(this.value)"
+                       placeholder="Ej: código o nombre de tu embajador (opcional)"
+                       class="w-full px-4 py-3 rounded-xl bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs sm:text-sm font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-400 transition" />
+              </div>
 
               <!-- Botón Verde Grande de WhatsApp Solicitado -->
               <button type="button"
@@ -947,7 +959,7 @@
           <div>
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
-                ● Panel Administrativo Activo
+                ● Producción en Vivo
               </span>
               <span id="admin-session-badge" class="text-xs font-bold text-qh-brownLight">Sesión: Juanjo</span>
             </div>
@@ -955,16 +967,12 @@
               Centro de Control • QUÉ HUEVONES
             </h1>
             <p class="text-xs sm:text-sm text-slate-400">
-              Monitoreo en tiempo real de ventas estimadas, pedidos hacia WhatsApp (+56953930491) y analítica de comportamiento de usuarios.
+              Gestión de pedidos reales, finanzas de socios (Juanjo &amp; Morensex), pagos a proveedores y comisiones de embajadores.
             </p>
           </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" onclick="simulateSampleTraffic()"
-                  class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-qh-brownLight text-xs font-bold border border-white/10 transition">
-            ⚡ + Simular Visita/Pedido Demo
-          </button>
           <button type="button" onclick="closeAdminDashboard()"
                   class="px-4 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white text-xs sm:text-sm font-bold shadow transition">
             👁️ Volver a ver la Tienda
@@ -976,61 +984,90 @@
         </div>
       </div>
 
-      <!-- 1. KPIs DE VENTAS ESTIMADAS Y CONVERSIÓN -->
+      <!-- Barra de Pestañas / Navegación del Panel de Administración -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 rounded-2xl bg-qh-navy border border-white/10 shadow-lg">
+        <button type="button" id="admin-tab-all" onclick="switchAdminTab('all')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-qh-brown text-white shadow transition">
+          🌐 Vista Completa
+        </button>
+        <button type="button" id="admin-tab-pedidos" onclick="switchAdminTab('pedidos')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
+          📦 Control de Pedidos
+        </button>
+        <button type="button" id="admin-tab-finanzas" onclick="switchAdminTab('finanzas')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
+          💰 Finanzas y Saldos
+        </button>
+        <button type="button" id="admin-tab-embajadores" onclick="switchAdminTab('embajadores')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
+          🤝 Embajadores y Comisiones
+        </button>
+        <button type="button" id="admin-tab-analitica" onclick="switchAdminTab('analitica')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
+          🖱️ Analítica Web
+        </button>
+      </div>
+
+      <!-- 1. KPIs PRINCIPALES EN CERO ABSOLUTO HASTA RECIBIR DATOS REALES -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Ventas Estimadas (Pedidos)</span>
+            <span>Ventas Aprobadas / Totales</span>
             <span class="text-lg">💰</span>
           </div>
           <p id="kpi-total-revenue" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-2">$0</p>
           <p id="kpi-monthly-projection" class="text-xs text-emerald-400 font-semibold mt-1">
-            Proyección mensual c/semanales: $0
+            En espera de pedidos: $0
           </p>
         </div>
 
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Pedidos Generados</span>
+            <span>Pedidos Registrados</span>
             <span class="text-lg">📲</span>
           </div>
           <p id="kpi-total-orders" class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-2">0</p>
           <p id="kpi-orders-breakdown" class="text-xs text-qh-brownLight font-semibold mt-1">
-            0 Fijos Semanales • 0 Únicos
+            0 Aprobados • 0 Pendientes
           </p>
         </div>
 
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Tasa de Conversión</span>
-            <span class="text-lg">🎯</span>
+            <span>Saldos Socios / Proveedores</span>
+            <span class="text-lg">🏦</span>
           </div>
-          <p id="kpi-conversion-rate" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">0%</p>
-          <p id="kpi-funnel-summary" class="text-xs text-slate-300 mt-1">
-            De visitas a checkout WhatsApp
+          <p id="kpi-partners-total" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
+          <p id="kpi-suppliers-total" class="text-xs text-slate-300 mt-1">
+            Pagado a proveedores: $0
           </p>
         </div>
 
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Interacciones Capturadas</span>
-            <span class="text-lg">🖱️</span>
+            <span>Comisiones Embajadores</span>
+            <span class="text-lg">🤝</span>
           </div>
-          <p id="kpi-total-clicks" class="font-display font-extrabold text-3xl sm:text-4xl text-qh-brownLight mt-2">0</p>
-          <p id="kpi-top-product-mini" class="text-xs text-slate-300 mt-1 truncate">
-            Más visto: —
+          <p id="kpi-ambassadors-commission" class="font-display font-extrabold text-3xl sm:text-4xl text-qh-brownLight mt-2">$0</p>
+          <p id="kpi-ambassadors-count" class="text-xs text-slate-300 mt-1 truncate">
+            0 embajadores activos • 0 con código
           </p>
         </div>
       </div>
 
-      <!-- 2. SEGUIMIENTO DE PEDIDOS (TABLA ORDENADA CON FILTROS) -->
-      <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+      <!-- ====================================================================
+           MÓDULO A: CONTROL DE PEDIDOS Y APROBACIÓN DE CÓDIGO DE EMBAJADOR
+           ==================================================================== -->
+      <div id="admin-section-pedidos" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📦 Seguimiento Comercial</span>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📦 Panel de Control de Pedidos</span>
             <h2 class="font-display font-extrabold text-2xl text-white mt-0.5">
-              Historial de Pedidos Generados hacia WhatsApp
+              Seguimiento, Aprobación Manual y Confirmación de Embajador
             </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Aprueba manualmente los pedidos cerrados por WhatsApp y confirma o asigna el código del embajador para acreditar su comisión automáticamente.
+            </p>
           </div>
 
           <!-- Filtros para ordenar y filtrar la tabla de pedidos -->
@@ -1058,16 +1095,66 @@
           </div>
         </div>
 
+        <!-- Formulario Rápido: Ingresar / Registrar un Pedido recibido directo por WhatsApp -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-qh-navyDark/90 border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+              ➕ Registrar Pedido Recibido por WhatsApp Manualmente
+            </span>
+            <span class="text-[11px] text-slate-400">Comisión automática: Docena $800 • Bandeja 30 un. $2.000 • Caja 60 un. $4.000</span>
+          </div>
+          <form id="admin-manual-order-form" onsubmit="handleCreateManualOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+            <div>
+              <label for="manual-order-product" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Formato</label>
+              <select id="manual-order-product" class="w-full px-3 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white">
+                <option value="campo-30">Campo 30 huevos ($8.900)</option>
+                <option value="campo-12">Campo Docena 12 un. ($4.200)</option>
+                <option value="campo-60">Campo Mayorista 60 un. ($16.900)</option>
+                <option value="blanco-30">Blanco 30 huevos ($7.600)</option>
+                <option value="blanco-12">Blanco Docena 12 un. ($3.600)</option>
+                <option value="blanco-60">Blanco Mayorista 60 un. ($14.500)</option>
+              </select>
+            </div>
+            <div>
+              <label for="manual-order-qty" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Cantidad</label>
+              <input id="manual-order-qty" type="number" min="1" max="100" value="1" required
+                     class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white" />
+            </div>
+            <div>
+              <label for="manual-order-type" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Modalidad</label>
+              <select id="manual-order-type" class="w-full px-3 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white">
+                <option value="Pedido Único">1️⃣ Pedido Único</option>
+                <option value="Pedido Fijo Semanal">🔁 Pedido Fijo Semanal</option>
+              </select>
+            </div>
+            <div>
+              <label for="manual-order-client" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Cliente (Opcional)</label>
+              <input id="manual-order-client" type="text" placeholder="Ej: Cliente WhatsApp"
+                     class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs text-white placeholder-slate-500" />
+            </div>
+            <div>
+              <label for="manual-order-ambassador" class="block text-[10px] font-bold uppercase text-amber-300 mb-1">Código Embajador</label>
+              <input id="manual-order-ambassador" type="text" placeholder="Ej: MATI10 (opcional)"
+                     class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-amber-400/40 text-xs font-bold text-amber-300 uppercase placeholder-slate-500" />
+            </div>
+            <div>
+              <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition">
+                ✅ Crear y Aprobar
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 <th class="py-3 px-4">ID / Fecha</th>
-                <th class="py-3 px-4">Tipo de Pedido</th>
+                <th class="py-3 px-4">Modalidad</th>
                 <th class="py-3 px-4">Detalle de Bandejas</th>
-                <th class="py-3 px-4">Total Huevos</th>
                 <th class="py-3 px-4">Subtotal</th>
-                <th class="py-3 px-4">Estado</th>
+                <th class="py-3 px-4">Código Embajador / Comisión</th>
+                <th class="py-3 px-4">Estado y Aprobación Manual</th>
               </tr>
             </thead>
             <tbody id="admin-orders-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
@@ -1077,85 +1164,431 @@
         </div>
       </div>
 
-      <!-- 3. ESTADÍSTICAS DE COMPORTAMIENTO (FRONTEND ANALYTICS) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- Rendimiento de Productos: Qué pincha la gente vs Qué productos ignoran (7 cols) -->
-        <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🥚 Comportamiento en Catálogo</span>
-              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
-                Productos Más Pinchados vs. Ignorados
-              </h3>
-            </div>
-            <div>
-              <label for="admin-sort-products" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Productos</label>
-              <select id="admin-sort-products" onchange="renderAdminDashboard()"
-                      class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
-                <option value="clicks-desc">🔥 Más pinchados primero</option>
-                <option value="clicks-asc">⚠️ Ignorados / Menos pinchados primero</option>
-                <option value="cart-desc">🛒 Más añadidos al carrito</option>
-              </select>
-            </div>
+      <!-- ====================================================================
+           MÓDULO B: 💰 FINANZAS Y SALDOS (SOCIOS Y PROVEEDORES)
+           ==================================================================== -->
+      <div id="admin-section-finanzas" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8">
+        <div class="border-b border-white/10 pb-5">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">💰 Módulo Financiero</span>
+          <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
+            Finanzas y Saldos (Socios y Proveedores)
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Control transparente de quién puso plata (aportes), quién pagó proveedores o gastos y el saldo acumulado a favor de cada socio.
+          </p>
+        </div>
+
+        <!-- 1. ESTADO DE CUENTA DE SOCIOS: Juanjo vs Morensex (Mati) -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 class="font-display font-extrabold text-xl text-white flex items-center gap-2">
+              <span>🤝 Estado de Cuenta de Socios</span>
+            </h3>
+            <span class="text-xs text-slate-400">
+              Los aportes de capital y los pagos hechos del bolsillo de cada socio suman automáticamente a su saldo a favor.
+            </span>
           </div>
 
-          <!-- Lista analítica de productos -->
-          <div id="admin-products-analytics" class="space-y-3.5">
-            <!-- Renderizado por app.js -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Tarjeta Socio 1: Juanjo -->
+            <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 border-2 border-amber-400/50 shadow-xl flex flex-col justify-between space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <span class="px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider">
+                    Socio Fundador
+                  </span>
+                  <h4 class="font-display font-extrabold text-2xl text-white mt-2">
+                    Saldo a favor de Juanjo
+                  </h4>
+                </div>
+                <span class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl font-extrabold">
+                  🥚
+                </span>
+              </div>
+
+              <div class="py-3 px-4 rounded-2xl bg-white/5 border border-white/10">
+                <span class="text-xs text-slate-400 block">Saldo total a favor actual:</span>
+                <p id="partner-balance-juanjo" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-1">$0</p>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Aportes</span>
+                  <strong id="partner-aportes-juanjo" class="text-emerald-400 font-display text-sm">$0</strong>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Pagó Gastos/Prov.</span>
+                  <strong id="partner-pagos-juanjo" class="text-amber-300 font-display text-sm">$0</strong>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Reembolsado</span>
+                  <strong id="partner-retiros-juanjo" class="text-slate-300 font-display text-sm">$0</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta Socio 2: Morensex (Mati) -->
+            <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 border-2 border-emerald-400/50 shadow-xl flex flex-col justify-between space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
+                    Socio Fundador
+                  </span>
+                  <h4 class="font-display font-extrabold text-2xl text-white mt-2">
+                    Saldo a favor de Morensex (Mati)
+                  </h4>
+                </div>
+                <span class="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-2xl font-extrabold">
+                  🥊
+                </span>
+              </div>
+
+              <div class="py-3 px-4 rounded-2xl bg-white/5 border border-white/10">
+                <span class="text-xs text-slate-400 block">Saldo total a favor actual:</span>
+                <p id="partner-balance-morensex" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-1">$0</p>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Aportes</span>
+                  <strong id="partner-aportes-morensex" class="text-emerald-400 font-display text-sm">$0</strong>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Pagó Gastos/Prov.</span>
+                  <strong id="partner-pagos-morensex" class="text-amber-300 font-display text-sm">$0</strong>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Reembolsado</span>
+                  <strong id="partner-retiros-morensex" class="text-slate-300 font-display text-sm">$0</strong>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Ranking de Clics en Botones y Elementos Ignorados (5 cols) -->
-        <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+        <!-- 2. FORMULARIOS RÁPIDOS: APORTES DE SOCIOS Y PAGOS A PROVEEDORES -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Columna Izquierda (6 cols): Formulario Rápido de Aportes y Movimientos de Socios -->
+          <div class="lg:col-span-6 rounded-2xl bg-qh-navyDark p-5 sm:p-6 border border-white/10 space-y-5">
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🖱️ Mapa de Clics</span>
-              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
-                Botones Pinchados vs. Sin Clics
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">⚡ Formulario Rápido de Socios</span>
+              <h3 class="font-display font-extrabold text-lg sm:text-xl text-white mt-0.5">
+                Registrar Quién Puso Plata (Aportes) o Pagó Qué
               </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Actualiza al instante el saldo a favor de Juanjo o Morensex (Mati).
+              </p>
             </div>
+
+            <form id="partner-movement-form" onsubmit="handleAddPartnerMovement(event)" class="space-y-3.5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="partner-mov-who" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Socio</label>
+                  <select id="partner-mov-who" required
+                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
+                    <option value="Juanjo">Juanjo</option>
+                    <option value="Morensex">Morensex (Mati)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="partner-mov-type" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Tipo de Movimiento</label>
+                  <select id="partner-mov-type" required
+                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
+                    <option value="aporte">➕ Puso plata (Aporte de capital)</option>
+                    <option value="pago_directo">🧾 Pagó gasto / compra directa</option>
+                    <option value="reembolso">➖ Retiro / Reembolso de saldo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="partner-mov-date" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Fecha</label>
+                  <input id="partner-mov-date" type="date" required
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown" />
+                </div>
+                <div>
+                  <label for="partner-mov-amount" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Monto ($ CLP)</label>
+                  <input id="partner-mov-amount" type="number" min="1" step="1" required placeholder="Ej: 50000"
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+                </div>
+              </div>
+
+              <div>
+                <label for="partner-mov-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto / Qué pagó o aportó</label>
+                <input id="partner-mov-concept" type="text" required placeholder="Ej: Aporte inicial para compra de bandejas / Pago bencina reparto"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+              </div>
+
+              <button type="submit"
+                      class="w-full py-3 px-4 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+                💾 Guardar Movimiento y Actualizar Saldo de Socio
+              </button>
+            </form>
+
+            <!-- Historial de Movimientos de Socios -->
+            <div class="pt-3 border-t border-white/10 space-y-2">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Historial de Aportes y Movimientos de Socios
+              </span>
+              <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
+                      <th class="py-2 px-2">Fecha</th>
+                      <th class="py-2 px-2">Socio</th>
+                      <th class="py-2 px-2">Concepto</th>
+                      <th class="py-2 px-2 text-right">Monto</th>
+                      <th class="py-2 px-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-partner-movements-tbody" class="divide-y divide-white/10">
+                    <!-- Renderizado por app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha (6 cols): Registro de Pagos a Proveedores -->
+          <div class="lg:col-span-6 rounded-2xl bg-qh-navyDark p-5 sm:p-6 border border-white/10 space-y-5">
             <div>
-              <label for="admin-sort-buttons" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro</label>
-              <select id="admin-sort-buttons" onchange="renderAdminDashboard()"
-                      class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
-                <option value="most">Más clicados</option>
-                <option value="ignored">No pinchados / Menos clics</option>
-              </select>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🚚 Registro de Proveedores</span>
+              <h3 class="font-display font-extrabold text-lg sm:text-xl text-white mt-0.5">
+                Pagos a Proveedores
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Ingresa Fecha, Monto Pagado y Concepto. Si lo pagó un socio, su saldo a favor se actualiza automáticamente.
+              </p>
+            </div>
+
+            <form id="supplier-payment-form" onsubmit="handleAddSupplierPayment(event)" class="space-y-3.5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="supplier-payment-date" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Fecha</label>
+                  <input id="supplier-payment-date" type="date" required
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown" />
+                </div>
+                <div>
+                  <label for="supplier-payment-amount" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Monto Pagado ($ CLP)</label>
+                  <input id="supplier-payment-amount" type="number" min="1" step="1" required placeholder="Ej: 120000"
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="supplier-payment-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto</label>
+                  <input id="supplier-payment-concept" type="text" required placeholder="Ej: Compra partida 300 bandejas granja"
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+                </div>
+                <div>
+                  <label for="supplier-payment-payer" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">¿Quién lo pagó?</label>
+                  <select id="supplier-payment-payer"
+                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
+                    <option value="Juanjo">Pagó Juanjo (+ Suma a su saldo a favor)</option>
+                    <option value="Morensex">Pagó Morensex / Mati (+ Suma a su saldo a favor)</option>
+                    <option value="Caja">Pagado con Caja del Negocio (Sin afectar saldos)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit"
+                      class="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+                🧾 Registrar Pago a Proveedor
+              </button>
+            </form>
+
+            <!-- Tabla de Pagos a Proveedores -->
+            <div class="pt-3 border-t border-white/10 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Historial de Pagos a Proveedores
+                </span>
+                <span id="supplier-payments-total-badge" class="text-xs font-extrabold text-amber-400">Total: $0</span>
+              </div>
+              <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
+                      <th class="py-2 px-2">Fecha</th>
+                      <th class="py-2 px-2">Concepto</th>
+                      <th class="py-2 px-2">Pagado por</th>
+                      <th class="py-2 px-2 text-right">Monto Pagado</th>
+                      <th class="py-2 px-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-supplier-payments-tbody" class="divide-y divide-white/10">
+                    <!-- Renderizado por app.js -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <div id="admin-buttons-analytics" class="space-y-3 max-h-[430px] overflow-y-auto pr-1">
-            <!-- Renderizado por app.js -->
-          </div>
         </div>
-
       </div>
 
-      <!-- 4. EMBUDO DE CONVERSIÓN Y LOG DE EVENTOS EN TIEMPO REAL -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- Embudo (5 cols) -->
-        <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📈 Embudo de Conversión</span>
-          <h3 class="font-display font-extrabold text-xl text-white">Flujo de Usuario en la Página</h3>
-          <div id="admin-funnel-bars" class="space-y-4 pt-2">
-            <!-- Renderizado por app.js -->
+      <!-- ====================================================================
+           MÓDULO C: 🤝 SISTEMA DE EMBAJADORES Y COMISIONES
+           ==================================================================== -->
+      <div id="admin-section-embajadores" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🤝 Programa de Referidos</span>
+            <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
+              Embajadores y Comisiones
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+              Genera códigos únicos para cada embajador y calcula automáticamente cuánto se le debe pagar según los pedidos aprobados con su código.
+            </p>
+          </div>
+
+          <!-- Regla Proporcional Oficial de Comisiones -->
+          <div class="flex flex-wrap items-center gap-2 bg-qh-navyDark p-3 rounded-2xl border border-white/10 text-xs">
+            <span class="font-extrabold text-amber-400 uppercase px-2">Regla de Comisión:</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">🥚 Docena (12): <strong class="text-emerald-400">$800</strong></span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">📦 Bandeja (30): <strong class="text-emerald-400">$2.000</strong></span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">🏆 Caja (60): <strong class="text-emerald-400">$4.000</strong></span>
           </div>
         </div>
 
-        <!-- Últimas Interacciones Registradas (7 cols) -->
-        <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">⚡ Telemetría LocalStorage</span>
-              <h3 class="font-display font-extrabold text-xl text-white">Registro en Vivo de Eventos</h3>
+        <!-- Formulario para Crear Embajador y Generar Código Único -->
+        <div class="p-5 rounded-2xl bg-qh-navyDark border border-white/10 space-y-3">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight block">
+            ➕ Registrar Nuevo Embajador y Asignar Código Único
+          </span>
+          <form id="admin-ambassador-form" onsubmit="handleCreateAmbassador(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-4">
+              <label for="ambassador-name-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Nombre del Embajador</label>
+              <input id="ambassador-name-input" type="text" required placeholder="Ej: Cata Gómez / Seba Fit"
+                     oninput="suggestAmbassadorCode()"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
             </div>
-            <button type="button" onclick="resetAnalyticsToClean()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
-              Reiniciar contadores
-            </button>
+            <div class="sm:col-span-4">
+              <label for="ambassador-code-create" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Código Único Asignado</label>
+              <div class="flex gap-2">
+                <input id="ambassador-code-create" type="text" required placeholder="Ej: CATAHUEVOS"
+                       class="flex-1 px-3.5 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wider placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+                <button type="button" onclick="generateRandomAmbassadorCode()"
+                        class="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white whitespace-nowrap transition" title="Autogenerar código único">
+                  🎲 Generar
+                </button>
+              </div>
+            </div>
+            <div class="sm:col-span-4">
+              <button type="submit"
+                      class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+                🤝 Guardar Embajador y Código
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabla de Embajadores y Total Acumulado que se le debe pagar a cada uno -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4">Embajador</th>
+                <th class="py-3 px-4">Código Único</th>
+                <th class="py-3 px-4">Pedidos Aprobados</th>
+                <th class="py-3 px-4">Formatos Vendidos (12 / 30 / 60)</th>
+                <th class="py-3 px-4">Total Acumulado a Pagar</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-ambassadors-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+              <!-- Renderizado por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MÓDULO D: 🖱️ ESTADÍSTICAS DE COMPORTAMIENTO (FRONTEND ANALYTICS)
+           ==================================================================== -->
+      <div id="admin-section-analitica" class="admin-module-section space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Rendimiento de Productos: Qué pincha la gente vs Qué productos ignoran (7 cols) -->
+          <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🥚 Comportamiento en Catálogo</span>
+                <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                  Productos Más Pinchados vs. Ignorados
+                </h3>
+              </div>
+              <div>
+                <label for="admin-sort-products" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Productos</label>
+                <select id="admin-sort-products" onchange="renderAdminDashboard()"
+                        class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
+                  <option value="clicks-desc">🔥 Más pinchados primero</option>
+                  <option value="clicks-asc">⚠️ Ignorados / Menos pinchados primero</option>
+                  <option value="cart-desc">🛒 Más añadidos al carrito</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Lista analítica de productos -->
+            <div id="admin-products-analytics" class="space-y-3.5">
+              <!-- Renderizado por app.js -->
+            </div>
           </div>
-          <div id="admin-event-stream" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
-            <!-- Renderizado por app.js -->
+
+          <!-- Ranking de Clics en Botones y Elementos Ignorados (5 cols) -->
+          <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🖱️ Mapa de Clics</span>
+                <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                  Botones Pinchados vs. Sin Clics
+                </h3>
+              </div>
+              <div>
+                <label for="admin-sort-buttons" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro</label>
+                <select id="admin-sort-buttons" onchange="renderAdminDashboard()"
+                        class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
+                  <option value="most">Más clicados</option>
+                  <option value="ignored">No pinchados / Menos clics</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="admin-buttons-analytics" class="space-y-3 max-h-[430px] overflow-y-auto pr-1">
+              <!-- Renderizado por app.js -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- EMBUDO DE CONVERSIÓN Y LOG DE EVENTOS EN TIEMPO REAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <!-- Embudo (5 cols) -->
+          <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📈 Embudo de Conversión</span>
+            <h3 class="font-display font-extrabold text-xl text-white">Flujo de Usuario en la Página</h3>
+            <div id="admin-funnel-bars" class="space-y-4 pt-2">
+              <!-- Renderizado por app.js -->
+            </div>
+          </div>
+
+          <!-- Últimas Interacciones Registradas (7 cols) -->
+          <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">⚡ Telemetría LocalStorage</span>
+                <h3 class="font-display font-extrabold text-xl text-white">Registro en Vivo de Eventos</h3>
+              </div>
+              <button type="button" onclick="resetProductionDataConfirmation()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
+                Reiniciar contadores
+              </button>
+            </div>
+            <div id="admin-event-stream" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
+              <!-- Renderizado por app.js -->
+            </div>
           </div>
         </div>
       </div>
@@ -1256,7 +1689,7 @@
           <span class="w-10 h-10 rounded-xl bg-qh-brown text-white flex items-center justify-center text-xl shadow">🛒</span>
           <div>
             <h3 class="font-display font-extrabold text-lg leading-tight">Tu Carrito Huevón</h3>
-            <p id="drawer-subtitle-count" class="text-xs text-qh-brownLight">1 bandeja seleccionada</p>
+            <p id="drawer-subtitle-count" class="text-xs text-qh-brownLight">0 bandejas seleccionadas</p>
           </div>
         </div>
         <button type="button" onclick="closeCartDrawer()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar carrito">
@@ -1320,11 +1753,11 @@
         <div class="p-4 rounded-2xl bg-qh-bone border border-slate-200 flex items-center justify-between">
           <div>
             <span id="drawer-mode-label" class="text-[11px] font-extrabold uppercase text-qh-brown block">Pedido Único</span>
-            <span id="drawer-total-eggs" class="text-xs font-bold text-slate-600">30 huevos de Selección Grande</span>
+            <span id="drawer-total-eggs" class="text-xs font-bold text-slate-600">0 huevos seleccionados</span>
           </div>
           <div class="text-right">
             <span class="text-[11px] text-slate-500 block">Subtotal:</span>
-            <span id="drawer-subtotal" class="font-display font-extrabold text-2xl text-qh-navy">$8.900</span>
+            <span id="drawer-subtotal" class="font-display font-extrabold text-2xl text-qh-navy">$0</span>
           </div>
         </div>
 
@@ -1336,6 +1769,19 @@
           <p class="text-xs text-slate-300 leading-relaxed">
             Te abrimos el chat con tu pedido listo. Solo completas tu nombre y dirección al enviarlo:
           </p>
+
+          <!-- Input Código de Embajador (justo antes del botón verde de WhatsApp) -->
+          <div class="p-3 rounded-xl bg-white/10 border border-white/15 space-y-1.5">
+            <label for="ambassador-code-drawer" class="block text-[11px] font-extrabold text-amber-300">
+              🤝 ¿Vienes de parte de un embajador? Ingresa su código aquí
+            </label>
+            <input id="ambassador-code-drawer"
+                   type="text"
+                   oninput="handleAmbassadorInput(this.value)"
+                   placeholder="Ej: MATI10 o nombre del embajador (opcional)"
+                   class="w-full px-3 py-2 rounded-lg bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400 transition" />
+          </div>
+
           <button type="button"
                   onclick="triggerDirectWhatsAppCheckout('Drawer Carrito: Quiero pedir mi bandeja directo')"
                   data-track-btn="Drawer Botón Verde: Quiero pedir mi bandeja directo"
