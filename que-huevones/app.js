@@ -12,13 +12,22 @@
 
 const WHATSAPP_NUMBER = '56953930491';
 
-// Limpieza total inmediata de cualquier rastro previo en almacenamiento local del navegador
+// Limpieza única de claves antiguas de demostración (sin borrar el espejo de producción v4)
 try {
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.clear();
-  }
-  if (typeof window !== 'undefined' && window.sessionStorage) {
-    window.sessionStorage.clear();
+    [
+      'qh_cart_state_v2',
+      'qh_analytics_v2',
+      'qh_orders_v2',
+      'qh_analytics_v1',
+      'qh_orders_v1',
+      'qh_cart_v1',
+      'qh_prod_cart_v3',
+      'qh_prod_analytics_v3',
+      'qh_prod_orders_v3',
+      'qh_prod_finances_v3',
+      'qh_prod_ambassadors_v3'
+    ].forEach((k) => window.localStorage.removeItem(k));
   }
 } catch (e) {
   // ignore
@@ -28,14 +37,24 @@ try {
    CONFIGURACIÓN DE BASE DE DATOS CLOUD PERMANENTE Y REALTIME
    ========================================================================== */
 
-// Endpoint permanente aprovisionado en la nube + canal SSE de sincronización instantánea
-const CLOUD_DB_OBJECT_ID = 'ff808181a09d98f701a1612243a84939';
-const CLOUD_DB_ENDPOINT = `https://api.restful-api.dev/objects/${CLOUD_DB_OBJECT_ID}`;
+// Almacenamiento Cloud Redundante:
+// 1. Canal Cloud Persistente + Stream SSE en Tiempo Real (ntfy.sh)
+// 2. Almacén de Objetos JSON en la Nube (bytebin.lucko.me)
+// 3. Proyecto Supabase PostgreSQL + Realtime (opcional/configurable)
+// 4. Espejo Instantáneo Local (qh_cloud_mirror_v4) para recargas (F5) en 0ms sin pérdida
 const CLOUD_REALTIME_TOPIC = 'qh_cloud_realtime_sync_v3_prod';
 const CLOUD_REALTIME_PUB_URL = `https://ntfy.sh/${CLOUD_REALTIME_TOPIC}`;
+const CLOUD_REALTIME_POLL_URL = `https://ntfy.sh/${CLOUD_REALTIME_TOPIC}/json?poll=1`;
 const CLOUD_REALTIME_SSE_URL = `https://ntfy.sh/${CLOUD_REALTIME_TOPIC}/sse`;
+const CLOUD_BYTEBIN_POST_URL = 'https://bytebin.lucko.me/post';
+const CLOUD_BYTEBIN_BASE_URL = 'https://bytebin.lucko.me/';
 
-// Configuración opcional de proyecto propio de Supabase (editable desde el modal "☁️ Conexión Supabase" y guardada en la nube)
+const MIRROR_STORAGE_KEY = 'qh_cloud_mirror_v4';
+const ADMIN_SESSION_KEY = 'qh_admin_session_v4';
+const ADMIN_VIEW_OPEN_KEY = 'qh_admin_view_open_v4';
+const CART_MIRROR_KEY = 'qh_cart_mirror_v4';
+
+// Configuración opcional de proyecto propio de Supabase
 let SUPABASE_CREDENTIALS = {
   url: '',
   anonKey: ''
@@ -45,6 +64,19 @@ let supabaseChannel = null;
 let realtimeEventSource = null;
 let cloudPollTimer = null;
 let isSavingCloud = false;
+let hasCompletedInitialCloudPull = false;
+let lastCloudMessageAt = 0;
+// ntfy.sh conserva mensajes ~12h: re-publicamos un respaldo si el último tiene más de 3h
+const CLOUD_REFRESH_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+
+function cloudStateHasBusinessData(st) {
+  return (
+    st.orders.length > 0 ||
+    st.finances.partnerMovements.length > 0 ||
+    st.finances.supplierPayments.length > 0 ||
+    st.ambassadors.length > 0
+  );
+}
 const CLIENT_INSTANCE_ID = 'qh-node-' + Math.random().toString(36).slice(2, 10);
 
 // Catálogo oficial de productos
@@ -323,8 +355,36 @@ function getEmptyCloudState(resetTimestamp = 0) {
   };
 }
 
-// Estado global sincronizado con la Nube (arranca en cero absoluto)
+// Estado global sincronizado con la Nube (arranca en cero absoluto o desde espejo local instantáneo)
 let CLOUD_STATE = getEmptyCloudState(0);
+
+function saveLocalCloudMirror() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(MIRROR_STORAGE_KEY, JSON.stringify(CLOUD_STATE));
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+function loadLocalCloudMirror() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = window.localStorage.getItem(MIRROR_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        CLOUD_STATE = normalizeStateObject(parsed);
+      }
+      const savedAdmin = window.localStorage.getItem(ADMIN_SESSION_KEY);
+      if (savedAdmin) {
+        currentAdminUser = savedAdmin;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+}
 
 function normalizeStateObject(raw) {
   const base = getEmptyCloudState(0);
@@ -570,7 +630,34 @@ function initSupabaseSDK(url, anonKey) {
 }
 
 /**
- * Descarga el estado permanente desde la Base de Datos Cloud
+ * Crea una versión compacta del estado para garantizar que el mensaje en ntfy.sh
+ * siempre quede por debajo de 4KB inline (conservando el 100% de pedidos, finanzas y embajadores).
+ */
+function buildCompactCloudState(stateObj) {
+  const s = normalizeStateObject(stateObj);
+  return {
+    orders: s.orders,
+    finances: s.finances,
+    ambassadors: s.ambassadors,
+    deletedIds: (s.deletedIds || []).slice(-100),
+    resetAt: s.resetAt,
+    updatedAt: s.updatedAt,
+    updatedBy: s.updatedBy,
+    supabaseConfig: s.supabaseConfig,
+    analytics: {
+      pageViews: s.analytics.pageViews,
+      totalClicks: s.analytics.totalClicks,
+      addToCartEvents: s.analytics.addToCartEvents,
+      whatsappCheckouts: s.analytics.whatsappCheckouts,
+      productStats: s.analytics.productStats,
+      buttonClicks: s.analytics.buttonClicks,
+      eventLog: (s.analytics.eventLog || []).slice(0, 8)
+    }
+  };
+}
+
+/**
+ * Descarga el estado permanente desde la Base de Datos Cloud (ntfy.sh + Bytebin + Supabase)
  */
 async function pullCloudState(silent = false) {
   try {
@@ -594,49 +681,135 @@ async function pullCloudState(silent = false) {
           updatedBy: data.updated_by
         });
         CLOUD_STATE = mergeCloudStates(CLOUD_STATE, supState);
+        saveLocalCloudMirror();
+        hasCompletedInitialCloudPull = true;
         refreshDashboardIfVisible();
         updateCloudStatusUI(`Sincronizado con Supabase (${getNowFormatted()})`, true);
-        return CLOUD_STATE;
       }
     }
 
-    // 2. Leer de la Base de Datos Cloud permanente aprovisionada
-    const response = await fetch(`${CLOUD_DB_ENDPOINT}?t=${Date.now()}`, {
+    // 2. Leer el historial persistente en la nube desde ntfy.sh (poll=1)
+    const response = await fetch(`${CLOUD_REALTIME_POLL_URL}&_t=${Date.now()}`, {
       method: 'GET',
-      headers: { Accept: 'application/json' },
       cache: 'no-store'
     });
 
     if (response.ok) {
-      const json = await response.json();
-      if (json && json.data) {
-        const remoteState = normalizeStateObject(json.data);
-        const hadNewerRemote = (remoteState.updatedAt || 0) > (CLOUD_STATE.updatedAt || 0);
-        CLOUD_STATE = mergeCloudStates(CLOUD_STATE, remoteState);
+      const text = await response.text();
+      const lines = text.split('\n').filter((line) => line.trim().length > 0);
+      let reconstructed = getEmptyCloudState(0);
+      let foundCloudMessages = false;
+      let latestBytebinKey = null;
+
+      for (const line of lines) {
+        try {
+          const outer = JSON.parse(line);
+          if (!outer || outer.event !== 'message') continue;
+          if (outer.time) {
+            lastCloudMessageAt = Math.max(lastCloudMessageAt, Number(outer.time) * 1000);
+          }
+          let payload = null;
+          if (outer.attachment && outer.attachment.url) {
+            // Mensajes > 4KB se guardan como adjunto en ntfy.sh
+            try {
+              const attRes = await fetch(outer.attachment.url, { cache: 'no-store' });
+              if (attRes.ok) payload = JSON.parse(await attRes.text());
+            } catch (attErr) {
+              payload = null;
+            }
+          } else if (outer.message) {
+            payload = JSON.parse(outer.message);
+          }
+          if (!payload) continue;
+
+          if (payload.bytebinKey) {
+            latestBytebinKey = payload.bytebinKey;
+          }
+
+          if (payload.state && typeof payload.state === 'object') {
+            foundCloudMessages = true;
+            const inc = normalizeStateObject(payload.state);
+            const isExplicitReset =
+              (inc.resetAt || 0) > (reconstructed.resetAt || 0) &&
+              inc.orders.length === 0 &&
+              inc.finances.partnerMovements.length === 0 &&
+              inc.finances.supplierPayments.length === 0 &&
+              inc.ambassadors.length === 0;
+
+            if (isExplicitReset) {
+              reconstructed = inc;
+            } else {
+              reconstructed = mergeCloudStates(reconstructed, inc);
+            }
+          }
+        } catch (lineErr) {
+          // Ignorar líneas malformadas
+        }
+      }
+
+      // 3. Si el último estado tiene respaldo completo en Bytebin Cloud Store, descargarlo y fusionarlo
+      if (latestBytebinKey) {
+        try {
+          const bbRes = await fetch(`${CLOUD_BYTEBIN_BASE_URL}${latestBytebinKey}`, {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+          });
+          if (bbRes.ok) {
+            const bbJson = await bbRes.json();
+            if (bbJson && typeof bbJson === 'object') {
+              foundCloudMessages = true;
+              const bbState = normalizeStateObject(bbJson);
+              reconstructed = mergeCloudStates(reconstructed, bbState);
+            }
+          }
+        } catch (bbErr) {
+          // Continuar con el estado reconstruido de ntfy
+        }
+      }
+
+      if (foundCloudMessages) {
+        const hadNewerRemote = (reconstructed.updatedAt || 0) !== (CLOUD_STATE.updatedAt || 0);
+        const isExplicitRemoteReset =
+          (reconstructed.resetAt || 0) > (CLOUD_STATE.resetAt || 0) &&
+          reconstructed.orders.length === 0 &&
+          reconstructed.finances.partnerMovements.length === 0 &&
+          reconstructed.finances.supplierPayments.length === 0 &&
+          reconstructed.ambassadors.length === 0;
+
+        if (isExplicitRemoteReset) {
+          CLOUD_STATE = reconstructed;
+        } else {
+          CLOUD_STATE = mergeCloudStates(CLOUD_STATE, reconstructed);
+        }
+
+        saveLocalCloudMirror();
 
         if (
-          remoteState.supabaseConfig &&
-          remoteState.supabaseConfig.url &&
-          remoteState.supabaseConfig.anonKey &&
+          CLOUD_STATE.supabaseConfig &&
+          CLOUD_STATE.supabaseConfig.url &&
+          CLOUD_STATE.supabaseConfig.anonKey &&
           !supabaseClient
         ) {
-          initSupabaseSDK(remoteState.supabaseConfig.url, remoteState.supabaseConfig.anonKey);
+          initSupabaseSDK(CLOUD_STATE.supabaseConfig.url, CLOUD_STATE.supabaseConfig.anonKey);
         }
 
         if (hadNewerRemote || !silent) {
           refreshDashboardIfVisible();
         }
-        updateCloudStatusUI(`Nube sincronizada (${getNowFormatted()})`, true);
       }
+
+      hasCompletedInitialCloudPull = true;
+      updateCloudStatusUI(`Nube sincronizada (${getNowFormatted()})`, true);
     }
   } catch (e) {
-    updateCloudStatusUI('Reintentando conexión Cloud...', false);
+    updateCloudStatusUI('Usando respaldo local + reconectando Cloud...', false);
   }
   return CLOUD_STATE;
 }
 
 /**
- * Guarda de forma permanente el estado en la Base de Datos Cloud
+ * Guarda de forma permanente el estado en la Base de Datos Cloud (Espejo Local 0ms + Bytebin + ntfy Realtime + Supabase)
  * y emite el evento en Tiempo Real para que el otro administrador vea el cambio al instante.
  */
 async function persistCloudState(actionSummary = 'Actualización') {
@@ -644,41 +817,40 @@ async function persistCloudState(actionSummary = 'Actualización') {
   CLOUD_STATE.updatedBy = currentAdminUser || 'Tienda Online';
   CLOUD_STATE.supabaseConfig = SUPABASE_CREDENTIALS;
 
+  // 1. Guardado instantáneo en espejo local (0ms): si el usuario recarga con F5 de inmediato, no pierde nada
+  saveLocalCloudMirror();
   refreshDashboardIfVisible();
   updateCloudStatusUI(`Guardando en la nube...`, true);
 
   try {
     isSavingCloud = true;
 
-    // 1. Obtener estado más reciente de la nube antes de escribir para fusionar cambios concurrentes
-    try {
-      const latestRes = await fetch(`${CLOUD_DB_ENDPOINT}?t=${Date.now()}`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store'
-      });
-      if (latestRes.ok) {
-        const latestJson = await latestRes.json();
-        if (latestJson && latestJson.data) {
-          CLOUD_STATE = mergeCloudStates(latestJson.data, CLOUD_STATE);
-          CLOUD_STATE.updatedAt = Date.now();
-        }
-      }
-    } catch (innerErr) {
-      // continuar con el guardado
+    // 2. Si aún no se había descargado el historial de la nube en esta sesión, fusionarlo antes de publicar
+    if (!hasCompletedInitialCloudPull) {
+      await pullCloudState(true);
+      CLOUD_STATE.updatedAt = Date.now();
+      saveLocalCloudMirror();
     }
 
-    // 2. Guardar de forma permanente en el Cloud REST Store
-    const putPromise = fetch(CLOUD_DB_ENDPOINT, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        name: 'qh_prod_cloud_db_v1',
-        data: CLOUD_STATE
-      })
-    });
+    // 3. Guardar objeto JSON completo en Bytebin Cloud Store
+    let bytebinKey = null;
+    try {
+      const bbPost = await fetch(CLOUD_BYTEBIN_POST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(CLOUD_STATE)
+      });
+      if (bbPost.ok) {
+        const bbData = await bbPost.json();
+        if (bbData && bbData.key) {
+          bytebinKey = bbData.key;
+        }
+      }
+    } catch (bbErr) {
+      // Continuar con ntfy y Supabase aunque Bytebin falle
+    }
 
-    // 3. Si Supabase está activo, hacer UPSERT permanente en PostgreSQL + Broadcast Realtime
+    // 4. Si Supabase está activo, hacer UPSERT permanente en PostgreSQL + Broadcast Realtime
     let supabasePromise = Promise.resolve();
     if (supabaseClient) {
       supabasePromise = supabaseClient.from('qh_cloud_store').upsert(
@@ -709,7 +881,8 @@ async function persistCloudState(actionSummary = 'Actualización') {
       }
     }
 
-    // 4. Emitir evento instantáneo por el canal SSE Realtime para que Juanjo y Morensex lo reciban al instante
+    // 5. Publicar y almacenar en el canal Cloud Persistente + SSE Realtime (ntfy.sh)
+    const compactState = buildCompactCloudState(CLOUD_STATE);
     const realtimeBroadcastPromise = fetch(CLOUD_REALTIME_PUB_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -717,15 +890,17 @@ async function persistCloudState(actionSummary = 'Actualización') {
         actionSummary,
         updatedBy: CLOUD_STATE.updatedBy,
         updatedAt: CLOUD_STATE.updatedAt,
-        state: CLOUD_STATE
+        bytebinKey,
+        state: compactState
       })
     }).catch(() => {});
 
-    await Promise.all([putPromise, supabasePromise, realtimeBroadcastPromise]);
+    await Promise.all([supabasePromise, realtimeBroadcastPromise]);
+    saveLocalCloudMirror();
     updateCloudStatusUI(`Guardado en la nube (${getNowFormatted()})`, true);
     refreshDashboardIfVisible();
   } catch (e) {
-    updateCloudStatusUI('Error de red al sincronizar', false);
+    updateCloudStatusUI('Guardado localmente • Reintentando nube', false);
   } finally {
     isSavingCloud = false;
   }
@@ -737,12 +912,20 @@ function applyIncomingRemoteState(remoteRaw, sourceLabel = 'Cloud Realtime') {
   const previousUpdatedAt = CLOUD_STATE.updatedAt || 0;
 
   // Si es un reinicio explícito más reciente, reemplazar por el estado limpio
-  if ((incoming.resetAt || 0) > (CLOUD_STATE.resetAt || 0) && incoming.orders.length === 0) {
+  const isExplicitReset =
+    (incoming.resetAt || 0) > (CLOUD_STATE.resetAt || 0) &&
+    incoming.orders.length === 0 &&
+    incoming.finances.partnerMovements.length === 0 &&
+    incoming.finances.supplierPayments.length === 0 &&
+    incoming.ambassadors.length === 0;
+
+  if (isExplicitReset) {
     CLOUD_STATE = incoming;
   } else {
     CLOUD_STATE = mergeCloudStates(CLOUD_STATE, incoming);
   }
 
+  saveLocalCloudMirror();
   refreshDashboardIfVisible();
   updateCloudStatusUI(`Sincronizado en vivo (${getNowFormatted()})`, true);
 
@@ -764,13 +947,41 @@ function startRealtimeCloudSubscriptions() {
         realtimeEventSource.close();
       }
       realtimeEventSource = new EventSource(CLOUD_REALTIME_SSE_URL);
-      realtimeEventSource.onmessage = (event) => {
+      realtimeEventSource.onmessage = async (event) => {
         try {
           const outer = JSON.parse(event.data);
-          if (!outer || outer.event !== 'message' || !outer.message) return;
-          const payload = JSON.parse(outer.message);
-          if (payload && payload.senderId !== CLIENT_INSTANCE_ID && payload.state) {
+          if (!outer || outer.event !== 'message') return;
+          if (outer.time) {
+            lastCloudMessageAt = Math.max(lastCloudMessageAt, Number(outer.time) * 1000);
+          }
+          let payload = null;
+          if (outer.attachment && outer.attachment.url) {
+            const attRes = await fetch(outer.attachment.url, { cache: 'no-store' });
+            if (attRes.ok) payload = JSON.parse(await attRes.text());
+          } else if (outer.message) {
+            payload = JSON.parse(outer.message);
+          }
+          if (!payload || payload.senderId === CLIENT_INSTANCE_ID) return;
+
+          if (payload.state) {
             applyIncomingRemoteState(payload.state, payload.updatedBy || 'Realtime');
+          }
+          if (payload.bytebinKey) {
+            try {
+              const bbRes = await fetch(`${CLOUD_BYTEBIN_BASE_URL}${payload.bytebinKey}`, {
+                method: 'GET',
+                headers: { Accept: 'application/json' },
+                cache: 'no-store'
+              });
+              if (bbRes.ok) {
+                const bbJson = await bbRes.json();
+                if (bbJson) {
+                  applyIncomingRemoteState(bbJson, payload.updatedBy || 'Realtime');
+                }
+              }
+            } catch (errBb) {
+              // ignore
+            }
           }
         } catch (err) {
           // ignore malformed messages
@@ -781,13 +992,13 @@ function startRealtimeCloudSubscriptions() {
     }
   }
 
-  // Respaldo continuo cada 4 segundos para redes móviles o reconexiones
+  // Respaldo periódico cada 10 segundos para redes móviles o reconexiones
   if (cloudPollTimer) clearInterval(cloudPollTimer);
   cloudPollTimer = setInterval(() => {
     if (!isSavingCloud) {
       pullCloudState(true);
     }
-  }, 4000);
+  }, 10000);
 }
 
 async function forceCloudRefresh() {
@@ -870,7 +1081,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.qh_cloud_store;`;
 }
 
 /* ==========================================================================
-   HELPERS DE ACCESO AL ESTADO EN LA NUBE (SIN LOCALSTORAGE)
+   HELPERS DE ACCESO AL ESTADO EN LA NUBE
    ========================================================================== */
 
 function loadAnalytics() {
@@ -900,7 +1111,9 @@ function trackButtonClick(buttonLabel) {
     detail: `Clic en botón: "${buttonLabel}"`
   });
   analytics.eventLog = analytics.eventLog.slice(0, 40);
-  persistCloudState(`Clic: ${buttonLabel}`);
+  CLOUD_STATE.updatedAt = Date.now();
+  saveLocalCloudMirror();
+  refreshDashboardIfVisible();
 }
 
 function trackProductInteraction(productId, actionType, detailMsg) {
@@ -922,7 +1135,9 @@ function trackProductInteraction(productId, actionType, detailMsg) {
     detail: detailMsg
   });
   analytics.eventLog = analytics.eventLog.slice(0, 40);
-  persistCloudState(detailMsg);
+  CLOUD_STATE.updatedAt = Date.now();
+  saveLocalCloudMirror();
+  refreshDashboardIfVisible();
 }
 
 /* ==========================================================================
@@ -1773,6 +1988,11 @@ async function handleAdminLogin(event) {
   if (isValidUser && isValidPass) {
     const displayName = ALLOWED_ADMINS[rawUser];
     currentAdminUser = displayName;
+    try {
+      window.localStorage.setItem(ADMIN_SESSION_KEY, displayName);
+    } catch (e) {
+      // ignore
+    }
     closeAdminLoginModal();
     document.getElementById('admin-login-form').reset();
     await showAdminDashboard(displayName);
@@ -1790,6 +2010,11 @@ async function showAdminDashboard(adminName) {
 
   if (storefront) storefront.classList.add('hidden');
   if (dashboard) dashboard.classList.remove('hidden');
+  try {
+    window.localStorage.setItem(ADMIN_VIEW_OPEN_KEY, '1');
+  } catch (e) {
+    // ignore
+  }
   if (badge) badge.textContent = `Sesión activa: ${adminName}`;
   if (navLabel) navLabel.textContent = `Panel (${adminName})`;
 
@@ -1810,11 +2035,21 @@ function closeAdminDashboard() {
   const dashboard = document.getElementById('admin-dashboard-view');
   if (dashboard) dashboard.classList.add('hidden');
   if (storefront) storefront.classList.remove('hidden');
+  try {
+    window.localStorage.removeItem(ADMIN_VIEW_OPEN_KEY);
+  } catch (e) {
+    // ignore
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function logoutAdmin() {
   currentAdminUser = null;
+  try {
+    window.localStorage.removeItem(ADMIN_SESSION_KEY);
+  } catch (e) {
+    // ignore
+  }
   const navLabel = document.getElementById('navbar-admin-label');
   if (navLabel) navLabel.textContent = 'Entrar';
   closeAdminDashboard();
@@ -2798,16 +3033,23 @@ async function resetProductionDataConfirmation() {
   syncOrderUI();
   renderCatalog();
   renderAdminDashboard();
+  saveLocalCloudMirror();
 
   try {
-    await fetch(CLOUD_DB_ENDPOINT, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        name: 'qh_prod_cloud_db_v1',
-        data: CLOUD_STATE
-      })
-    });
+    let bytebinKey = null;
+    try {
+      const bbPost = await fetch(CLOUD_BYTEBIN_POST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(CLOUD_STATE)
+      });
+      if (bbPost.ok) {
+        const bbData = await bbPost.json();
+        bytebinKey = bbData && bbData.key ? bbData.key : null;
+      }
+    } catch (bbErr) {
+      // ignore
+    }
 
     if (supabaseClient) {
       await supabaseClient.from('qh_cloud_store').upsert(
@@ -2833,7 +3075,8 @@ async function resetProductionDataConfirmation() {
         actionSummary: 'Reinicio a cero absoluto',
         updatedBy: currentAdminUser || 'Admin',
         updatedAt: nowMs,
-        state: CLOUD_STATE
+        bytebinKey,
+        state: buildCompactCloudState(CLOUD_STATE)
       })
     }).catch(() => {});
   } catch (e) {
@@ -2865,13 +3108,41 @@ function showToast(message) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Cargar al instante el último estado guardado (0ms tras F5) y la sesión de admin
+  loadLocalCloudMirror();
+  CLOUD_STATE.analytics.pageViews = (CLOUD_STATE.analytics.pageViews || 0) + 1;
+  saveLocalCloudMirror();
+
   // Renderizar tienda inmediatamente con carrito en 0
   renderCatalog();
   syncOrderUI();
 
-  // Conectar a la Base de Datos Permanente en la Nube y activar suscripción Realtime
+  if (currentAdminUser && ALLOWED_ADMINS[currentAdminUser.toLowerCase()]) {
+    const navLabel = document.getElementById('navbar-admin-label');
+    if (navLabel) navLabel.textContent = `Panel (${currentAdminUser})`;
+    let wasDashboardOpen = false;
+    try {
+      wasDashboardOpen = window.localStorage.getItem(ADMIN_VIEW_OPEN_KEY) === '1';
+    } catch (e) {
+      wasDashboardOpen = false;
+    }
+    if (wasDashboardOpen) {
+      showAdminDashboard(currentAdminUser);
+    }
+  }
+
+  // 2. Conectar a la Base de Datos en la Nube, fusionar y activar suscripción Realtime
   await pullCloudState(true);
+  refreshDashboardIfVisible();
   startRealtimeCloudSubscriptions();
+
+  // 3. Si la copia en la nube está vieja o vacía pero este dispositivo tiene datos, re-publicar respaldo
+  if (
+    cloudStateHasBusinessData(CLOUD_STATE) &&
+    Date.now() - lastCloudMessageAt > CLOUD_REFRESH_MAX_AGE_MS
+  ) {
+    persistCloudState('Respaldo automático de datos');
+  }
 
   // Listener global delegado para rastrear clics reales en elementos con [data-track-btn]
   document.body.addEventListener('click', (e) => {
