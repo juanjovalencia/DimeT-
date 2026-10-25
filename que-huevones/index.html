@@ -1107,12 +1107,12 @@
 
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Saldos Socios / Proveedores</span>
+            <span>Caja de la Empresa</span>
             <span class="text-lg">🏦</span>
           </div>
           <p id="kpi-partners-total" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
-          <p id="kpi-suppliers-total" class="text-xs text-slate-300 mt-1">
-            Pagado a proveedores: $0
+          <p id="kpi-suppliers-total" class="text-xs text-slate-300 mt-1 truncate">
+            Estado socios: 🟢 A mano ($0)
           </p>
         </div>
 
@@ -1234,201 +1234,123 @@
       </div>
 
       <!-- ====================================================================
-           MÓDULO B: 💰 FINANZAS Y SALDOS (SOCIOS Y PROVEEDORES)
+           MÓDULO B: 💰 FINANZAS, CAJA DE LA EMPRESA Y AJUSTE 50/50 ENTRE SOCIOS
            ==================================================================== -->
       <div id="admin-section-finanzas" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8">
-        <div class="border-b border-white/10 pb-5">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">💰 Módulo Financiero</span>
-          <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
-            Finanzas y Saldos (Socios y Proveedores)
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-1">
-            Control transparente de quién puso plata (aportes), quién pagó proveedores o gastos y el saldo acumulado a favor de cada socio.
-          </p>
+        <div class="border-b border-white/10 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">💰 Módulo Financiero</span>
+            <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
+              Caja de la Empresa y Ajuste 50/50 (Juanjo & Mati)
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+              Fondo común del negocio, cálculo automático de deudas 50/50 entre socios y liquidación con abonos directos.
+            </p>
+          </div>
+          <button type="button" onclick="prefillSettlementForm()"
+                  class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 text-xs font-extrabold transition flex items-center gap-2">
+            <span>💸</span> Saldar Deuda entre Socios
+          </button>
         </div>
 
-        <!-- 1. ESTADO DE CUENTA DE SOCIOS: Juanjo vs Morensex (Mati) -->
-        <div class="space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 class="font-display font-extrabold text-xl text-white flex items-center gap-2">
-              <span>🤝 Estado de Cuenta de Socios</span>
-            </h3>
-            <span class="text-xs text-slate-400">
-              Los aportes de capital y los pagos hechos del bolsillo de cada socio suman automáticamente a su saldo a favor.
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Tarjeta Socio 1: Juanjo -->
-            <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 border-2 border-amber-400/50 shadow-xl flex flex-col justify-between space-y-4">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider">
-                    Socio Fundador
-                  </span>
-                  <h4 class="font-display font-extrabold text-2xl text-white mt-2">
-                    Saldo a favor de Juanjo
-                  </h4>
-                </div>
-                <span class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl font-extrabold">
-                  🥚
-                </span>
-              </div>
-
-              <div class="py-3 px-4 rounded-2xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block">Saldo total a favor actual:</span>
-                <p id="partner-balance-juanjo" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-1">$0</p>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Aportes</span>
-                  <strong id="partner-aportes-juanjo" class="text-emerald-400 font-display text-sm">$0</strong>
-                </div>
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Pagó Gastos/Prov.</span>
-                  <strong id="partner-pagos-juanjo" class="text-amber-300 font-display text-sm">$0</strong>
-                </div>
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Reembolsado</span>
-                  <strong id="partner-retiros-juanjo" class="text-slate-300 font-display text-sm">$0</strong>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tarjeta Socio 2: Morensex (Mati) -->
-            <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 border-2 border-emerald-400/50 shadow-xl flex flex-col justify-between space-y-4">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <span class="px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
-                    Socio Fundador
-                  </span>
-                  <h4 class="font-display font-extrabold text-2xl text-white mt-2">
-                    Saldo a favor de Morensex (Mati)
-                  </h4>
-                </div>
-                <span class="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-2xl font-extrabold">
-                  🥊
-                </span>
-              </div>
-
-              <div class="py-3 px-4 rounded-2xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block">Saldo total a favor actual:</span>
-                <p id="partner-balance-morensex" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-1">$0</p>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Aportes</span>
-                  <strong id="partner-aportes-morensex" class="text-emerald-400 font-display text-sm">$0</strong>
-                </div>
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Pagó Gastos/Prov.</span>
-                  <strong id="partner-pagos-morensex" class="text-amber-300 font-display text-sm">$0</strong>
-                </div>
-                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
-                  <span class="text-[10px] text-slate-400 block uppercase font-bold">Reembolsado</span>
-                  <strong id="partner-retiros-morensex" class="text-slate-300 font-display text-sm">$0</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. FORMULARIOS RÁPIDOS: APORTES DE SOCIOS Y PAGOS A PROVEEDORES -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- 1. RESUMEN VISUAL DE BALANCES: TARJETA 1 (CAJA EMPRESA) & TARJETA 2 (ESTADO ENTRE SOCIOS) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <!-- Columna Izquierda (6 cols): Formulario Rápido de Aportes y Movimientos de Socios -->
-          <div class="lg:col-span-6 rounded-2xl bg-qh-navyDark p-5 sm:p-6 border border-white/10 space-y-5">
-            <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">⚡ Formulario Rápido de Socios</span>
-              <h3 class="font-display font-extrabold text-lg sm:text-xl text-white mt-0.5">
-                Registrar Quién Puso Plata (Aportes) o Pagó Qué
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Actualiza al instante el saldo a favor de Juanjo o Morensex (Mati).
+          <!-- Tarjeta 1: Caja Disponible de la Empresa (Fondo Común) -->
+          <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 sm:p-7 border-2 border-emerald-400/50 shadow-2xl flex flex-col justify-between space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-extrabold uppercase tracking-wider">
+                  🏦 Fondo Común
+                </span>
+                <h3 class="font-display font-extrabold text-2xl text-white mt-2">
+                  Caja Disponible de la Empresa
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Suma pedidos cobrados/pagados y resta gastos pagados con dinero del negocio.
+                </p>
+              </div>
+              <span class="w-14 h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-3xl shrink-0">
+                🏦
+              </span>
+            </div>
+
+            <div class="py-4 px-5 rounded-2xl bg-white/5 border border-white/10">
+              <span class="text-xs text-slate-400 block font-bold uppercase tracking-wider">Monto total disponible en Caja:</span>
+              <p id="company-cash-balance" class="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-emerald-400 mt-1">$0</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold">➕ Total Ingresos Caja</span>
+                <strong id="company-cash-inflows" class="text-emerald-400 font-display text-sm sm:text-base">$0</strong>
+                <span id="company-cash-orders-note" class="text-[10px] text-slate-400 block mt-0.5">0 pedidos cobrados</span>
+              </div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold">➖ Egresos de Caja</span>
+                <strong id="company-cash-expenses" class="text-rose-400 font-display text-sm sm:text-base">$0</strong>
+                <span id="company-cash-expenses-note" class="text-[10px] text-slate-400 block mt-0.5">Gastos y comisiones</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Estado entre Socios (Regla 50 / 50) -->
+          <div class="rounded-3xl bg-gradient-to-br from-qh-navyDark to-slate-900 p-6 sm:p-7 border-2 border-amber-400/50 shadow-2xl flex flex-col justify-between space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
+                  ⚖️ Regla 50 / 50
+                </span>
+                <h3 class="font-display font-extrabold text-2xl text-white mt-2">
+                  Estado entre Socios
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Si un socio paga de su bolsillo, el sistema le suma automáticamente el 50% de deuda al otro.
+                </p>
+              </div>
+              <span class="w-14 h-14 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-3xl shrink-0">
+                🤝
+              </span>
+            </div>
+
+            <!-- Texto directo exacto exigido por requerimiento -->
+            <div class="py-4 px-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-center min-h-[92px]">
+              <span class="text-xs text-slate-400 block font-bold uppercase tracking-wider mb-1">Balance neto en tiempo real:</span>
+              <p id="partner-net-debt-status" class="font-display font-black text-xl sm:text-2xl lg:text-3xl text-emerald-400 leading-tight">
+                🟢 Cuentas saldadas ($0) - Están a mano
               </p>
             </div>
 
-            <form id="partner-movement-form" onsubmit="handleAddPartnerMovement(event)" class="space-y-3.5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label for="partner-mov-who" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Socio</label>
-                  <select id="partner-mov-who" required
-                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
-                    <option value="Juanjo">Juanjo</option>
-                    <option value="Morensex">Morensex (Mati)</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="partner-mov-type" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Tipo de Movimiento</label>
-                  <select id="partner-mov-type" required
-                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
-                    <option value="aporte">➕ Puso plata (Aporte de capital)</option>
-                    <option value="pago_directo">🧾 Pagó gasto / compra directa</option>
-                    <option value="reembolso">➖ Retiro / Reembolso de saldo</option>
-                  </select>
-                </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold">Bolsillo Mati</span>
+                <strong id="partner-mati-pocket" class="text-amber-300 font-display text-xs sm:text-sm">$0</strong>
               </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label for="partner-mov-date" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Fecha</label>
-                  <input id="partner-mov-date" type="date" required
-                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown" />
-                </div>
-                <div>
-                  <label for="partner-mov-amount" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Monto ($ CLP)</label>
-                  <input id="partner-mov-amount" type="number" min="1" step="1" required placeholder="Ej: 50000"
-                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
-                </div>
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold">Bolsillo Juanjo</span>
+                <strong id="partner-juanjo-pocket" class="text-amber-300 font-display text-xs sm:text-sm">$0</strong>
               </div>
-
-              <div>
-                <label for="partner-mov-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto / Qué pagó o aportó</label>
-                <input id="partner-mov-concept" type="text" required placeholder="Ej: Aporte inicial para compra de bandejas / Pago bencina reparto"
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
-              </div>
-
-              <button type="submit"
-                      class="w-full py-3 px-4 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
-                💾 Guardar Movimiento y Actualizar Saldo de Socio
-              </button>
-            </form>
-
-            <!-- Historial de Movimientos de Socios -->
-            <div class="pt-3 border-t border-white/10 space-y-2">
-              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Historial de Aportes y Movimientos de Socios
-              </span>
-              <div class="overflow-x-auto max-h-60 overflow-y-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
-                      <th class="py-2 px-2">Fecha</th>
-                      <th class="py-2 px-2">Socio</th>
-                      <th class="py-2 px-2">Concepto</th>
-                      <th class="py-2 px-2 text-right">Monto</th>
-                      <th class="py-2 px-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-partner-movements-tbody" class="divide-y divide-white/10">
-                    <!-- Renderizado por app.js -->
-                  </tbody>
-                </table>
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 block uppercase font-bold">Abonos Directos</span>
+                <strong id="partner-total-settlements" class="text-emerald-400 font-display text-xs sm:text-sm">$0</strong>
               </div>
             </div>
           </div>
 
-          <!-- Columna Derecha (6 cols): Registro de Pagos a Proveedores -->
+        </div>
+
+        <!-- 2. FORMULARIOS DE REGISTRO: GASTOS/PROVEEDORES Y SALDAR DEUDA (ABONOS) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Formulario A (6 cols): Registro de Gastos y Pagos a Proveedores -->
           <div class="lg:col-span-6 rounded-2xl bg-qh-navyDark p-5 sm:p-6 border border-white/10 space-y-5">
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🚚 Registro de Proveedores</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🧾 Contabilidad de Negocio</span>
               <h3 class="font-display font-extrabold text-lg sm:text-xl text-white mt-0.5">
-                Pagos a Proveedores
+                Registrar Gasto o Pago a Proveedor
               </h3>
               <p class="text-xs text-slate-400 mt-0.5">
-                Ingresa Fecha, Monto Pagado y Concepto. Si lo pagó un socio, su saldo a favor se actualiza automáticamente.
+                Indica con qué dinero se pagó. Si salió del bolsillo de un socio, calcula de inmediato el 50% de deuda.
               </p>
             </div>
 
@@ -1441,62 +1363,155 @@
                 </div>
                 <div>
                   <label for="supplier-payment-amount" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Monto Pagado ($ CLP)</label>
-                  <input id="supplier-payment-amount" type="number" min="1" step="1" required placeholder="Ej: 120000"
+                  <input id="supplier-payment-amount" type="number" min="1" step="1" required placeholder="Ej: 25490"
                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label for="supplier-payment-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto</label>
-                  <input id="supplier-payment-concept" type="text" required placeholder="Ej: Compra partida 300 bandejas granja"
-                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
-                </div>
-                <div>
-                  <label for="supplier-payment-payer" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">¿Quién lo pagó?</label>
-                  <select id="supplier-payment-payer"
-                          class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-qh-brown">
-                    <option value="Juanjo">Pagó Juanjo (+ Suma a su saldo a favor)</option>
-                    <option value="Morensex">Pagó Morensex / Mati (+ Suma a su saldo a favor)</option>
-                    <option value="Caja">Pagado con Caja del Negocio (Sin afectar saldos)</option>
-                  </select>
-                </div>
+              <div>
+                <label for="supplier-payment-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto / Detalle del Gasto</label>
+                <input id="supplier-payment-concept" type="text" required placeholder="Ej: Compra huevos a granja / Bencina reparto / Bandejas"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+              </div>
+
+              <div>
+                <label for="supplier-payment-payer" class="block text-[11px] font-bold uppercase text-amber-300 mb-1">
+                  ¿Con qué plata se pagó?
+                </label>
+                <select id="supplier-payment-payer" required
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400">
+                  <option value="Caja">🏦 "Caja de la Empresa" (Se descuenta del fondo común, no genera deuda)</option>
+                  <option value="Morensex">🥊 "Bolsillo de Mati (Morensex)" (Juanjo le debe el 50%)</option>
+                  <option value="Juanjo">🥚 "Bolsillo de Juanjo" (Mati le debe el 50%)</option>
+                </select>
               </div>
 
               <button type="submit"
                       class="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
-                🧾 Registrar Pago a Proveedor
+                🧾 Guardar Gasto y Actualizar Balances
               </button>
             </form>
+          </div>
 
-            <!-- Tabla de Pagos a Proveedores -->
-            <div class="pt-3 border-t border-white/10 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                  Historial de Pagos a Proveedores
-                </span>
-                <span id="supplier-payments-total-badge" class="text-xs font-extrabold text-amber-400">Total: $0</span>
+          <!-- Formulario B (6 cols): Saldar Deuda / Abono entre Socios -->
+          <div id="partner-settlement-box" class="lg:col-span-6 rounded-2xl bg-qh-navyDark p-5 sm:p-6 border border-white/10 space-y-5">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">💸 Ajuste de Cuentas Directo</span>
+              <h3 class="font-display font-extrabold text-lg sm:text-xl text-white mt-0.5">
+                Saldar Deuda / Abono entre Socios
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Registra cuando un socio transfiere plata al otro para ponerse al día con su 50% (sin afectar la Caja de la Empresa).
+              </p>
+            </div>
+
+            <form id="partner-settlement-form" onsubmit="handleAddDebtSettlement(event)" class="space-y-3.5">
+              <div>
+                <label for="settlement-from-to" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">
+                  ¿Quién paga a quién?
+                </label>
+                <select id="settlement-from-to" required
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+                  <option value="Juanjo-Morensex">🥚 Juanjo le paga / transfiere a 🥊 Mati (Morensex)</option>
+                  <option value="Morensex-Juanjo">🥊 Mati (Morensex) le paga / transfiere a 🥚 Juanjo</option>
+                </select>
               </div>
-              <div class="overflow-x-auto max-h-60 overflow-y-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
-                      <th class="py-2 px-2">Fecha</th>
-                      <th class="py-2 px-2">Concepto</th>
-                      <th class="py-2 px-2">Pagado por</th>
-                      <th class="py-2 px-2 text-right">Monto Pagado</th>
-                      <th class="py-2 px-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-supplier-payments-tbody" class="divide-y divide-white/10">
-                    <!-- Renderizado por app.js -->
-                  </tbody>
-                </table>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="settlement-date" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Fecha</label>
+                  <input id="settlement-date" type="date" required
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400" />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label for="settlement-amount" class="block text-[11px] font-bold uppercase text-slate-300">Monto ($ CLP)</label>
+                    <button type="button" onclick="prefillExactSettlementAmount()" class="text-[10px] text-emerald-400 hover:underline font-bold">
+                      Saldar Exacto
+                    </button>
+                  </div>
+                  <input id="settlement-amount" type="number" min="1" step="1" required placeholder="Ej: 12745"
+                         class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+                </div>
               </div>
+
+              <div>
+                <label for="settlement-concept" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Concepto / Nota</label>
+                <input id="settlement-concept" type="text" required placeholder="Ej: Transferencia para saldar 50% compra de huevos"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+              </div>
+
+              <button type="submit"
+                      class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+                💸 Registrar Abono y Saldar Deuda
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- 3. HISTORIAL DETALLADO DE MOVIMIENTOS CON EDICIÓN Y ELIMINACIÓN -->
+        <div class="space-y-6 pt-2">
+          
+          <!-- Historial 1: Gastos y Pagos a Proveedores -->
+          <div class="rounded-2xl bg-qh-navyDark p-5 border border-white/10 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400 block">Historial de Gastos y Proveedores</span>
+                <span class="text-xs text-slate-400">Puedes editar o eliminar cualquier registro erróneo con los botones de acción.</span>
+              </div>
+              <span id="supplier-payments-total-badge" class="text-xs font-extrabold text-amber-400">Total: $0</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-72 overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
+                    <th class="py-2.5 px-3">Fecha</th>
+                    <th class="py-2.5 px-3">Concepto</th>
+                    <th class="py-2.5 px-3">¿Con qué plata se pagó?</th>
+                    <th class="py-2.5 px-3 text-right">Monto Total</th>
+                    <th class="py-2.5 px-3">Efecto 50/50</th>
+                    <th class="py-2.5 px-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-supplier-payments-tbody" class="divide-y divide-white/10">
+                  <!-- Filas inyectadas por app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Historial 2: Abonos / Saldar Deudas entre Socios -->
+          <div class="rounded-2xl bg-qh-navyDark p-5 border border-white/10 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400 block">Historial de Abonos entre Socios</span>
+                <span class="text-xs text-slate-400">Transferencias directas y liquidaciones que reducen la deuda 50/50.</span>
+              </div>
+              <span id="debt-settlements-total-badge" class="text-xs font-extrabold text-emerald-400">Abonos: $0</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-72 overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase text-slate-400">
+                    <th class="py-2.5 px-3">Fecha</th>
+                    <th class="py-2.5 px-3">Transferencia</th>
+                    <th class="py-2.5 px-3">Concepto / Nota</th>
+                    <th class="py-2.5 px-3 text-right">Monto Abono</th>
+                    <th class="py-2.5 px-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-debt-settlements-tbody" class="divide-y divide-white/10">
+                  <!-- Filas inyectadas por app.js -->
+                </tbody>
+              </table>
             </div>
           </div>
 
         </div>
+
       </div>
 
       <!-- ====================================================================
@@ -2011,6 +2026,89 @@
           <button type="button" onclick="copySupabaseSQLSchema()"
                   class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-display font-bold text-xs border border-white/15 transition">
             📋 Copiar SQL para Supabase
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE EDICIÓN DE REGISTROS FINANCIEROS (GASTOS Y ABONOS)
+       ======================================================================== -->
+  <div id="edit-finance-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border-2 border-amber-400/50 relative space-y-5">
+      <button type="button" onclick="closeEditFinanceModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl shadow">✏️</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400" id="edit-finance-modal-badge">Editar Registro</span>
+          <h3 class="font-display font-extrabold text-2xl text-white" id="edit-finance-modal-title">Modificar Movimiento</h3>
+        </div>
+      </div>
+
+      <form id="edit-finance-form" onsubmit="handleSaveEditFinanceRecord(event)" class="space-y-4">
+        <input type="hidden" id="edit-finance-id" />
+        <input type="hidden" id="edit-finance-kind" />
+
+        <div id="edit-finance-payer-group">
+          <label for="edit-finance-payer" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            ¿Con qué plata se pagó?
+          </label>
+          <select id="edit-finance-payer"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400">
+            <option value="Caja">🏦 "Caja de la Empresa" (Fondo común, no genera deuda)</option>
+            <option value="Morensex">🥊 "Bolsillo de Mati (Morensex)" (Juanjo debe 50%)</option>
+            <option value="Juanjo">🥚 "Bolsillo de Juanjo" (Mati debe 50%)</option>
+          </select>
+        </div>
+
+        <div id="edit-finance-settlement-group" class="hidden">
+          <label for="edit-finance-from-to" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            ¿Quién paga a quién?
+          </label>
+          <select id="edit-finance-from-to"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+            <option value="Juanjo-Morensex">🥚 Juanjo le paga / transfiere a 🥊 Mati</option>
+            <option value="Morensex-Juanjo">🥊 Mati le paga / transfiere a 🥚 Juanjo</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-finance-date" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Fecha
+            </label>
+            <input id="edit-finance-date" type="date" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400" />
+          </div>
+          <div>
+            <label for="edit-finance-amount" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Monto ($ CLP)
+            </label>
+            <input id="edit-finance-amount" type="number" min="1" step="1" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div>
+          <label for="edit-finance-concept" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            Concepto / Detalle
+          </label>
+          <input id="edit-finance-concept" type="text" required
+                 class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit"
+                  class="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+            💾 Guardar Cambios en la Nube
+          </button>
+          <button type="button" onclick="closeEditFinanceModal()"
+                  class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
+            Cancelar
           </button>
         </div>
       </form>
