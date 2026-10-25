@@ -548,10 +548,10 @@
               🥚 Catálogo Directo de Granja
             </span>
             <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-qh-navy leading-tight">
-              Elige tus <span class="text-qh-brown">Bandejas Huevonas</span>
+              Elige tus <span class="text-qh-brown">Bandejas de 30 Huevos</span>
             </h2>
             <p class="mt-3 text-slate-600 text-base sm:text-lg max-w-2xl">
-              Todos nuestros formatos vienen con <strong class="text-qh-navy">Calibre Primera / Tamaño Grande (Huevos de Selección Grande)</strong>. Ajusta la cantidad, súmalas al carrito y pide directo por WhatsApp.
+              Formato exclusivo en <strong class="text-qh-navy">Bandejas de 30 unidades de Calibre Primera (Huevos de Selección Grande)</strong>. Frescura garantizada, precios fijos y directos a tu puerta.
             </p>
           </div>
 
@@ -559,23 +559,23 @@
           <div class="inline-flex flex-wrap gap-2 p-1.5 rounded-2xl bg-qh-bone border border-slate-200 self-start lg:self-end" role="tablist" aria-label="Filtrar catálogo por tipo de huevo">
             <button type="button" onclick="filterCatalog('all')" id="filter-btn-all" data-track-btn="Filtro Catálogo: Todos"
                     class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm bg-qh-navy text-white shadow transition-all">
-              Todos (6)
+              Todos (2)
             </button>
             <button type="button" onclick="filterCatalog('campo')" id="filter-btn-campo" data-track-btn="Filtro Catálogo: Huevos de Campo"
                     class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
               <span class="w-3 h-3 rounded-full bg-qh-brown inline-block"></span>
-              <span>Huevos de Campo (Color)</span>
+              <span>Huevo de Campo ($11.500)</span>
             </button>
             <button type="button" onclick="filterCatalog('blanco')" id="filter-btn-blanco" data-track-btn="Filtro Catálogo: Huevos Blancos"
                     class="catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2">
               <span class="w-3 h-3 rounded-full bg-white border-2 border-qh-navy inline-block"></span>
-              <span>Huevos Seleccionados (Blancos)</span>
+              <span>Blanco Seleccionado ($9.000)</span>
             </button>
           </div>
         </div>
 
-        <!-- Grid de Tarjetas de Producto -->
-        <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+        <!-- Grid de Tarjetas de Producto (2 Opciones de Alto Impacto) -->
+        <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <!-- Renderizado por app.js -->
         </div>
 
@@ -588,7 +588,7 @@
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">Tu Carrito Huevón en Vivo</span>
               <h3 id="summary-banner-title" class="font-display font-extrabold text-xl sm:text-2xl text-white">
-                Combina formatos de Campo y Blancos sin formularios largos
+                Bandejas de 30 unidades • Campo $11.500 y Blanco $9.000
               </h3>
               <p id="summary-banner-subtitle" class="text-xs sm:text-sm text-slate-300 mt-0.5">
                 Elige <strong class="text-white">Pedido Único</strong> o <strong class="text-amber-400">Pedido Fijo Semanal</strong> y envíalo con un clic a WhatsApp.
@@ -768,13 +768,33 @@
                   </div>
                 </button>
               </div>
+
+              <!-- Selector Obligatorio de Día para Pedido Fijo Semanal (Desplegable dinámico) -->
+              <div id="weekly-day-box-main" class="mt-4 p-4 rounded-2xl bg-amber-400/15 border-2 border-amber-400/60 hidden transition-all">
+                <div class="flex items-center gap-2 mb-2.5">
+                  <span class="text-xl">📅</span>
+                  <div>
+                    <span class="block text-xs sm:text-sm font-extrabold text-qh-navy">
+                      ¿Qué día de la semana prefieres recibir tus huevos? <strong class="text-amber-800">*</strong>
+                    </span>
+                    <span class="text-[11px] font-bold text-qh-brown">Selecciona tu día de entrega semanal fija:</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5 sm:gap-2">
+                  <button type="button" onclick="setDeliveryDay('Lunes')" data-day="Lunes" class="day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-extrabold text-xs bg-amber-400 text-qh-navyDark shadow-md ring-2 ring-amber-300 transition">Lunes</button>
+                  <button type="button" onclick="setDeliveryDay('Martes')" data-day="Martes" class="day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition">Martes</button>
+                  <button type="button" onclick="setDeliveryDay('Miércoles')" data-day="Miércoles" class="day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition">Miércoles</button>
+                  <button type="button" onclick="setDeliveryDay('Jueves')" data-day="Jueves" class="day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition">Jueves</button>
+                  <button type="button" onclick="setDeliveryDay('Viernes')" data-day="Viernes" class="day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition">Viernes</button>
+                </div>
+              </div>
             </div>
 
             <!-- 2. Lista de Bandejas en el Carrito (Sumar / Restar cantidades) -->
             <div class="p-4 sm:p-5 rounded-2xl bg-qh-bone border border-slate-200 space-y-4">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="text-xs font-extrabold uppercase tracking-wider text-qh-navy">
-                  2. Tus Bandejas Seleccionadas (Suma o resta cantidades):
+                  2. Tus Bandejas de 30 Huevos (Suma o resta cantidades):
                 </span>
                 <button type="button" onclick="clearOrderCart()" data-track-btn="Carrito: Vaciar Todo" class="text-xs font-bold text-slate-500 hover:text-red-600 transition">
                   Vaciar carrito
@@ -785,12 +805,8 @@
               <div class="flex flex-col sm:flex-row gap-2.5">
                 <select id="order-QuickSelect" aria-label="Seleccionar formato de bandeja para añadir al carrito"
                         class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-qh-navy text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-qh-brown">
-                  <option value="campo-30">Bandeja Familiar 30 un. - Huevo de Campo ($8.900)</option>
-                  <option value="campo-12">Docena 12 un. - Huevo de Campo ($4.200)</option>
-                  <option value="campo-60">Caja Mayorista 60 un. - Huevo de Campo ($16.900)</option>
-                  <option value="blanco-30">Bandeja Familiar 30 un. - Blanco Seleccionado ($7.600)</option>
-                  <option value="blanco-12">Docena 12 un. - Blanco Seleccionado ($3.600)</option>
-                  <option value="blanco-60">Caja Mayorista 60 un. - Blanco Seleccionado ($14.500)</option>
+                  <option value="campo-30">Bandeja Huevo de Campo 30 un. ($11.500)</option>
+                  <option value="blanco-30">Bandeja Huevo Blanco 30 un. ($9.000)</option>
                 </select>
                 <button type="button" onclick="addFromFormSelect()" data-track-btn="Carrito: + Sumar Formato desde Selector"
                         class="px-4 py-2.5 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-bold text-xs sm:text-sm whitespace-nowrap transition">
@@ -818,42 +834,87 @@
               </div>
             </div>
 
-            <!-- 3. RECUADRO DESTACADO DE CHECKOUT DIRECTO POR WHATSAPP SIN LLENAR FORMULARIOS -->
-            <div class="rounded-3xl bg-gradient-to-br from-qh-navy via-slate-800 to-qh-navyDark text-white p-6 sm:p-8 border-2 border-emerald-500/60 shadow-2xl relative overflow-hidden">
+            <!-- 3. RECUADRO DESTACADO DE CHECKOUT Y DATOS DIRECTOS A WHATSAPP -->
+            <div class="rounded-3xl bg-gradient-to-br from-qh-navy via-slate-800 to-qh-navyDark text-white p-6 sm:p-8 border-2 border-emerald-500/60 shadow-2xl relative overflow-hidden space-y-4">
               <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
-              <div class="flex items-center gap-2.5 mb-2">
+              <div class="flex items-center gap-2.5">
                 <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-extrabold uppercase tracking-wider border border-emerald-400/30">
-                  ⚡ Cero Formularios Largos
+                  ⚡ Envío Directo WhatsApp
                 </span>
                 <span class="text-xs font-bold text-amber-400">WhatsApp Oficial +56 9 5393 0491</span>
               </div>
 
-              <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
-                ¿Prefieres pedir directo por WhatsApp sin llenar nada?
-              </h3>
-              <p class="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Tu mensaje ya lleva armadas tus bandejas, cantidades, modalidad (<strong id="wa-box-mode-text" class="text-amber-400">Pedido Único</strong>) y el subtotal. Solo presiona el botón verde y completa tu nombre y dirección directo en el chat:
-              </p>
-
-              <!-- Input de Código de Embajador justo antes del botón verde de WhatsApp -->
-              <div class="mt-4 p-4 rounded-2xl bg-white/10 border border-white/15">
-                <label for="ambassador-code-main" class="block text-xs sm:text-sm font-extrabold text-amber-300 mb-2">
-                  🤝 ¿Vienes de parte de un embajador? Ingresa su código aquí
-                </label>
-                <input type="text"
-                       id="ambassador-code-main"
-                       oninput="handleAmbassadorInput(this.value)"
-                       placeholder="Ej: código o nombre de tu embajador (opcional)"
-                       class="w-full px-4 py-3 rounded-xl bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs sm:text-sm font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-400 transition" />
+              <!-- Aviso Visible de Pago Requerido -->
+              <div class="p-3.5 rounded-2xl bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs sm:text-sm font-semibold flex items-center gap-2.5 leading-snug">
+                <span class="text-lg flex-shrink-0">💬</span>
+                <span>El pago se coordina directamente por WhatsApp (Transferencia). No se realizan cobros en esta página.</span>
               </div>
 
-              <!-- Botón Verde Grande de WhatsApp Solicitado -->
+              <div>
+                <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
+                  Tengo listo mi pedido para enviar a WhatsApp
+                </h3>
+                <p class="mt-1 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Completa tu nombre y dirección a continuación para habilitar el botón. Tu mensaje se enviará 100% armado a WhatsApp:
+                </p>
+              </div>
+
+              <!-- Campos de captura de datos obligatorios + código embajador -->
+              <div class="space-y-3 p-4 sm:p-5 rounded-2xl bg-white/10 border border-white/15">
+                <div>
+                  <label for="customer-name-main" class="block text-xs sm:text-sm font-extrabold text-white mb-1.5 flex items-center justify-between">
+                    <span>👤 Tu Nombre <strong class="text-emerald-400">*</strong></span>
+                    <span class="text-[10px] text-amber-300 uppercase tracking-wider font-bold">Obligatorio</span>
+                  </label>
+                  <input type="text"
+                         id="customer-name-main"
+                         oninput="handleCustomerDataInput('name', this.value)"
+                         placeholder="Ej: Juan Pérez"
+                         required
+                         class="w-full px-4 py-3 rounded-xl bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 transition" />
+                </div>
+
+                <div>
+                  <label for="customer-address-main" class="block text-xs sm:text-sm font-extrabold text-white mb-1.5 flex items-center justify-between">
+                    <span>📍 Tu Dirección de Entrega <strong class="text-emerald-400">*</strong></span>
+                    <span class="text-[10px] text-amber-300 uppercase tracking-wider font-bold">Obligatorio</span>
+                  </label>
+                  <input type="text"
+                         id="customer-address-main"
+                         oninput="handleCustomerDataInput('address', this.value)"
+                         placeholder="Ej: Av. Las Condes 1234, Depto 402, Las Condes"
+                         required
+                         class="w-full px-4 py-3 rounded-xl bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 transition" />
+                </div>
+
+                <!-- Input de Código de Embajador (Opcional) -->
+                <div>
+                  <label for="ambassador-code-main" class="block text-xs sm:text-sm font-extrabold text-amber-300 mb-1.5 flex items-center justify-between">
+                    <span>🤝 ¿Vienes de parte de un embajador?</span>
+                    <span class="text-[10px] text-slate-300 font-normal">(Opcional)</span>
+                  </label>
+                  <input type="text"
+                         id="ambassador-code-main"
+                         oninput="handleAmbassadorInput(this.value)"
+                         placeholder="Ingresa su código aquí (Ej: MATI10)"
+                         class="w-full px-4 py-2.5 rounded-xl bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs sm:text-sm font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-400 transition" />
+                </div>
+              </div>
+
+              <!-- Aviso si faltan campos -->
+              <p id="customer-validation-notice-main" class="text-xs text-amber-300 font-bold flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>Ingresa tu Nombre y Dirección de Entrega para habilitar el envío directo.</span>
+              </p>
+
+              <!-- Botón Verde Principal de WhatsApp con texto solicitado -->
               <button type="button"
-                      onclick="triggerDirectWhatsAppCheckout('Carrito Principal: Quiero pedir mi bandeja directo')"
-                      data-track-btn="Botón Verde WhatsApp: Quiero pedir mi bandeja directo"
-                      class="mt-5 w-full py-4 sm:py-5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-base sm:text-xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-95 transition-all pulse-whatsapp">
-                <span>📲 Quiero pedir mi bandeja directo</span>
+                      id="btn-whatsapp-checkout-main"
+                      onclick="triggerDirectWhatsAppCheckout('Carrito Principal')"
+                      data-track-btn="Botón Verde WhatsApp: Tengo listo mi pedido, enviar a WhatsApp"
+                      class="w-full py-4 sm:py-5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-base sm:text-xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-3 transition-all pulse-whatsapp">
+                <span>📲 Tengo listo mi pedido, enviar a WhatsApp</span>
               </button>
 
               <!-- Vista Previa en Vivo del Mensaje Autogenerado -->
@@ -908,7 +969,7 @@
                 <li class="flex items-start gap-3.5">
                   <span class="w-10 h-10 rounded-xl bg-qh-brown/15 text-qh-brown flex items-center justify-center text-lg flex-shrink-0">✉️</span>
                   <div>
-                    <span class="text-xs font-bold uppercase text-slate-400 block">Correo de Contacto y Mayoristas</span>
+                    <span class="text-xs font-bold uppercase text-slate-400 block">Correo de Contacto y Ventas</span>
                     <a href="mailto:pedidos@quehuevones.cl" data-track-btn="Contacto: Clic Correo" class="font-display font-bold text-base text-qh-navy hover:text-qh-brown transition">pedidos@quehuevones.cl</a>
                   </div>
                 </li>
@@ -1113,18 +1174,14 @@
             <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
               ➕ Registrar Pedido Recibido por WhatsApp Manualmente
             </span>
-            <span class="text-[11px] text-slate-400">Comisión automática: Docena $800 • Bandeja 30 un. $2.000 • Caja 60 un. $4.000</span>
+            <span class="text-[11px] text-slate-400">Comisión automática: Bandeja 30 un. $2.000</span>
           </div>
           <form id="admin-manual-order-form" onsubmit="handleCreateManualOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
             <div>
               <label for="manual-order-product" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Formato</label>
               <select id="manual-order-product" class="w-full px-3 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white">
-                <option value="campo-30">Campo 30 huevos ($8.900)</option>
-                <option value="campo-12">Campo Docena 12 un. ($4.200)</option>
-                <option value="campo-60">Campo Mayorista 60 un. ($16.900)</option>
-                <option value="blanco-30">Blanco 30 huevos ($7.600)</option>
-                <option value="blanco-12">Blanco Docena 12 un. ($3.600)</option>
-                <option value="blanco-60">Blanco Mayorista 60 un. ($14.500)</option>
+                <option value="campo-30">Bandeja Huevo de Campo 30 un. ($11.500)</option>
+                <option value="blanco-30">Bandeja Huevo Blanco 30 un. ($9.000)</option>
               </select>
             </div>
             <div>
@@ -1460,9 +1517,7 @@
           <!-- Regla Proporcional Oficial de Comisiones -->
           <div class="flex flex-wrap items-center gap-2 bg-qh-navyDark p-3 rounded-2xl border border-white/10 text-xs">
             <span class="font-extrabold text-amber-400 uppercase px-2">Regla de Comisión:</span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">🥚 Docena (12): <strong class="text-emerald-400">$800</strong></span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">📦 Bandeja (30): <strong class="text-emerald-400">$2.000</strong></span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-bold">🏆 Caja (60): <strong class="text-emerald-400">$4.000</strong></span>
+            <span class="px-3 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-extrabold text-xs">📦 Bandeja 30 un: <strong class="text-emerald-400">$2.000</strong> de comisión por unidad</span>
           </div>
         </div>
 
@@ -1506,7 +1561,7 @@
                 <th class="py-3 px-4">Embajador</th>
                 <th class="py-3 px-4">Código Único</th>
                 <th class="py-3 px-4">Pedidos Aprobados</th>
-                <th class="py-3 px-4">Formatos Vendidos (12 / 30 / 60)</th>
+                <th class="py-3 px-4">Bandejas (30 un.) Vendidas</th>
                 <th class="py-3 px-4">Total Acumulado a Pagar</th>
                 <th class="py-3 px-4 text-right">Acciones</th>
               </tr>
@@ -1727,6 +1782,20 @@
               🔁 Pedido Fijo Semanal
             </button>
           </div>
+
+          <!-- Selector de Día para Pedido Fijo Semanal en Drawer -->
+          <div id="weekly-day-box-drawer" class="mt-2.5 p-3 rounded-xl bg-amber-400/15 border border-amber-400/50 hidden transition-all">
+            <span class="block text-[11px] font-extrabold text-qh-navy mb-1.5">
+              📅 Día de entrega semanal: <strong class="text-amber-800">*</strong>
+            </span>
+            <div class="grid grid-cols-5 gap-1">
+              <button type="button" onclick="setDeliveryDay('Lunes')" data-day="Lunes" class="day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-extrabold text-[11px] bg-amber-400 text-qh-navyDark shadow transition">Lun</button>
+              <button type="button" onclick="setDeliveryDay('Martes')" data-day="Martes" class="day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition">Mar</button>
+              <button type="button" onclick="setDeliveryDay('Miércoles')" data-day="Miércoles" class="day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition">Mié</button>
+              <button type="button" onclick="setDeliveryDay('Jueves')" data-day="Jueves" class="day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition">Jue</button>
+              <button type="button" onclick="setDeliveryDay('Viernes')" data-day="Viernes" class="day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition">Vie</button>
+            </div>
+          </div>
         </div>
 
         <!-- Lista de Productos en el Carrito -->
@@ -1743,16 +1812,12 @@
         <!-- Agregar otra bandeja rápido desde el Drawer -->
         <div class="p-3.5 rounded-2xl bg-qh-bone border border-slate-200">
           <label for="drawer-quick-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-qh-navy mb-1.5">
-            + Sumar otro formato al carrito:
+            + Sumar bandeja al carrito:
           </label>
           <div class="flex gap-2">
             <select id="drawer-quick-select" class="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-300 text-qh-navy text-xs font-semibold">
-              <option value="campo-30">Campo 30 un. ($8.900)</option>
-              <option value="campo-12">Campo 12 un. ($4.200)</option>
-              <option value="campo-60">Campo 60 un. ($16.900)</option>
-              <option value="blanco-30">Blanco 30 un. ($7.600)</option>
-              <option value="blanco-12">Blanco 12 un. ($3.600)</option>
-              <option value="blanco-60">Blanco 60 un. ($14.500)</option>
+              <option value="campo-30">Bandeja Huevo de Campo 30 un. ($11.500)</option>
+              <option value="blanco-30">Bandeja Huevo Blanco 30 un. ($9.000)</option>
             </select>
             <button type="button" onclick="addFromDrawerSelect()" data-track-btn="Drawer: + Añadir Formato"
                     class="px-3.5 py-2 rounded-xl bg-qh-navy text-white font-bold text-xs whitespace-nowrap">
@@ -1773,32 +1838,76 @@
           </div>
         </div>
 
-        <!-- Recuadro Destacado de WhatsApp Directo sin llenar formularios -->
-        <div class="rounded-2xl bg-qh-navy text-white p-5 border-2 border-emerald-500 shadow-xl space-y-3">
-          <p class="font-display font-extrabold text-base sm:text-lg text-white leading-snug">
-            ¿Prefieres pedir directo por WhatsApp sin llenar nada?
-          </p>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Te abrimos el chat con tu pedido listo. Solo completas tu nombre y dirección al enviarlo:
-          </p>
-
-          <!-- Input Código de Embajador (justo antes del botón verde de WhatsApp) -->
-          <div class="p-3 rounded-xl bg-white/10 border border-white/15 space-y-1.5">
-            <label for="ambassador-code-drawer" class="block text-[11px] font-extrabold text-amber-300">
-              🤝 ¿Vienes de parte de un embajador? Ingresa su código aquí
-            </label>
-            <input id="ambassador-code-drawer"
-                   type="text"
-                   oninput="handleAmbassadorInput(this.value)"
-                   placeholder="Ej: MATI10 o nombre del embajador (opcional)"
-                   class="w-full px-3 py-2 rounded-lg bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400 transition" />
+        <!-- Recuadro Destacado de WhatsApp Directo con datos -->
+        <div class="rounded-2xl bg-qh-navy text-white p-5 border-2 border-emerald-500 shadow-xl space-y-3.5">
+          <!-- Aviso Visible de Pago -->
+          <div class="p-2.5 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+            <span class="text-base flex-shrink-0">💬</span>
+            <span>El pago se coordina directamente por WhatsApp (Transferencia).</span>
           </div>
 
+          <div>
+            <p class="font-display font-extrabold text-base sm:text-lg text-white leading-snug">
+              Tengo listo mi pedido para enviar a WhatsApp
+            </p>
+            <p class="text-xs text-slate-300 leading-relaxed mt-0.5">
+              Ingresa tus datos para habilitar el botón y enviar el mensaje 100% armado:
+            </p>
+          </div>
+
+          <!-- Campos de Cliente en Drawer -->
+          <div class="space-y-2.5 p-3 rounded-xl bg-white/10 border border-white/15">
+            <div>
+              <label for="customer-name-drawer" class="block text-[11px] font-extrabold text-white mb-1 flex items-center justify-between">
+                <span>👤 Tu Nombre <strong class="text-emerald-400">*</strong></span>
+                <span class="text-[9px] text-amber-300 font-bold uppercase">Obligatorio</span>
+              </label>
+              <input id="customer-name-drawer"
+                     type="text"
+                     oninput="handleCustomerDataInput('name', this.value)"
+                     placeholder="Ej: Juan Pérez"
+                     required
+                     class="w-full px-3 py-2 rounded-lg bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-emerald-400 transition" />
+            </div>
+
+            <div>
+              <label for="customer-address-drawer" class="block text-[11px] font-extrabold text-white mb-1 flex items-center justify-between">
+                <span>📍 Tu Dirección de Entrega <strong class="text-emerald-400">*</strong></span>
+                <span class="text-[9px] text-amber-300 font-bold uppercase">Obligatorio</span>
+              </label>
+              <input id="customer-address-drawer"
+                     type="text"
+                     oninput="handleCustomerDataInput('address', this.value)"
+                     placeholder="Ej: Calle, Número, Comuna"
+                     required
+                     class="w-full px-3 py-2 rounded-lg bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs font-medium focus:outline-none focus:border-emerald-400 transition" />
+            </div>
+
+            <!-- Input Código de Embajador (Opcional) -->
+            <div>
+              <label for="ambassador-code-drawer" class="block text-[11px] font-extrabold text-amber-300 mb-1 flex items-center justify-between">
+                <span>🤝 Código de Embajador</span>
+                <span class="text-[9px] text-slate-300">(Opcional)</span>
+              </label>
+              <input id="ambassador-code-drawer"
+                     type="text"
+                     oninput="handleAmbassadorInput(this.value)"
+                     placeholder="Ej: MATI10"
+                     class="w-full px-3 py-2 rounded-lg bg-qh-navyDark/90 border border-white/20 text-white placeholder-slate-400 text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-emerald-400 transition" />
+            </div>
+          </div>
+
+          <p id="customer-validation-notice-drawer" class="text-[11px] text-amber-300 font-bold flex items-center gap-1">
+            <span>⚠️</span>
+            <span>Ingresa Nombre y Dirección para habilitar el envío.</span>
+          </p>
+
           <button type="button"
-                  onclick="triggerDirectWhatsAppCheckout('Drawer Carrito: Quiero pedir mi bandeja directo')"
-                  data-track-btn="Drawer Botón Verde: Quiero pedir mi bandeja directo"
-                  class="w-full py-4 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-lg flex items-center justify-center gap-2 transition-all pulse-whatsapp">
-            <span>📲 Quiero pedir mi bandeja directo</span>
+                  id="btn-whatsapp-checkout-drawer"
+                  onclick="triggerDirectWhatsAppCheckout('Drawer Carrito')"
+                  data-track-btn="Drawer Botón Verde: Tengo listo mi pedido, enviar a WhatsApp"
+                  class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-lg flex items-center justify-center gap-2 transition-all pulse-whatsapp">
+            <span>📲 Tengo listo mi pedido, enviar a WhatsApp</span>
           </button>
         </div>
 

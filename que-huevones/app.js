@@ -6,7 +6,7 @@
  *    ningún dato financiero, de pedidos, de embajadores o de analítica se pierde.
  * 2. Sincronización Instantánea Multi-Administrador (Juanjo <-> Morensex/Mati).
  * 3. Dashboard Financiero (Estado de Cuenta de Socios Juanjo & Morensex + Pagos a Proveedores).
- * 4. Sistema de Embajadores y Comisiones ($800 Docena / $2.000 Bandeja 30 / $4.000 Caja 60).
+ * 4. Sistema de Embajadores y Comisiones ($2.000 por Bandeja de 30 unidades).
  * 5. Checkout con Código de Embajador hacia WhatsApp (+56953930491) y Aprobación Manual en Dashboard.
  */
 
@@ -79,109 +79,45 @@ function cloudStateHasBusinessData(st) {
 }
 const CLIENT_INSTANCE_ID = 'qh-node-' + Math.random().toString(36).slice(2, 10);
 
-// Catálogo oficial de productos
+// Catálogo oficial de productos (Formato exclusivo Bandejas de 30 unidades)
 const PRODUCTS = [
-  {
-    id: 'campo-12',
-    category: 'campo',
-    typeLabel: 'Huevos de Campo (Color)',
-    name: 'Docena de Campo',
-    format: 'Docena (12 un.)',
-    eggsCount: 12,
-    commission: 800,
-    caliberBadge: 'Calibre Primera / Tamaño Grande',
-    qualityNote: 'Huevos de Selección Grande • Yema dorada y cáscara firme',
-    price: 4200,
-    badge: 'Ideal para Probar',
-    popular: false,
-    description: '12 huevos de campo de cáscara marrón firme y yema dorada intensa. Recolectados a mano de gallinas 100% libres.',
-    features: ['Gallinas de libre pastoreo', 'Yema color sol natural', 'Empaque de pulpa ecológica']
-  },
   {
     id: 'campo-30',
     category: 'campo',
-    typeLabel: 'Huevos de Campo (Color)',
-    name: 'Bandeja Familiar de Campo',
-    format: 'Bandeja Familiar (30 un.)',
+    typeLabel: 'Huevo de Campo (Color/Café)',
+    name: 'Bandeja Huevo de Campo',
+    format: '30 unidades',
     eggsCount: 30,
     commission: 2000,
     caliberBadge: 'Calibre Primera / Tamaño Grande',
     qualityNote: 'Huevos de Selección Grande • Yema dorada y cáscara firme',
-    price: 8900,
-    badge: '🔥 El Más Vendido',
+    price: 11500,
+    badge: '🔥 100% Campo Libre',
     popular: true,
-    description: 'Nuestra bandeja campeona de 30 huevos de campo de Selección Grande. El formato favorito para desayunos potentes toda la semana.',
-    features: ['Mejor relación precio/calidad', 'Calibre Primera / Tamaño Grande', 'Recolección del día (<24 hrs)']
-  },
-  {
-    id: 'campo-60',
-    category: 'campo',
-    typeLabel: 'Huevos de Campo (Color)',
-    name: 'Caja Mayorista de Campo',
-    format: 'Caja Mayorista (60 un.)',
-    eggsCount: 60,
-    commission: 4000,
-    caliberBadge: 'Huevos de Selección Grande',
-    qualityNote: 'Calibre Primera / Tamaño Grande • Cáscara marrón firme',
-    price: 16900,
-    badge: '🚚 Envío Gratis Incluido',
-    popular: false,
-    description: '2 bandejas completas (60 unidades) de huevos de campo de Selección Grande. Pensado para familias deportistas, repostería o negocios.',
-    features: ['Ahorro mayorista directo', 'Despacho prioritario gratis', 'Garantía Cero Quebrados']
-  },
-  {
-    id: 'blanco-12',
-    category: 'blanco',
-    typeLabel: 'Huevos Seleccionados (Blancos)',
-    name: 'Docena Blanca Seleccionada',
-    format: 'Docena (12 un.)',
-    eggsCount: 12,
-    commission: 800,
-    caliberBadge: 'Calibre Primera / Tamaño Grande',
-    qualityNote: 'Huevos de Selección Grande • Clara densa y cáscara limpia',
-    price: 3600,
-    badge: 'Frescura Total',
-    popular: false,
-    description: '12 huevos blancos seleccionados uno a uno por calidad y frescura. Clara densa ideal para batidos, merengues y sartén.',
-    features: ['Alimentación 100% grano natural', 'Clara firme de alta proteína', 'Empaque protector reciclable']
+    description: 'Bandeja de 30 huevos de campo de Selección Grande de cáscara marrón firme y yema dorada intensa. Recolectados de gallinas 100% libres de pastoreo.',
+    features: ['30 unidades de Selección Grande', 'Gallinas 100% libres de pastoreo', 'Yema dorada cremosa natural']
   },
   {
     id: 'blanco-30',
     category: 'blanco',
-    typeLabel: 'Huevos Seleccionados (Blancos)',
-    name: 'Bandeja Familiar Blanca',
-    format: 'Bandeja Familiar (30 un.)',
+    typeLabel: 'Huevo Blanco Seleccionado',
+    name: 'Bandeja Huevo Blanco Seleccionado',
+    format: '30 unidades',
     eggsCount: 30,
     commission: 2000,
     caliberBadge: 'Calibre Primera / Tamaño Grande',
-    qualityNote: 'Huevos de Selección Grande • Yema firme y sabor puro',
-    price: 7600,
-    badge: '⭐ Favorito en Cocina',
+    qualityNote: 'Huevos de Selección Grande • Clara densa y cáscara limpia',
+    price: 9000,
+    badge: '⭐ Selección Grande',
     popular: false,
-    description: '30 huevos blancos de Selección Grande con yema firme y sabor limpio. Ideales para la cocina familiar de todos los días.',
-    features: ['30 unidades de Selección Grande', 'Sin jaulas ni hormonas', 'Frescura garantizada 24/48h']
-  },
-  {
-    id: 'blanco-60',
-    category: 'blanco',
-    typeLabel: 'Huevos Seleccionados (Blancos)',
-    name: 'Caja Mayorista Blanca',
-    format: 'Caja Mayorista (60 un.)',
-    eggsCount: 60,
-    commission: 4000,
-    caliberBadge: 'Huevos de Selección Grande',
-    qualityNote: 'Calibre Primera / Tamaño Grande • Clara firme y fresca',
-    price: 14500,
-    badge: '💪 Rendimiento Máximo',
-    popular: false,
-    description: 'Pack ahorro de 60 huevos blancos de Selección Grande (2 bandejas de 30 un.) con despacho gratis a tu puerta.',
-    features: ['Precio mayorista conveniente', 'Despacho gratis incluido', 'Reposición 2x1 ante roturas']
+    description: 'Bandeja de 30 huevos blancos de Selección Grande con cáscara limpia y clara densa de alta proteína. Máxima frescura garantizada en tu cocina.',
+    features: ['30 unidades de Selección Grande', 'Alimentación natural 100% limpia', 'Clara firme y yema consistente']
   }
 ];
 
 const ALL_TRACKABLE_BUTTONS = [
-  'Botón Verde WhatsApp: Quiero pedir mi bandeja directo',
-  'Drawer Botón Verde: Quiero pedir mi bandeja directo',
+  'Botón Verde WhatsApp: Tengo listo mi pedido, enviar a WhatsApp',
+  'Drawer Botón Verde: Tengo listo mi pedido, enviar a WhatsApp',
   'Header: Pide por WhatsApp',
   'Header: Abrir Carrito',
   'Hero CTA: Ver Bandejas Disponibles',
@@ -208,17 +144,16 @@ const ALL_TRACKABLE_BUTTONS = [
 
 // Cantidades temporales en las tarjetas del catálogo
 const cardQuantities = {
-  'campo-12': 1,
   'campo-30': 1,
-  'campo-60': 1,
-  'blanco-12': 1,
-  'blanco-30': 1,
-  'blanco-60': 1
+  'blanco-30': 1
 };
 
 // Estado en memoria del Carrito del cliente actual (inicia en 0)
 let orderCart = {};
 let currentOrderType = 'Pedido Único'; // 'Pedido Único' | 'Pedido Fijo Semanal'
+let currentDeliveryDay = 'Lunes'; // 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes'
+let customerName = '';
+let customerAddress = '';
 let currentAmbassadorCode = '';
 let activeFilter = 'all';
 let activeAdminTab = 'all';
@@ -380,6 +315,12 @@ function loadLocalCloudMirror() {
       if (savedAdmin) {
         currentAdminUser = savedAdmin;
       }
+      const savedName = window.localStorage.getItem('qh_customer_name');
+      if (savedName) customerName = savedName;
+      const savedAddress = window.localStorage.getItem('qh_customer_address');
+      if (savedAddress) customerAddress = savedAddress;
+      const savedDay = window.localStorage.getItem('qh_delivery_day');
+      if (savedDay) currentDeliveryDay = savedDay;
     }
   } catch (e) {
     // ignore
@@ -1157,6 +1098,78 @@ function handleAmbassadorInput(value) {
   }
 }
 
+function handleCustomerDataInput(field, value) {
+  if (field === 'name') {
+    customerName = (value || '').trimStart();
+    const mainInput = document.getElementById('customer-name-main');
+    const drawerInput = document.getElementById('customer-name-drawer');
+    if (mainInput && mainInput.value !== customerName) mainInput.value = customerName;
+    if (drawerInput && drawerInput.value !== customerName) drawerInput.value = customerName;
+    try { window.localStorage.setItem('qh_customer_name', customerName); } catch (e) {}
+  } else if (field === 'address') {
+    customerAddress = (value || '').trimStart();
+    const mainInput = document.getElementById('customer-address-main');
+    const drawerInput = document.getElementById('customer-address-drawer');
+    if (mainInput && mainInput.value !== customerAddress) mainInput.value = customerAddress;
+    if (drawerInput && drawerInput.value !== customerAddress) drawerInput.value = customerAddress;
+    try { window.localStorage.setItem('qh_customer_address', customerAddress); } catch (e) {}
+  }
+
+  updateWhatsAppButtonState();
+
+  const waPreview = document.getElementById('whatsapp-live-preview');
+  if (waPreview) {
+    waPreview.textContent = buildWhatsAppDirectMessage();
+  }
+}
+
+function setDeliveryDay(day) {
+  currentDeliveryDay = day;
+  try { window.localStorage.setItem('qh_delivery_day', day); } catch (e) {}
+  syncOrderUI();
+  showToast(`📅 Día de entrega semanal: ${day}`);
+}
+
+function updateWhatsAppButtonState() {
+  const hasName = customerName.trim().length > 0;
+  const hasAddress = customerAddress.trim().length > 0;
+  const isReady = hasName && hasAddress;
+
+  const btnMain = document.getElementById('btn-whatsapp-checkout-main');
+  const btnDrawer = document.getElementById('btn-whatsapp-checkout-drawer');
+  const noticeMain = document.getElementById('customer-validation-notice-main');
+  const noticeDrawer = document.getElementById('customer-validation-notice-drawer');
+
+  if (btnMain) {
+    if (isReady) {
+      btnMain.classList.remove('opacity-60');
+      btnMain.classList.add('pulse-whatsapp');
+    } else {
+      btnMain.classList.add('opacity-60');
+      btnMain.classList.remove('pulse-whatsapp');
+    }
+  }
+
+  if (btnDrawer) {
+    if (isReady) {
+      btnDrawer.classList.remove('opacity-60');
+      btnDrawer.classList.add('pulse-whatsapp');
+    } else {
+      btnDrawer.classList.add('opacity-60');
+      btnDrawer.classList.remove('pulse-whatsapp');
+    }
+  }
+
+  if (noticeMain) {
+    if (isReady) noticeMain.classList.add('hidden');
+    else noticeMain.classList.remove('hidden');
+  }
+  if (noticeDrawer) {
+    if (isReady) noticeDrawer.classList.add('hidden');
+    else noticeDrawer.classList.remove('hidden');
+  }
+}
+
 function setOrderType(type) {
   currentOrderType = type;
   syncOrderUI();
@@ -1181,9 +1194,7 @@ function closeCartDrawer() {
 
 /**
  * Calcula la comisión proporcional de un pedido según sus ítems:
- * - Docena (12 huevos): $800 de comisión por unidad.
  * - Bandeja de 30 huevos: $2.000 de comisión por unidad.
- * - Caja Mayorista (60 huevos): $4.000 de comisión por unidad.
  */
 function calculateOrderCommission(items) {
   if (!Array.isArray(items)) return 0;
@@ -1191,75 +1202,112 @@ function calculateOrderCommission(items) {
     const qty = Number(item.qty) || 0;
     const product = PRODUCTS.find((p) => p.id === item.id);
     const eggs = product ? product.eggsCount : parseInt(item.format, 10) || 0;
-    if (eggs === 12) return sum + qty * 800;
     if (eggs === 30) return sum + qty * 2000;
+    // Históricos retrocompatibles
+    if (eggs === 12) return sum + qty * 800;
     if (eggs === 60) return sum + qty * 4000;
-    return sum;
+    return sum + qty * 2000;
   }, 0);
 }
 
 /**
  * Construye el mensaje exacto para WhatsApp (+56953930491):
- * - Detalle de los productos y sus cantidades
- * - Si es Pedido Único o Pedido Fijo Semanal
- * - El Subtotal
- * - Si el cliente escribió un código de embajador: "Vengo de parte de: [CÓDIGO/NOMBRE]"
- * - Espacio en blanco para que el cliente solo complete su Nombre y Dirección desde el chat
+ * - [Cantidad]x Bandeja Huevo de Campo ($11.500 c/u)
+ * - [Cantidad]x Bandeja Huevo Blanco ($9.000 c/u)
+ * Total: $XX.XXX
+ * Modalidad: [Pedido Único / Pedido Fijo Semanal]
+ * [CONDICIONAL]: Quiero dejar agendado que me despachen todos los [DÍA ELEGIDO].
+ *
+ * Mis datos de entrega:
+ * Nombre: [Nombre ingresado en la web]
+ * Dirección: [Dirección ingresada en la web]
+ * Código de embajador: [Código ingresado o 'Ninguno']
  */
 function buildWhatsAppDirectMessage() {
-  const productIds = Object.keys(orderCart);
-  const ambassadorLine = currentAmbassadorCode
-    ? `Vengo de parte de: ${currentAmbassadorCode}\n`
-    : '';
+  const qtyCampo = Number(orderCart['campo-30']) || 0;
+  const qtyBlanco = Number(orderCart['blanco-30']) || 0;
 
-  if (productIds.length === 0) {
-    return (
-      `¡Hola *QUÉ HUEVONES*! 🥚🥊\n` +
-      `Quiero hacer un *${currentOrderType}*:\n\n` +
-      `• (Selecciona tus bandejas en el catálogo o indícanos aquí cuántas quieres)\n\n` +
-      `🔄 *Tipo de Pedido:* ${currentOrderType}\n` +
-      `${ambassadorLine}\n` +
-      `--- Completo mis datos aquí ---\n` +
-      `👤 Mi Nombre: \n` +
-      `📍 Mi Dirección: `
-    );
+  // Si el carrito está vacío en la vista previa inicial, mostrar 1x Campo por defecto
+  const displayCampo = (qtyCampo === 0 && qtyBlanco === 0) ? 1 : qtyCampo;
+  const displayBlanco = (qtyCampo === 0 && qtyBlanco === 0) ? 0 : qtyBlanco;
+
+  const itemLines = [];
+  let totalAmount = 0;
+
+  if (displayCampo > 0) {
+    const subCampo = displayCampo * 11500;
+    totalAmount += subCampo;
+    itemLines.push(`- ${displayCampo}x Bandeja Huevo de Campo ($11.500 c/u)`);
+  }
+  if (displayBlanco > 0) {
+    const subBlanco = displayBlanco * 9000;
+    totalAmount += subBlanco;
+    itemLines.push(`- ${displayBlanco}x Bandeja Huevo Blanco ($9.000 c/u)`);
   }
 
-  let subtotal = 0;
-  let totalEggs = 0;
+  const itemsDetail = itemLines.join('\n');
+  const totalFormatted = formatCLP(totalAmount);
 
-  const lines = productIds.map((id) => {
-    const product = PRODUCTS.find((p) => p.id === id);
-    const qty = orderCart[id];
-    const lineSub = product.price * qty;
-    subtotal += lineSub;
-    totalEggs += product.eggsCount * qty;
-    return `• ${qty}x ${product.name} (${product.format}) = ${formatCLP(lineSub)}`;
-  });
+  let weeklyLine = '';
+  if (currentOrderType === 'Pedido Fijo Semanal') {
+    weeklyLine = `\nQuiero dejar agendado que me despachen todos los ${currentDeliveryDay || 'Lunes'}.`;
+  }
+
+  const nameVal = customerName.trim() || '[Nombre ingresado en la web]';
+  const addressVal = customerAddress.trim() || '[Dirección ingresada en la web]';
+  const ambVal = currentAmbassadorCode.trim() || 'Ninguno';
 
   return (
-    `¡Hola *QUÉ HUEVONES*! 🥚🥊\n` +
-    `Quiero pedir mis bandejas directo:\n\n` +
-    `🛒 *DETALLE DEL PEDIDO:*\n` +
-    `${lines.join('\n')}\n\n` +
-    `🥚 *Total Huevos:* ${totalEggs} un. (Calibre Primera / Selección Grande)\n` +
-    `🔄 *Tipo de Pedido:* ${currentOrderType}\n` +
-    `💰 *Subtotal:* ${formatCLP(subtotal)}\n` +
-    `${ambassadorLine}\n` +
-    `--- Completo mis datos aquí ---\n` +
-    `👤 Mi Nombre: \n` +
-    `📍 Mi Dirección: `
+`¡Hola! Tengo listo mi pedido de Qué Huevones:
+${itemsDetail}
+Total: ${totalFormatted}
+Modalidad: ${currentOrderType}${weeklyLine}
+
+Mis datos de entrega:
+Nombre: ${nameVal}
+Dirección: ${addressVal}
+Código de embajador: ${ambVal}`
   );
 }
 
 /**
  * Ejecuta el Checkout Directo a WhatsApp (+56953930491),
- * guarda el pedido de forma permanente en la Base de Datos en la Nube
- * y sincroniza en tiempo real con el Dashboard de Juanjo y Morensex.
+ * valida que los datos obligatorios estén completos,
+ * guarda el pedido permanentemente en la Base de Datos en la Nube
+ * y abre WhatsApp con el mensaje 100% pre-rellenado.
  */
 function triggerDirectWhatsAppCheckout(sourceLabel = 'Checkout Directo WhatsApp') {
-  if (Object.keys(orderCart).length === 0) {
+  const name = customerName.trim();
+  const address = customerAddress.trim();
+
+  if (!name) {
+    const inp = document.getElementById('customer-name-main') || document.getElementById('customer-name-drawer');
+    if (inp) {
+      inp.focus();
+      inp.classList.add('ring-2', 'ring-red-400');
+      setTimeout(() => inp.classList.remove('ring-2', 'ring-red-400'), 2500);
+    }
+    showToast('⚠️ Por favor completa Tu Nombre para enviar tu pedido');
+    return;
+  }
+
+  if (!address) {
+    const inp = document.getElementById('customer-address-main') || document.getElementById('customer-address-drawer');
+    if (inp) {
+      inp.focus();
+      inp.classList.add('ring-2', 'ring-red-400');
+      setTimeout(() => inp.classList.remove('ring-2', 'ring-red-400'), 2500);
+    }
+    showToast('⚠️ Por favor completa Tu Dirección de Entrega');
+    return;
+  }
+
+  let qtyCampo = Number(orderCart['campo-30']) || 0;
+  let qtyBlanco = Number(orderCart['blanco-30']) || 0;
+
+  if (qtyCampo === 0 && qtyBlanco === 0) {
     orderCart['campo-30'] = 1;
+    qtyCampo = 1;
     syncOrderUI();
     renderCatalog();
   }
@@ -1273,6 +1321,7 @@ function triggerDirectWhatsAppCheckout(sourceLabel = 'Checkout Directo WhatsApp'
     const p = PRODUCTS.find((item) => item.id === id);
     if (!p) return;
     const qty = orderCart[id];
+    if (qty <= 0) return;
     const lineTotal = p.price * qty;
     subtotal += lineTotal;
     totalEggs += p.eggsCount * qty;
@@ -1304,7 +1353,7 @@ function triggerDirectWhatsAppCheckout(sourceLabel = 'Checkout Directo WhatsApp'
     minute: '2-digit'
   });
 
-  const cleanCode = (currentAmbassadorCode || '').trim();
+  const cleanCode = (currentAmbassadorCode || '').trim().toUpperCase();
   const commissionAmount = calculateOrderCommission(orderItems);
 
   const newOrder = {
@@ -1313,7 +1362,9 @@ function triggerDirectWhatsAppCheckout(sourceLabel = 'Checkout Directo WhatsApp'
     date: formattedDate,
     timestamp: nowMs,
     updatedAt: nowMs,
-    clientName: 'Cliente Web WhatsApp',
+    clientName: name,
+    clientAddress: address,
+    deliveryDay: currentOrderType === 'Pedido Fijo Semanal' ? currentDeliveryDay : null,
     orderType: currentOrderType,
     items: orderItems,
     totalEggs,
@@ -1330,14 +1381,14 @@ function triggerDirectWhatsAppCheckout(sourceLabel = 'Checkout Directo WhatsApp'
   analytics.eventLog.unshift({
     time: getNowFormatted(),
     type: 'CHECKOUT_WHATSAPP',
-    detail: `Checkout WhatsApp (${currentOrderType}): ${formatCLP(subtotal)}${
-      cleanCode ? ` • Vengo de parte de: ${cleanCode}` : ''
+    detail: `Checkout WhatsApp (${currentOrderType}): ${formatCLP(subtotal)} • Cliente: ${name}${
+      cleanCode ? ` • Embajador: ${cleanCode}` : ''
     }`
   });
   analytics.eventLog = analytics.eventLog.slice(0, 40);
 
   // Guardar permanentemente en la nube y notificar en tiempo real
-  persistCloudState(`Nuevo pedido WhatsApp ${newOrder.displayId}`);
+  persistCloudState(`Nuevo pedido WhatsApp ${newOrder.displayId} (${name})`);
 
   // Abrir enlace automático a WhatsApp +56953930491
   const message = buildWhatsAppDirectMessage();
@@ -1547,19 +1598,19 @@ function renderCatalog() {
         </div>
 
         <div class="pt-5 border-t border-slate-200/90 space-y-4">
-          <div class="flex items-baseline justify-between">
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-qh-brown/40 shadow-sm flex items-center justify-between gap-3">
             <div>
-              <span class="text-xs font-bold text-slate-500 block">Precio por formato:</span>
-              <span class="font-display font-extrabold text-2xl text-qh-navy">${formatCLP(product.price)}</span>
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">Precio Fijo Bandeja (30 un.)</span>
+              <span class="font-display font-extrabold text-3xl sm:text-4xl text-qh-navy leading-none">${formatCLP(product.price)}</span>
             </div>
             <div class="text-right">
-              <span class="text-xs font-bold text-qh-brown bg-qh-brown/10 px-2.5 py-1 rounded-lg inline-block">
+              <span class="text-xs font-black text-qh-brown bg-qh-brown/15 px-3 py-1.5 rounded-xl inline-block shadow-xs">
                 ${formatCLP(unitPrice)} c/huevo
               </span>
               ${
                 inCartQty > 0
                   ? `<span class="block text-[11px] font-extrabold text-emerald-700 mt-1">✓ ${inCartQty} en tu carrito</span>`
-                  : ''
+                  : `<span class="block text-[10px] font-bold text-slate-400 mt-1">30 unidades</span>`
               }
             </div>
           </div>
@@ -1769,12 +1820,60 @@ function syncOrderUI() {
     drawerAmbInput.value = currentAmbassadorCode;
   }
 
+  // Sincronizar inputs de nombre y dirección entre pantalla principal y drawer
+  const mainNameInp = document.getElementById('customer-name-main');
+  const drawerNameInp = document.getElementById('customer-name-drawer');
+  if (mainNameInp && mainNameInp.value !== customerName) {
+    mainNameInp.value = customerName;
+  }
+  if (drawerNameInp && drawerNameInp.value !== customerName) {
+    drawerNameInp.value = customerName;
+  }
+
+  const mainAddressInp = document.getElementById('customer-address-main');
+  const drawerAddressInp = document.getElementById('customer-address-drawer');
+  if (mainAddressInp && mainAddressInp.value !== customerAddress) {
+    mainAddressInp.value = customerAddress;
+  }
+  if (drawerAddressInp && drawerAddressInp.value !== customerAddress) {
+    drawerAddressInp.value = customerAddress;
+  }
+
   // Sincronizar estado visual de las tarjetas "Pedido Único" vs "Pedido Fijo Semanal"
   const isSemanal = currentOrderType === 'Pedido Fijo Semanal';
   const btnUnicoMain = document.getElementById('type-btn-unico-main');
   const btnSemanalMain = document.getElementById('type-btn-semanal-main');
   const btnUnicoDrawer = document.getElementById('type-btn-unico-drawer');
   const btnSemanalDrawer = document.getElementById('type-btn-semanal-drawer');
+
+  // Mostrar / Ocultar selectores de día de entrega semanal
+  const weeklyBoxMain = document.getElementById('weekly-day-box-main');
+  const weeklyBoxDrawer = document.getElementById('weekly-day-box-drawer');
+  if (weeklyBoxMain) {
+    if (isSemanal) weeklyBoxMain.classList.remove('hidden');
+    else weeklyBoxMain.classList.add('hidden');
+  }
+  if (weeklyBoxDrawer) {
+    if (isSemanal) weeklyBoxDrawer.classList.remove('hidden');
+    else weeklyBoxDrawer.classList.add('hidden');
+  }
+
+  // Actualizar botones de día seleccionado
+  ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].forEach((day) => {
+    const isDaySelected = currentDeliveryDay === day;
+    const btnMain = document.querySelector(`.day-btn-main[data-day="${day}"]`);
+    const btnDrawer = document.querySelector(`.day-btn-drawer[data-day="${day}"]`);
+    if (btnMain) {
+      btnMain.className = isDaySelected
+        ? 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-extrabold text-xs bg-amber-400 text-qh-navyDark shadow-md ring-2 ring-amber-300 transition'
+        : 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition';
+    }
+    if (btnDrawer) {
+      btnDrawer.className = isDaySelected
+        ? 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-extrabold text-[11px] bg-amber-400 text-qh-navyDark shadow transition'
+        : 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition';
+    }
+  });
 
   const unicoIcon = document.getElementById('unico-icon-box');
   const unicoStatus = document.getElementById('unico-status-pill');
@@ -1913,6 +2012,7 @@ function syncOrderUI() {
       totalTrays > 0 ? `${totalEggs} huevos de Selección Grande` : '0 huevos seleccionados';
   }
   if (drawerSubtitle) drawerSubtitle.textContent = `${totalTrays} bandeja(s) • ${currentOrderType}`;
+  updateWhatsAppButtonState();
   if (waPreview) waPreview.textContent = buildWhatsAppDirectMessage();
 }
 
@@ -2628,7 +2728,12 @@ function renderAdminDashboard() {
                 <span class="text-[11px] text-slate-400 block">${order.date}</span>
                 ${
                   order.clientName
-                    ? `<span class="text-[11px] text-qh-brownLight font-semibold">${order.clientName}</span>`
+                    ? `<span class="text-xs text-amber-300 font-bold block">${order.clientName}</span>`
+                    : ''
+                }
+                ${
+                  order.clientAddress
+                    ? `<span class="text-[11px] text-slate-300 block truncate max-w-[200px]" title="${order.clientAddress}">📍 ${order.clientAddress}</span>`
                     : ''
                 }
               </td>
@@ -2638,7 +2743,7 @@ function renderAdminDashboard() {
                     ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
                     : 'bg-sky-400/15 text-sky-300 border border-sky-400/30'
                 }">
-                  ${isWeekly ? '🔁 Pedido Fijo Semanal' : '1️⃣ Pedido Único'}
+                  ${isWeekly ? `🔁 Semanal (${order.deliveryDay || 'Lunes'})` : '1️⃣ Pedido Único'}
                 </span>
               </td>
               <td class="py-3.5 px-4 text-slate-200 leading-relaxed">
@@ -2813,9 +2918,7 @@ function renderAdminDashboard() {
                 ${amb.ordersCount} pedido(s) aprobado(s)
               </td>
               <td class="py-3.5 px-4 text-xs text-slate-300">
-                <span class="inline-block mr-2">🥚 Docenas (12): <strong>${amb.count12}</strong> ($800 c/u)</span>
-                <span class="inline-block mr-2">📦 Bandejas (30): <strong>${amb.count30}</strong> ($2.000 c/u)</span>
-                <span class="inline-block">🏆 Cajas (60): <strong>${amb.count60}</strong> ($4.000 c/u)</span>
+                <span class="inline-block">📦 Bandejas (30 un.): <strong>${amb.count30}</strong> ($2.000 c/u)</span>
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
                 <span class="font-display font-extrabold text-xl text-emerald-400">
