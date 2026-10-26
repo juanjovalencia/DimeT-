@@ -2357,25 +2357,22 @@ function handleCreateManualOrder(event) {
 }
 
 /* ==========================================================================
-   MÓDULO B: 💰 FINANZAS, CAJA DE LA EMPRESA Y REGLA 50/50 ENTRE SOCIOS EN LA NUBE
+   MÓDULO B: 💰 FINANZAS, CAJA DE LA EMPRESA Y SALDOS DE BOLSILLO EN LA NUBE
    ========================================================================== */
 
 /**
- * Calcula con exactitud matemática el estado de la Caja de la Empresa y
- * la regla de balance 50/50 entre Juanjo y Mati (Morensex).
+ * Calcula el estado de la Caja de la Empresa y los saldos de bolsillo independientes
+ * de Mati y Juanjo con división automática 50% según pagos a proveedores.
  */
 function calculateFinancialState() {
   const orders = loadOrders();
   const finances = loadFinances();
 
   // 1. CAJA DE LA EMPRESA (FONDO COMÚN)
-  // Suma: Pedidos pagados/cobrados + Aportes de capital a Caja
-  // Resta: Gastos o pagos a proveedores pagados con "Caja de la Empresa" + Comisiones pagadas de Caja
   let ordersPaidRevenue = 0;
   let paidOrdersCount = 0;
 
   orders.forEach((o) => {
-    // Pedidos completados o explícitamente marcados como cobrados en caja
     if (o.paid || (o.approved && o.status === 'Completado')) {
       ordersPaidRevenue += Number(o.subtotal) || 0;
       paidOrdersCount += 1;
@@ -2402,73 +2399,22 @@ function calculateFinancialState() {
     const payer = sp.payer;
     if (payer === 'Caja' || payer === 'caja' || payer === 'Caja de la Empresa') {
       cajaExpenses += amt;
-    } else if (payer === 'Morensex' || payer === 'Mati') {
+    } else if (payer === 'Morensex' || payer === 'Mati' || payer === 'Bolsillo de Mati (Morensex)') {
       matiOutOfPocket += amt;
-    } else if (payer === 'Juanjo') {
+    } else if (payer === 'Juanjo' || payer === 'Bolsillo de Juanjo') {
       juanjoOutOfPocket += amt;
-    }
-  });
-
-  (finances.partnerMovements || []).forEach((m) => {
-    const amt = Number(m.amount) || 0;
-    if (m.type === 'pago_directo') {
-      if (m.partner === 'Morensex' || m.partner === 'Mati') {
-        matiOutOfPocket += amt;
-      } else if (m.partner === 'Juanjo') {
-        juanjoOutOfPocket += amt;
-      }
     }
   });
 
   const cajaDisponible = totalCajaInflows - cajaExpenses;
 
-  // 2. REGLA 50/50 ENTRE SOCIOS Y SALDAR DEUDAS (ABONOS DIRECTOS)
-  // Cada socio asume el 50% de los gastos pagados del bolsillo del otro.
-  // Deuda acumulada de Juanjo hacia Mati = 50% de matiOutOfPocket
-  // Deuda acumulada de Mati hacia Juanjo = 50% de juanjoOutOfPocket
-  // Abonos directos entre socios para saldar:
-  // - Juanjo transfiere a Mati -> reduce la deuda de Juanjo (o aumenta saldo a favor de Juanjo)
-  // - Mati transfiere a Juanjo -> reduce la deuda de Mati (o aumenta saldo a favor de Mati)
-  let juanjoSettlementsToMati = 0;
-  let matiSettlementsToJuanjo = 0;
-  let totalSettlementsAmount = 0;
-
-  (finances.debtSettlements || []).forEach((s) => {
-    const amt = Number(s.amount) || 0;
-    totalSettlementsAmount += amt;
-    const fromP = s.fromPartner === 'Morensex' || s.fromPartner === 'Mati' ? 'Morensex' : 'Juanjo';
-    const toP = s.toPartner === 'Morensex' || s.toPartner === 'Mati' ? 'Morensex' : 'Juanjo';
-    if (fromP === 'Juanjo' && toP === 'Morensex') {
-      juanjoSettlementsToMati += amt;
-    } else if (fromP === 'Morensex' && toP === 'Juanjo') {
-      matiSettlementsToJuanjo += amt;
-    }
-  });
-
-  // Net Debt: Si es positivo, Juanjo debe a Mati. Si es negativo, Mati debe a Juanjo. Si es 0, a mano.
-  const netDebtJuanjoToMati =
-    (matiOutOfPocket * 0.5 - juanjoSettlementsToMati) -
-    (juanjoOutOfPocket * 0.5 - matiSettlementsToJuanjo);
-
-  const roundedNetDebt = Math.round(netDebtJuanjoToMati);
-
-  // Exact strings required by specification:
-  // - "🔴 Juanjo le debe $XX.XXX a Mati"
-  // - "🔴 Mati le debe $XX.XXX a Juanjo"
-  // - "🟢 Cuentas saldadas ($0) - Están a mano"
-  let partnerStatusText = '';
-  let partnerStatusColor = 'text-emerald-400';
-
-  if (roundedNetDebt > 0) {
-    partnerStatusText = `🔴 Juanjo le debe ${formatCLP(roundedNetDebt)} a Mati`;
-    partnerStatusColor = 'text-rose-400';
-  } else if (roundedNetDebt < 0) {
-    partnerStatusText = `🔴 Mati le debe ${formatCLP(Math.abs(roundedNetDebt))} a Juanjo`;
-    partnerStatusColor = 'text-rose-400';
-  } else {
-    partnerStatusText = '🟢 Cuentas saldadas ($0) - Están a mano';
-    partnerStatusColor = 'text-emerald-400';
-  }
+  // 2. LÓGICA DE DIVISIÓN 50% EXCLUSIVA PARA PAGOS A PROVEEDOR DESDE EL BOLSILLO DE LOS SOCIOS
+  // - Cada gasto pagado a un proveedor o distribuidor por uno de los socios se divide automáticamente en 50% y 50%.
+  // - Si paga Bolsillo de Mati: mitad (+50%) saldo a favor en Saldo de Mati, y la otra mitad (-50%) deuda en Saldo de Juanjo.
+  // - Si paga Bolsillo de Juanjo: mitad (+50%) saldo a favor en Saldo de Juanjo, y la otra mitad (-50%) deuda en Saldo de Mati.
+  // - Si ambos parten de cero o no han pagado, ambos saldos son $0.
+  const saldoBolsilloMati = Math.round(matiOutOfPocket * 0.5 - juanjoOutOfPocket * 0.5);
+  const saldoBolsilloJuanjo = Math.round(juanjoOutOfPocket * 0.5 - matiOutOfPocket * 0.5);
 
   return {
     cajaDisponible,
@@ -2477,15 +2423,11 @@ function calculateFinancialState() {
     paidOrdersCount,
     capitalAportesToCaja,
     cajaExpenses,
+    totalSuppliersExpenses,
     matiOutOfPocket,
     juanjoOutOfPocket,
-    totalSuppliersExpenses,
-    juanjoSettlementsToMati,
-    matiSettlementsToJuanjo,
-    totalSettlementsAmount,
-    netDebtJuanjoToMati: roundedNetDebt,
-    partnerStatusText,
-    partnerStatusColor
+    saldoBolsilloMati,
+    saldoBolsilloJuanjo
   };
 }
 
@@ -2532,9 +2474,10 @@ function deletePartnerMovement(movId) {
 }
 
 /**
- * Registra un gasto o pago a proveedor distinguiendo:
- * 1. "Caja de la Empresa": Descuenta del fondo común del negocio. No genera deuda entre Juanjo y Mati.
- * 2. "Bolsillo de Mati" o "Bolsillo de Juanjo": Registra el gasto y calcula automáticamente el 50% de deuda para el otro socio.
+ * Registra un pago a proveedor distinguiendo:
+ * - Opción A: "Bolsillo de Mati (Morensex)" -> +50% saldo a favor Mati / -50% deuda Juanjo
+ * - Opción B: "Bolsillo de Juanjo" -> +50% saldo a favor Juanjo / -50% deuda Mati
+ * - Opción C: "Caja de la Empresa" -> Descuenta del fondo común sin generar deuda entre socios
  */
 function handleAddSupplierPayment(event) {
   event.preventDefault();
@@ -2562,17 +2505,18 @@ function handleAddSupplierPayment(event) {
   if (amtInput) amtInput.value = '';
   if (concInput) concInput.value = '';
 
+  const half = Math.round(amount * 0.5);
   let toastNote = '';
   if (payer === 'Caja') {
-    toastNote = ' • Descontado de Caja de la Empresa (Sin deuda entre socios)';
+    toastNote = ' • Descontado de Caja de la Empresa';
   } else if (payer === 'Morensex') {
-    toastNote = ` • Pagó Mati (Juanjo le debe el 50%: ${formatCLP(Math.round(amount * 0.5))})`;
+    toastNote = ` • Pagó Mati (+${formatCLP(half)} a favor de Mati / -${formatCLP(half)} deuda Juanjo)`;
   } else if (payer === 'Juanjo') {
-    toastNote = ` • Pagó Juanjo (Mati le debe el 50%: ${formatCLP(Math.round(amount * 0.5))})`;
+    toastNote = ` • Pagó Juanjo (+${formatCLP(half)} a favor de Juanjo / -${formatCLP(half)} deuda Mati)`;
   }
 
-  persistCloudState(`Gasto / Pago registrado: ${formatCLP(amount)} (${payer})`);
-  showToast(`☁️ Gasto guardado en la nube: ${formatCLP(amount)}${toastNote}`);
+  persistCloudState(`Pago a proveedor: ${formatCLP(amount)} (${payer})`);
+  showToast(`☁️ Pago a proveedor guardado: ${formatCLP(amount)}${toastNote}`);
 }
 
 function deleteSupplierPayment(payId) {
@@ -2581,112 +2525,11 @@ function deleteSupplierPayment(payId) {
     (p) => p.id !== payId
   );
   persistCloudState('Pago a proveedor eliminado');
-  showToast('🗑️ Registro de gasto eliminado de la nube');
+  showToast('🗑️ Registro de pago a proveedor eliminado');
 }
 
 /**
- * Registra cuando un socio transfiere plata al otro o le paga una cuenta personal
- * para ponerse al día con su 50% de deuda, descontándolo de inmediato sin tocar la Caja.
- */
-function handleAddDebtSettlement(event) {
-  event.preventDefault();
-  const fromToVal = document.getElementById('settlement-from-to').value;
-  const date = document.getElementById('settlement-date').value || getTodayISODate();
-  const amount = Math.max(0, Number(document.getElementById('settlement-amount').value) || 0);
-  const concept = (document.getElementById('settlement-concept').value || '').trim();
-
-  if (!amount || !concept) return;
-
-  const fromPartner = fromToVal === 'Morensex-Juanjo' ? 'Morensex' : 'Juanjo';
-  const toPartner = fromToVal === 'Morensex-Juanjo' ? 'Juanjo' : 'Morensex';
-
-  const nowMs = Date.now();
-  const finances = loadFinances();
-  if (!Array.isArray(finances.debtSettlements)) {
-    finances.debtSettlements = [];
-  }
-
-  finances.debtSettlements.unshift({
-    id: 'SET-' + nowMs + '-' + Math.random().toString(36).slice(2, 6),
-    date,
-    fromPartner,
-    toPartner,
-    amount,
-    concept,
-    timestamp: nowMs,
-    updatedAt: nowMs
-  });
-
-  const amtInput = document.getElementById('settlement-amount');
-  const concInput = document.getElementById('settlement-concept');
-  if (amtInput) amtInput.value = '';
-  if (concInput) concInput.value = '';
-
-  const fromLabel = fromPartner === 'Morensex' ? 'Mati (Morensex)' : 'Juanjo';
-  const toLabel = toPartner === 'Morensex' ? 'Mati (Morensex)' : 'Juanjo';
-
-  persistCloudState(`Abono entre socios: ${fromLabel} transfirió ${formatCLP(amount)} a ${toLabel}`);
-  showToast(`🤝 Abono registrado en la nube: ${fromLabel} pagó ${formatCLP(amount)} a ${toLabel}`);
-}
-
-function deleteDebtSettlement(settleId) {
-  CLOUD_STATE.deletedIds.push(settleId);
-  if (Array.isArray(CLOUD_STATE.finances.debtSettlements)) {
-    CLOUD_STATE.finances.debtSettlements = CLOUD_STATE.finances.debtSettlements.filter(
-      (s) => s.id !== settleId
-    );
-  }
-  persistCloudState('Abono entre socios eliminado');
-  showToast('🗑️ Abono entre socios eliminado de la nube');
-}
-
-/**
- * Pre-rellena automáticamente el formulario de abonos con la deuda exacta
- * y la dirección correcta de pago (quién debe a quién).
- */
-function prefillSettlementForm() {
-  const fin = calculateFinancialState();
-  const fromToSelect = document.getElementById('settlement-from-to');
-  const amtInput = document.getElementById('settlement-amount');
-  const concInput = document.getElementById('settlement-concept');
-  const dateInput = document.getElementById('settlement-date');
-
-  if (dateInput) dateInput.value = getTodayISODate();
-
-  if (fin.netDebtJuanjoToMati > 0) {
-    if (fromToSelect) fromToSelect.value = 'Juanjo-Morensex';
-    if (amtInput) amtInput.value = fin.netDebtJuanjoToMati;
-    if (concInput) concInput.value = 'Transferencia para saldar 50% de gastos a favor de Mati';
-    showToast(`📝 Formulario listo: Juanjo salda ${formatCLP(fin.netDebtJuanjoToMati)} a Mati`);
-  } else if (fin.netDebtJuanjoToMati < 0) {
-    if (fromToSelect) fromToSelect.value = 'Morensex-Juanjo';
-    if (amtInput) amtInput.value = Math.abs(fin.netDebtJuanjoToMati);
-    if (concInput) concInput.value = 'Transferencia para saldar 50% de gastos a favor de Juanjo';
-    showToast(`📝 Formulario listo: Mati salda ${formatCLP(Math.abs(fin.netDebtJuanjoToMati))} a Juanjo`);
-  } else {
-    showToast('🟢 Las cuentas ya están saldadas ($0). Juanjo y Mati están a mano.');
-  }
-
-  const box = document.getElementById('partner-settlement-box');
-  if (box) {
-    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    box.classList.add('ring-2', 'ring-emerald-400');
-    setTimeout(() => box.classList.remove('ring-2', 'ring-emerald-400'), 2000);
-  }
-}
-
-function prefillExactSettlementAmount() {
-  const fin = calculateFinancialState();
-  const amtInput = document.getElementById('settlement-amount');
-  if (!amtInput) return;
-  const exact = Math.abs(fin.netDebtJuanjoToMati);
-  if (exact > 0) {
-    amtInput.value = exact;
-  }
-}
-
-/**
- * Abre el modal para editar un gasto registrado o pago a proveedor.
+ * Abre el modal para editar un pago a proveedor.
  */
 function openEditExpenseModal(payId) {
   const finances = loadFinances();
@@ -2695,11 +2538,6 @@ function openEditExpenseModal(payId) {
 
   const modal = document.getElementById('edit-finance-modal');
   const idInput = document.getElementById('edit-finance-id');
-  const kindInput = document.getElementById('edit-finance-kind');
-  const titleEl = document.getElementById('edit-finance-modal-title');
-  const badgeEl = document.getElementById('edit-finance-modal-badge');
-  const payerGroup = document.getElementById('edit-finance-payer-group');
-  const settleGroup = document.getElementById('edit-finance-settlement-group');
   const payerSelect = document.getElementById('edit-finance-payer');
   const dateInput = document.getElementById('edit-finance-date');
   const amtInput = document.getElementById('edit-finance-amount');
@@ -2708,57 +2546,18 @@ function openEditExpenseModal(payId) {
   if (!modal) return;
 
   idInput.value = sp.id;
-  kindInput.value = 'expense';
-  if (titleEl) titleEl.textContent = 'Editar Gasto / Proveedor';
-  if (badgeEl) badgeEl.textContent = 'Modificar Gasto de Negocio';
-  if (payerGroup) payerGroup.classList.remove('hidden');
-  if (settleGroup) settleGroup.classList.add('hidden');
-
-  if (payerSelect) payerSelect.value = sp.payer || 'Caja';
+  if (payerSelect) {
+    if (sp.payer === 'Morensex' || sp.payer === 'Mati') {
+      payerSelect.value = 'Morensex';
+    } else if (sp.payer === 'Juanjo') {
+      payerSelect.value = 'Juanjo';
+    } else {
+      payerSelect.value = 'Caja';
+    }
+  }
   if (dateInput) dateInput.value = sp.date || getTodayISODate();
   if (amtInput) amtInput.value = sp.amount || 0;
   if (concInput) concInput.value = sp.concept || '';
-
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-}
-
-/**
- * Abre el modal para editar un abono registrado entre socios.
- */
-function openEditSettlementModal(settleId) {
-  const finances = loadFinances();
-  const s = (finances.debtSettlements || []).find((item) => item.id === settleId);
-  if (!s) return;
-
-  const modal = document.getElementById('edit-finance-modal');
-  const idInput = document.getElementById('edit-finance-id');
-  const kindInput = document.getElementById('edit-finance-kind');
-  const titleEl = document.getElementById('edit-finance-modal-title');
-  const badgeEl = document.getElementById('edit-finance-modal-badge');
-  const payerGroup = document.getElementById('edit-finance-payer-group');
-  const settleGroup = document.getElementById('edit-finance-settlement-group');
-  const fromToSelect = document.getElementById('edit-finance-from-to');
-  const dateInput = document.getElementById('edit-finance-date');
-  const amtInput = document.getElementById('edit-finance-amount');
-  const concInput = document.getElementById('edit-finance-concept');
-
-  if (!modal) return;
-
-  idInput.value = s.id;
-  kindInput.value = 'settlement';
-  if (titleEl) titleEl.textContent = 'Editar Abono entre Socios';
-  if (badgeEl) badgeEl.textContent = 'Modificar Liquidación 50/50';
-  if (payerGroup) payerGroup.classList.add('hidden');
-  if (settleGroup) settleGroup.classList.remove('hidden');
-
-  const fromP = s.fromPartner === 'Morensex' ? 'Morensex' : 'Juanjo';
-  const toP = s.toPartner === 'Morensex' ? 'Morensex' : 'Juanjo';
-  if (fromToSelect) fromToSelect.value = `${fromP}-${toP}`;
-
-  if (dateInput) dateInput.value = s.date || getTodayISODate();
-  if (amtInput) amtInput.value = s.amount || 0;
-  if (concInput) concInput.value = s.concept || '';
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -2773,47 +2572,86 @@ function closeEditFinanceModal() {
 }
 
 /**
- * Guarda los cambios editados en un gasto o abono y los sincroniza en la nube.
+ * Guarda los cambios editados en un pago a proveedor y los sincroniza en la nube.
  */
 function handleSaveEditFinanceRecord(event) {
   event.preventDefault();
   const id = document.getElementById('edit-finance-id').value;
-  const kind = document.getElementById('edit-finance-kind').value;
   const date = document.getElementById('edit-finance-date').value || getTodayISODate();
   const amount = Math.max(0, Number(document.getElementById('edit-finance-amount').value) || 0);
   const concept = (document.getElementById('edit-finance-concept').value || '').trim();
+  const payer = document.getElementById('edit-finance-payer').value || 'Caja';
 
   if (!id || !amount || !concept) return;
 
   const finances = loadFinances();
-  const nowMs = Date.now();
+  const sp = (finances.supplierPayments || []).find((p) => p.id === id);
+  if (!sp) return;
 
-  if (kind === 'expense') {
-    const sp = (finances.supplierPayments || []).find((p) => p.id === id);
-    if (!sp) return;
-    const payer = document.getElementById('edit-finance-payer').value || 'Caja';
-    sp.date = date;
-    sp.amount = amount;
-    sp.concept = concept;
-    sp.payer = payer;
-    sp.updatedAt = nowMs;
-    persistCloudState(`Gasto actualizado: ${formatCLP(amount)} (${payer})`);
-    showToast(`✏️ Gasto de negocio actualizado en la nube: ${formatCLP(amount)}`);
-  } else if (kind === 'settlement') {
-    const s = (finances.debtSettlements || []).find((item) => item.id === id);
-    if (!s) return;
-    const fromToVal = document.getElementById('edit-finance-from-to').value;
-    s.date = date;
-    s.amount = amount;
-    s.concept = concept;
-    s.fromPartner = fromToVal === 'Morensex-Juanjo' ? 'Morensex' : 'Juanjo';
-    s.toPartner = fromToVal === 'Morensex-Juanjo' ? 'Juanjo' : 'Morensex';
-    s.updatedAt = nowMs;
-    persistCloudState(`Abono entre socios actualizado: ${formatCLP(amount)}`);
-    showToast(`✏️ Abono entre socios actualizado en la nube: ${formatCLP(amount)}`);
-  }
+  sp.date = date;
+  sp.amount = amount;
+  sp.concept = concept;
+  sp.payer = payer;
+  sp.updatedAt = Date.now();
 
+  persistCloudState(`Pago a proveedor actualizado: ${formatCLP(amount)} (${payer})`);
+  showToast(`✏️ Pago a proveedor actualizado en la nube: ${formatCLP(amount)}`);
   closeEditFinanceModal();
+}
+
+/**
+ * Alterna el estado de cobro en Caja de un pedido ('Cobrado en Caja' vs 'Pendiente')
+ * permitiendo ingresar de inmediato su dinero a la Caja Disponible.
+ */
+function toggleOrderPaid(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.paid = !target.paid;
+  if (target.paid) {
+    target.approved = true;
+    target.status = 'Completado';
+  } else {
+    target.status = target.approved ? 'Aprobado' : 'Pendiente Aprobación';
+  }
+  target.updatedAt = Date.now();
+
+  const msg = target.paid
+    ? `💰 Pedido ${target.displayId || orderId} cobrado e ingresado a Caja (${formatCLP(target.subtotal)})`
+    : `↩️ Pedido ${target.displayId || orderId} desmarcado de Caja`;
+
+  persistCloudState(msg);
+  showToast(msg);
+}
+
+/**
+ * Paga la comisión acumulada de un embajador descontándola directamente de la Caja de la Empresa.
+ */
+function payAmbassadorCommission(code, name, amount) {
+  if (!amount || amount <= 0) {
+    showToast('⚠️ Este embajador no registra comisiones acumuladas.');
+    return;
+  }
+  const confirmed = confirm(
+    `¿Confirmas registrar el pago de comisión de ${formatCLP(amount)} a ${name} (${code}) descontándolo directamente de la Caja Disponible de la Empresa?`
+  );
+  if (!confirmed) return;
+
+  const nowMs = Date.now();
+  const finances = loadFinances();
+  finances.supplierPayments.unshift({
+    id: 'SP-AMB-' + nowMs + '-' + Math.random().toString(36).slice(2, 6),
+    date: getTodayISODate(),
+    amount,
+    concept: `Pago Comisión Embajador: ${name} (${code})`,
+    payer: 'Caja',
+    timestamp: nowMs,
+    updatedAt: nowMs
+  });
+
+  persistCloudState(`Pago de comisión a ${code}: ${formatCLP(amount)} desde Caja`);
+  showToast(`💸 Comisión de ${formatCLP(amount)} pagada a ${name} y descontada de Caja de la Empresa`);
 }
 
 /**
@@ -2983,30 +2821,94 @@ function renderAdminDashboard() {
   const compCashInEl = document.getElementById('company-cash-inflows');
   const compCashOrdNoteEl = document.getElementById('company-cash-orders-note');
   const compCashExpEl = document.getElementById('company-cash-expenses');
-  const partnerNetDebtStatusEl = document.getElementById('partner-net-debt-status');
-  const partnerMatiPocketEl = document.getElementById('partner-mati-pocket');
-  const partnerJuanjoPocketEl = document.getElementById('partner-juanjo-pocket');
-  const partnerTotalSettlementsEl = document.getElementById('partner-total-settlements');
 
   if (compCashBalEl) compCashBalEl.textContent = formatCLP(fin.cajaDisponible);
   if (compCashInEl) compCashInEl.textContent = formatCLP(fin.totalCajaInflows);
   if (compCashOrdNoteEl) compCashOrdNoteEl.textContent = `${fin.paidOrdersCount} pedido(s) cobrado(s) en caja`;
   if (compCashExpEl) compCashExpEl.textContent = formatCLP(fin.cajaExpenses);
 
-  if (partnerNetDebtStatusEl) {
-    partnerNetDebtStatusEl.textContent = fin.partnerStatusText;
-    partnerNetDebtStatusEl.className = `font-display font-black text-xl sm:text-2xl lg:text-3xl leading-tight ${fin.partnerStatusColor}`;
+  // Saldo Bolsillo de Mati
+  const balMatiEl = document.getElementById('partner-balance-mati');
+  const badgeMatiEl = document.getElementById('partner-mati-badge');
+  const totalMatiPaidEl = document.getElementById('partner-mati-total-paid');
+  const statusNoteMatiEl = document.getElementById('partner-mati-status-note');
+
+  if (totalMatiPaidEl) totalMatiPaidEl.textContent = formatCLP(fin.matiOutOfPocket);
+
+  if (balMatiEl) {
+    if (fin.saldoBolsilloMati > 0) {
+      balMatiEl.textContent = `+${formatCLP(fin.saldoBolsilloMati)}`;
+      balMatiEl.className = 'font-display font-black text-3xl sm:text-4xl text-emerald-400 mt-1';
+      if (badgeMatiEl) {
+        badgeMatiEl.textContent = '🟢 Saldo a Favor';
+        badgeMatiEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      }
+      if (statusNoteMatiEl) statusNoteMatiEl.textContent = `A favor (+${formatCLP(fin.saldoBolsilloMati)})`;
+    } else if (fin.saldoBolsilloMati < 0) {
+      balMatiEl.textContent = `-${formatCLP(Math.abs(fin.saldoBolsilloMati))}`;
+      balMatiEl.className = 'font-display font-black text-3xl sm:text-4xl text-rose-400 mt-1';
+      if (badgeMatiEl) {
+        badgeMatiEl.textContent = '🔴 Deuda';
+        badgeMatiEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      }
+      if (statusNoteMatiEl)
+        statusNoteMatiEl.textContent = `Debe pagar ${formatCLP(Math.abs(fin.saldoBolsilloMati))}`;
+    } else {
+      balMatiEl.textContent = '$0';
+      balMatiEl.className = 'font-display font-black text-3xl sm:text-4xl text-slate-200 mt-1';
+      if (badgeMatiEl) {
+        badgeMatiEl.textContent = '⚪ Al Día ($0)';
+        badgeMatiEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-white/10 text-slate-300 border border-white/10';
+      }
+      if (statusNoteMatiEl) statusNoteMatiEl.textContent = 'Al día ($0)';
+    }
   }
 
-  if (partnerMatiPocketEl) partnerMatiPocketEl.textContent = formatCLP(fin.matiOutOfPocket);
-  if (partnerJuanjoPocketEl) partnerJuanjoPocketEl.textContent = formatCLP(fin.juanjoOutOfPocket);
-  if (partnerTotalSettlementsEl) partnerTotalSettlementsEl.textContent = formatCLP(fin.totalSettlementsAmount);
+  // Saldo Bolsillo de Juanjo
+  const balJuanjoEl = document.getElementById('partner-balance-juanjo');
+  const badgeJuanjoEl = document.getElementById('partner-juanjo-badge');
+  const totalJuanjoPaidEl = document.getElementById('partner-juanjo-total-paid');
+  const statusNoteJuanjoEl = document.getElementById('partner-juanjo-status-note');
+
+  if (totalJuanjoPaidEl) totalJuanjoPaidEl.textContent = formatCLP(fin.juanjoOutOfPocket);
+
+  if (balJuanjoEl) {
+    if (fin.saldoBolsilloJuanjo > 0) {
+      balJuanjoEl.textContent = `+${formatCLP(fin.saldoBolsilloJuanjo)}`;
+      balJuanjoEl.className = 'font-display font-black text-3xl sm:text-4xl text-emerald-400 mt-1';
+      if (badgeJuanjoEl) {
+        badgeJuanjoEl.textContent = '🟢 Saldo a Favor';
+        badgeJuanjoEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      }
+      if (statusNoteJuanjoEl) statusNoteJuanjoEl.textContent = `A favor (+${formatCLP(fin.saldoBolsilloJuanjo)})`;
+    } else if (fin.saldoBolsilloJuanjo < 0) {
+      balJuanjoEl.textContent = `-${formatCLP(Math.abs(fin.saldoBolsilloJuanjo))}`;
+      balJuanjoEl.className = 'font-display font-black text-3xl sm:text-4xl text-rose-400 mt-1';
+      if (badgeJuanjoEl) {
+        badgeJuanjoEl.textContent = '🔴 Deuda';
+        badgeJuanjoEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      }
+      if (statusNoteJuanjoEl)
+        statusNoteJuanjoEl.textContent = `Debe pagar ${formatCLP(Math.abs(fin.saldoBolsilloJuanjo))}`;
+    } else {
+      balJuanjoEl.textContent = '$0';
+      balJuanjoEl.className = 'font-display font-black text-3xl sm:text-4xl text-slate-200 mt-1';
+      if (badgeJuanjoEl) {
+        badgeJuanjoEl.textContent = '⚪ Al Día ($0)';
+        badgeJuanjoEl.className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-white/10 text-slate-300 border border-white/10';
+      }
+      if (statusNoteJuanjoEl) statusNoteJuanjoEl.textContent = 'Al día ($0)';
+    }
+  }
 
   const supTotalBadge = document.getElementById('supplier-payments-total-badge');
   if (supTotalBadge) supTotalBadge.textContent = `Total: ${formatCLP(fin.totalSuppliersExpenses)}`;
-
-  const setTotalBadge = document.getElementById('debt-settlements-total-badge');
-  if (setTotalBadge) setTotalBadge.textContent = `Abonos: ${formatCLP(fin.totalSettlementsAmount)}`;
 
   // 3. Calcular Comisiones de Embajadores sobre Pedidos Aprobados con Código
   const ambassadorStatsMap = {};
@@ -3097,7 +2999,7 @@ function renderAdminDashboard() {
   }
   if (kpiPartnersEl) kpiPartnersEl.textContent = formatCLP(fin.cajaDisponible);
   if (kpiSuppliersEl) {
-    kpiSuppliersEl.textContent = fin.partnerStatusText;
+    kpiSuppliersEl.textContent = `Pagado a proveedores: ${formatCLP(fin.totalSuppliersExpenses)}`;
   }
   if (kpiAmbCommEl) kpiAmbCommEl.textContent = formatCLP(totalAllCommissions);
   if (kpiAmbCountEl) {
@@ -3245,14 +3147,14 @@ function renderAdminDashboard() {
     }
   }
 
-  // 6. Renderizar Tablas Financieras (Gastos a Proveedores y Abonos entre Socios)
+  // 6. Renderizar Historial de Pagos a Proveedores (División 50%)
   const supplierTbody = document.getElementById('admin-supplier-payments-tbody');
   if (supplierTbody) {
     if (!finances.supplierPayments || finances.supplierPayments.length === 0) {
       supplierTbody.innerHTML = `
         <tr>
           <td colspan="6" class="py-6 text-center text-slate-500">
-            Sin pagos a proveedores ni gastos registrados en la nube ($0).
+            Sin pagos a proveedores registrados en la nube ($0).
           </td>
         </tr>
       `;
@@ -3261,22 +3163,23 @@ function renderAdminDashboard() {
         .map((sp) => {
           let payerBadge = '';
           let effectBadge = '';
-          if (sp.payer === 'Caja') {
+          const halfAmt = Math.round(sp.amount * 0.5);
+          if (sp.payer === 'Caja' || sp.payer === 'caja' || sp.payer === 'Caja de la Empresa') {
             payerBadge =
-              '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/30 whitespace-nowrap">🏦 Caja Empresa</span>';
-            effectBadge = '<span class="text-slate-400 text-[11px]">No genera deuda (fondo común)</span>';
-          } else if (sp.payer === 'Morensex') {
+              '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/30 whitespace-nowrap">🏦 Caja de la Empresa</span>';
+            effectBadge = '<span class="text-slate-400 text-[11px]">Descontado de Caja (sin deuda)</span>';
+          } else if (sp.payer === 'Morensex' || sp.payer === 'Mati' || sp.payer === 'Bolsillo de Mati (Morensex)') {
             payerBadge =
-              '<span class="px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-300 font-extrabold text-[11px] border border-amber-400/30 whitespace-nowrap">🥊 Bolsillo Mati</span>';
-            effectBadge = `<span class="text-rose-400 font-bold text-[11px]">Juanjo debe 50% (${formatCLP(
-              Math.round(sp.amount * 0.5)
-            )})</span>`;
-          } else if (sp.payer === 'Juanjo') {
+              '<span class="px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-300 font-extrabold text-[11px] border border-amber-400/30 whitespace-nowrap">🥊 Bolsillo de Mati</span>';
+            effectBadge = `<span class="text-emerald-400 font-bold text-[11px]">Mati +50% (${formatCLP(
+              halfAmt
+            )})</span> • <span class="text-rose-400 font-bold text-[11px]">Juanjo -50% (${formatCLP(halfAmt)})</span>`;
+          } else if (sp.payer === 'Juanjo' || sp.payer === 'Bolsillo de Juanjo') {
             payerBadge =
-              '<span class="px-2.5 py-1 rounded-lg bg-sky-400/20 text-sky-300 font-extrabold text-[11px] border border-sky-400/30 whitespace-nowrap">🥚 Bolsillo Juanjo</span>';
-            effectBadge = `<span class="text-rose-400 font-bold text-[11px]">Mati debe 50% (${formatCLP(
-              Math.round(sp.amount * 0.5)
-            )})</span>`;
+              '<span class="px-2.5 py-1 rounded-lg bg-sky-400/20 text-sky-300 font-extrabold text-[11px] border border-sky-400/30 whitespace-nowrap">🥚 Bolsillo de Juanjo</span>';
+            effectBadge = `<span class="text-emerald-400 font-bold text-[11px]">Juanjo +50% (${formatCLP(
+              halfAmt
+            )})</span> • <span class="text-rose-400 font-bold text-[11px]">Mati -50% (${formatCLP(halfAmt)})</span>`;
           } else {
             payerBadge = `<span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-amber-300">${sp.payer}</span>`;
             effectBadge = '<span class="text-slate-400 text-[11px]">-</span>';
@@ -3294,106 +3197,14 @@ function renderAdminDashboard() {
               <td class="py-2.5 px-3 text-right whitespace-nowrap">
                 <button type="button" onclick="openEditExpenseModal('${sp.id}')"
                         class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs mr-1 transition"
-                        title="Editar gasto o proveedor">
+                        title="Editar pago a proveedor">
                   ✏️
                 </button>
                 <button type="button" onclick="deleteSupplierPayment('${sp.id}')"
                         class="px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-300 font-bold text-xs transition"
-                        title="Eliminar gasto">
+                        title="Eliminar pago a proveedor">
                   🗑️
                 </button>
-              </td>
-            </tr>
-          `;
-        })
-        .join('');
-    }
-  }
-
-  // Renderizar Tabla de Abonos / Liquidación entre Socios (Regla 50/50)
-  const debtSettlementsTbody = document.getElementById('admin-debt-settlements-tbody');
-  if (debtSettlementsTbody) {
-    const settlements = finances.debtSettlements || [];
-    if (settlements.length === 0) {
-      debtSettlementsTbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="py-6 text-center text-slate-500">
-            Sin abonos ni transferencias entre socios registradas ($0).
-          </td>
-        </tr>
-      `;
-    } else {
-      debtSettlementsTbody.innerHTML = settlements
-        .map((s) => {
-          const fromP = s.fromPartner === 'Morensex' ? '🥊 Mati' : '🥚 Juanjo';
-          const toP = s.toPartner === 'Morensex' ? '🥊 Mati' : '🥚 Juanjo';
-
-          return `
-            <tr class="hover:bg-white/5 transition">
-              <td class="py-2.5 px-3 whitespace-nowrap text-slate-400">${s.date}</td>
-              <td class="py-2.5 px-3 whitespace-nowrap font-bold text-white">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs">
-                  ${fromP} <span class="text-emerald-400">➔</span> ${toP}
-                </span>
-              </td>
-              <td class="py-2.5 px-3 text-slate-300">${s.concept}</td>
-              <td class="py-2.5 px-3 text-right font-display font-extrabold text-emerald-400 whitespace-nowrap">
-                ${formatCLP(s.amount)}
-              </td>
-              <td class="py-2.5 px-3 text-right whitespace-nowrap">
-                <button type="button" onclick="openEditSettlementModal('${s.id}')"
-                        class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs mr-1 transition"
-                        title="Editar abono">
-                  ✏️
-                </button>
-                <button type="button" onclick="deleteDebtSettlement('${s.id}')"
-                        class="px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-300 font-bold text-xs transition"
-                        title="Eliminar abono">
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          `;
-        })
-        .join('');
-    }
-  }
-
-  // Compatibilidad con tabla previa de movimientos si aún existiera
-  const partnerMovTbody = document.getElementById('admin-partner-movements-tbody');
-  if (partnerMovTbody) {
-    if (!finances.partnerMovements || finances.partnerMovements.length === 0) {
-      partnerMovTbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="py-4 text-center text-slate-500">
-            Sin aportes ni movimientos registrados en la nube ($0).
-          </td>
-        </tr>
-      `;
-    } else {
-      partnerMovTbody.innerHTML = finances.partnerMovements
-        .map((m) => {
-          const isReembolso = m.type === 'reembolso';
-          const partnerName = m.partner === 'Morensex' ? 'Morensex (Mati)' : 'Juanjo';
-          const typeBadge =
-            m.type === 'aporte'
-              ? '<span class="text-emerald-400 font-bold">Aporte</span>'
-              : m.type === 'pago_directo'
-              ? '<span class="text-amber-300 font-bold">Pagó Gasto</span>'
-              : '<span class="text-red-300 font-bold">Reembolso</span>';
-
-          return `
-            <tr class="hover:bg-white/5">
-              <td class="py-2 px-2 whitespace-nowrap text-slate-400">${m.date}</td>
-              <td class="py-2 px-2 font-bold text-white">${partnerName}</td>
-              <td class="py-2 px-2 text-slate-300">${typeBadge} • ${m.concept}</td>
-              <td class="py-2 px-2 text-right font-display font-extrabold whitespace-nowrap ${
-                isReembolso ? 'text-red-400' : 'text-emerald-400'
-              }">
-                ${isReembolso ? '−' : '+'}${formatCLP(m.amount)}
-              </td>
-              <td class="py-2 px-2 text-right">
-                <button type="button" onclick="deletePartnerMovement('${m.id}')" class="text-slate-500 hover:text-red-400 font-bold">✕</button>
               </td>
             </tr>
           `;
