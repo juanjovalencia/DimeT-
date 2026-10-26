@@ -1077,7 +1077,7 @@
         </button>
         <button type="button" id="admin-tab-analitica" onclick="switchAdminTab('analitica')"
                 class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
-          🖱️ Analítica Web
+          🥚 Productos Más Pinchados
         </button>
       </div>
 
@@ -1214,16 +1214,38 @@
           </form>
         </div>
 
+        <!-- Listas automáticas de trabajo (Filtros / Vistas rápidas de ruta y cobro) -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">Vistas Rápidas:</span>
+          <button type="button" id="order-worklist-all" onclick="setOrderWorklistFilter('all')"
+                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-qh-brown text-white shadow transition">
+            📦 Todas (<span id="count-worklist-all">0</span>)
+          </button>
+          <button type="button" id="order-worklist-pending" onclick="setOrderWorklistFilter('pending_payment')"
+                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-amber-300 hover:bg-white/20 transition">
+            ⏳ 1. Pendientes de Pago (<span id="count-worklist-pending">0</span>)
+          </button>
+          <button type="button" id="order-worklist-dispatch" onclick="setOrderWorklistFilter('to_dispatch')"
+                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-emerald-300 hover:bg-white/20 transition">
+            🚚 2. Para Despachar (Pagados - Falta Entregar) (<span id="count-worklist-dispatch">0</span>)
+          </button>
+          <button type="button" id="order-worklist-delivered" onclick="setOrderWorklistFilter('delivered')"
+                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-sky-300 hover:bg-white/20 transition">
+            ✅ 3. Historial Entregados (<span id="count-worklist-delivered">0</span>)
+          </button>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 <th class="py-3 px-4">ID / Fecha</th>
+                <th class="py-3 px-4">Cliente & Dirección de Ruta</th>
                 <th class="py-3 px-4">Modalidad</th>
                 <th class="py-3 px-4">Detalle de Bandejas</th>
                 <th class="py-3 px-4">Subtotal</th>
-                <th class="py-3 px-4">Código Embajador / Comisión</th>
-                <th class="py-3 px-4">Estado y Aprobación Manual</th>
+                <th class="py-3 px-4">Código Embajador</th>
+                <th class="py-3 px-4">Estado y Flujo de Despacho</th>
               </tr>
             </thead>
             <tbody id="admin-orders-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
@@ -1324,6 +1346,10 @@
                 <span class="text-slate-400 text-[11px]">Estado de cuenta:</span>
                 <span id="partner-mati-status-note" class="text-slate-300 font-semibold text-[11px]">Al día ($0)</span>
               </div>
+              <div class="flex items-center justify-between text-amber-300/90 pt-1 border-t border-white/5">
+                <span class="text-[11px]">Ajuste abono de Juanjo:</span>
+                <span id="partner-mati-adjustment-note" class="font-semibold text-[11px]">-$2.300</span>
+              </div>
             </div>
           </div>
 
@@ -1362,6 +1388,10 @@
               <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-[11px]">Estado de cuenta:</span>
                 <span id="partner-juanjo-status-note" class="text-slate-300 font-semibold text-[11px]">Al día ($0)</span>
+              </div>
+              <div class="flex items-center justify-between text-sky-300/90 pt-1 border-t border-white/5">
+                <span class="text-[11px]">Ajuste abono a Mati:</span>
+                <span id="partner-juanjo-adjustment-note" class="font-semibold text-[11px]">+$2.300</span>
               </div>
             </div>
           </div>
@@ -1507,7 +1537,7 @@
           </form>
         </div>
 
-        <!-- Tabla de Embajadores y Total Acumulado que se le debe pagar a cada uno -->
+        <!-- Tabla de Embajadores y Saldos de Comisiones -->
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -1515,8 +1545,10 @@
                 <th class="py-3 px-4">Embajador</th>
                 <th class="py-3 px-4">Código Único</th>
                 <th class="py-3 px-4">Pedidos Aprobados</th>
-                <th class="py-3 px-4">Bandejas (30 un.) Vendidas</th>
-                <th class="py-3 px-4">Total Acumulado a Pagar</th>
+                <th class="py-3 px-4">Bandejas Vendidas</th>
+                <th class="py-3 px-4">Total Ganado</th>
+                <th class="py-3 px-4">Pagado</th>
+                <th class="py-3 px-4">Saldo Pendiente a Pagar</th>
                 <th class="py-3 px-4 text-right">Acciones</th>
               </tr>
             </thead>
@@ -1525,92 +1557,78 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Historial de Transacciones y Pagos de Comisiones a Embajadores -->
+        <div class="pt-6 border-t border-white/10 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">📜 Historial de Pagos</span>
+              <h3 class="font-display font-extrabold text-xl text-white">Transacciones a Embajadores</h3>
+              <p class="text-xs text-slate-400">Comisiones saldadas y descontadas de la Caja de la Empresa.</p>
+            </div>
+            <span id="ambassador-payouts-total-badge" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
+              Total Saldado: $0
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <th class="py-2.5 px-3">Fecha</th>
+                  <th class="py-2.5 px-3">Embajador</th>
+                  <th class="py-2.5 px-3">Código Único</th>
+                  <th class="py-2.5 px-3">Monto Pagado</th>
+                  <th class="py-2.5 px-3">Origen</th>
+                  <th class="py-2.5 px-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-ambassador-payouts-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+                <!-- Filas inyectadas por app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- ====================================================================
-           MÓDULO D: 🖱️ ESTADÍSTICAS DE COMPORTAMIENTO (FRONTEND ANALYTICS)
+           MÓDULO D: 🥚 PRODUCTOS MÁS PINCHADOS (MÉTRICA EXCLUSIVA)
            ==================================================================== -->
-      <div id="admin-section-analitica" class="admin-module-section space-y-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          <!-- Rendimiento de Productos: Qué pincha la gente vs Qué productos ignoran (7 cols) -->
-          <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-              <div>
-                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🥚 Comportamiento en Catálogo</span>
-                <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
-                  Productos Más Pinchados vs. Ignorados
-                </h3>
-              </div>
-              <div>
-                <label for="admin-sort-products" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Productos</label>
-                <select id="admin-sort-products" onchange="renderAdminDashboard()"
-                        class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
-                  <option value="clicks-desc">🔥 Más pinchados primero</option>
-                  <option value="clicks-asc">⚠️ Ignorados / Menos pinchados primero</option>
-                  <option value="cart-desc">🛒 Más añadidos al carrito</option>
-                </select>
-              </div>
+      <div id="admin-section-analitica" class="admin-module-section space-y-6">
+        <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">🥚 Comportamiento en Catálogo</span>
+              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                Productos Más Pinchados
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Visualiza el interés de compra directo de los clientes en las bandejas de 30 unidades.
+              </p>
             </div>
-
-            <!-- Lista analítica de productos -->
-            <div id="admin-products-analytics" class="space-y-3.5">
-              <!-- Renderizado por app.js -->
+            <div>
+              <label for="admin-sort-products" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Ordenar Productos</label>
+              <select id="admin-sort-products" onchange="renderAdminDashboard()"
+                      class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white focus:outline-none focus:border-amber-400">
+                <option value="clicks-desc">🔥 Más pinchados primero</option>
+                <option value="clicks-asc">⚠️ Menos pinchados primero</option>
+                <option value="cart-desc">🛒 Más añadidos al carrito</option>
+              </select>
             </div>
           </div>
 
-          <!-- Ranking de Clics en Botones y Elementos Ignorados (5 cols) -->
-          <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-              <div>
-                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🖱️ Mapa de Clics</span>
-                <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
-                  Botones Pinchados vs. Sin Clics
-                </h3>
-              </div>
-              <div>
-                <label for="admin-sort-buttons" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro</label>
-                <select id="admin-sort-buttons" onchange="renderAdminDashboard()"
-                        class="px-3 py-2 rounded-xl bg-qh-navyDark border border-white/15 text-xs font-bold text-white">
-                  <option value="most">Más clicados</option>
-                  <option value="ignored">No pinchados / Menos clics</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="admin-buttons-analytics" class="space-y-3 max-h-[430px] overflow-y-auto pr-1">
-              <!-- Renderizado por app.js -->
-            </div>
+          <!-- Tarjetas de Productos Más Pinchados -->
+          <div id="admin-products-analytics" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Renderizado por app.js -->
           </div>
-
         </div>
 
-        <!-- EMBUDO DE CONVERSIÓN Y LOG DE EVENTOS EN TIEMPO REAL -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <!-- Embudo (5 cols) -->
-          <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">📈 Embudo de Conversión</span>
-            <h3 class="font-display font-extrabold text-xl text-white">Flujo de Usuario en la Página</h3>
-            <div id="admin-funnel-bars" class="space-y-4 pt-2">
-              <!-- Renderizado por app.js -->
-            </div>
-          </div>
-
-          <!-- Últimas Interacciones Registradas (7 cols) -->
-          <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-xl space-y-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">☁️ Telemetría Cloud en Tiempo Real</span>
-                <h3 class="font-display font-extrabold text-xl text-white">Registro en Vivo de Eventos</h3>
-              </div>
-              <button type="button" onclick="resetProductionDataConfirmation()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
-                Reiniciar base de datos a cero
-              </button>
-            </div>
-            <div id="admin-event-stream" class="space-y-2 max-h-64 overflow-y-auto pr-1 text-xs">
-              <!-- Renderizado por app.js -->
-            </div>
-          </div>
+        <!-- Mantenimiento del Sistema -->
+        <div class="flex items-center justify-between p-4 rounded-2xl bg-qh-navyDark/60 border border-white/10 text-xs">
+          <span class="text-slate-400">Panel administrativo enfocado con máxima prioridad en Control de Pedidos y Finanzas.</span>
+          <button type="button" onclick="resetProductionDataConfirmation()" class="text-xs text-slate-400 hover:text-red-400 font-semibold transition">
+            ⚠️ Reiniciar base de datos a cero
+          </button>
         </div>
       </div>
 
@@ -2034,6 +2052,190 @@
             💾 Guardar Cambios en la Nube
           </button>
           <button type="button" onclick="closeEditFinanceModal()"
+                  class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE EDICIÓN COMPLETA DE PEDIDOS (ADMIN)
+       ======================================================================== -->
+  <div id="edit-order-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border-2 border-emerald-400/50 relative space-y-5 my-8">
+      <button type="button" onclick="closeEditOrderModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-2xl shadow">📦</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">Gestión de Pedido</span>
+          <h3 class="font-display font-extrabold text-2xl text-white">Editar Pedido Completo</h3>
+        </div>
+      </div>
+
+      <form id="edit-order-form" onsubmit="handleSaveEditOrder(event)" class="space-y-4">
+        <input type="hidden" id="edit-order-id" />
+
+        <!-- ID y Fecha -->
+        <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+          <div>
+            <span class="text-slate-400 block font-bold uppercase text-[10px]">ID Pedido:</span>
+            <span id="edit-order-display-id" class="font-display font-extrabold text-amber-300 text-sm">-</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-bold uppercase text-[10px]">Fecha Registro:</span>
+            <span id="edit-order-date" class="text-slate-200 font-semibold text-xs">-</span>
+          </div>
+        </div>
+
+        <!-- Datos del Cliente -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-order-client-name" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Nombre del Cliente
+            </label>
+            <input id="edit-order-client-name" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400" />
+          </div>
+          <div>
+            <label for="edit-order-client-phone" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Teléfono / WhatsApp
+            </label>
+            <input id="edit-order-client-phone" type="text" placeholder="+569..."
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-400" />
+          </div>
+        </div>
+
+        <!-- Dirección de Entrega -->
+        <div>
+          <label for="edit-order-client-address" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            📍 Dirección de Entrega (Calle, Número, Comuna)
+          </label>
+          <input id="edit-order-client-address" type="text" placeholder="Ej: Av. Las Condes 1234, Depto 501"
+                 class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-400" />
+        </div>
+
+        <!-- Modalidad y Día de Entrega -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-order-type" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Modalidad
+            </label>
+            <select id="edit-order-type"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+              <option value="Pedido Único">1️⃣ Pedido Único</option>
+              <option value="Pedido Fijo Semanal">🔁 Pedido Fijo Semanal</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-order-delivery-day" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Día de Reparto (Si es Semanal)
+            </label>
+            <select id="edit-order-delivery-day"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+              <option value="Lunes">Lunes</option>
+              <option value="Martes">Martes</option>
+              <option value="Miércoles">Miércoles</option>
+              <option value="Jueves">Jueves</option>
+              <option value="Viernes">Viernes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Modificar Bandejas y Cantidades -->
+        <div class="p-4 rounded-2xl bg-qh-navyDark border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">
+              🥚 Detalle y Cantidad de Bandejas (30 un.)
+            </span>
+            <button type="button" onclick="recalculateModalOrderSubtotal()"
+                    class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition">
+              🔄 Recalcular Subtotal
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="edit-order-qty-campo" class="block text-[11px] font-bold text-slate-300 mb-1">
+                Bandeja Campo ($11.500)
+              </label>
+              <input id="edit-order-qty-campo" type="number" min="0" max="100" value="0"
+                     oninput="recalculateModalOrderSubtotal()"
+                     class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white" />
+            </div>
+            <div>
+              <label for="edit-order-qty-blanco" class="block text-[11px] font-bold text-slate-300 mb-1">
+                Bandeja Blanco ($9.000)
+              </label>
+              <input id="edit-order-qty-blanco" type="number" min="0" max="100" value="0"
+                     oninput="recalculateModalOrderSubtotal()"
+                     class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtotal / Total a Pagar (Modificación manual para aplicar descuentos) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="edit-order-subtotal" class="block text-xs font-extrabold uppercase tracking-wider text-amber-400">
+              Subtotal / Total a Pagar ($ CLP)
+            </label>
+            <span class="text-[10px] text-slate-400">Permite descuento directo</span>
+          </div>
+          <input id="edit-order-subtotal" type="number" min="0" step="100" required
+                 class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-amber-400/40 text-sm font-extrabold text-amber-300 focus:outline-none focus:border-amber-400" />
+          <p class="text-[11px] text-slate-400 mt-1">
+            Puedes sobreescribir este monto libremente para aplicar descuentos pactados con el cliente.
+          </p>
+        </div>
+
+        <!-- Código de Embajador (Modificar o Quitar) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="edit-order-ambassador-code" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300">
+              Código de Embajador
+            </label>
+            <button type="button" onclick="clearOrderAmbassadorCodeInModal()"
+                    class="text-[11px] font-bold text-rose-300 hover:text-rose-200 transition">
+              ➖ Quitar / Dejar Sin Código (-)
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <input id="edit-order-ambassador-code" type="text" placeholder="Ej: MATI10 o dejar vacío"
+                   class="flex-1 px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wider placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+            <button type="button" onclick="clearOrderAmbassadorCodeInModal()"
+                    class="px-3 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-xs font-extrabold text-rose-300 border border-rose-500/30 whitespace-nowrap transition">
+              - Sin Código
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Si lo dejas vacío o en "-", se elimina el código del pedido y no suma comisión.
+          </p>
+        </div>
+
+        <!-- Estado de Pago y Despacho -->
+        <div>
+          <label for="edit-order-state" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+            Flujo de Estado (Pago y Despacho)
+          </label>
+          <select id="edit-order-state" required
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+            <option value="Pendiente">⏳ Estado 1: Pendiente de Pago (Aún no transfiere)</option>
+            <option value="Pagado">✅ Estado 2: Pagado / Aprobado — Falta Entregar (Suma a Caja)</option>
+            <option value="Entregado">🚚 Estado 3: Entregado / Completado (Despacho finalizado)</option>
+          </select>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex items-center gap-3 pt-3">
+          <button type="submit"
+                  class="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+            💾 Guardar Cambios en la Nube
+          </button>
+          <button type="button" onclick="closeEditOrderModal()"
                   class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
             Cancelar
           </button>

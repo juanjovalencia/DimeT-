@@ -275,11 +275,13 @@ function getDefaultAnalytics() {
 }
 
 function getEmptyCloudState(resetTimestamp = 0) {
-  return {
+  const base = {
     orders: [],
     finances: {
       partnerMovements: [],
       supplierPayments: [],
+      ambassadorPayouts: [],
+      partnerAdjustments: [],
       debtSettlements: []
     },
     ambassadors: [],
@@ -290,6 +292,8 @@ function getEmptyCloudState(resetTimestamp = 0) {
     updatedBy: 'system',
     supabaseConfig: SUPABASE_CREDENTIALS
   };
+  reconcileBusinessDataDefaults(base);
+  return base;
 }
 
 // Estado global sincronizado con la Nube (arranca en cero absoluto o desde espejo local instantáneo)
@@ -312,6 +316,8 @@ function loadLocalCloudMirror() {
       if (raw) {
         const parsed = JSON.parse(raw);
         CLOUD_STATE = normalizeStateObject(parsed);
+      } else {
+        reconcileBusinessDataDefaults(CLOUD_STATE);
       }
       const savedAdmin = window.localStorage.getItem(ADMIN_SESSION_KEY);
       if (savedAdmin) {
@@ -326,6 +332,115 @@ function loadLocalCloudMirror() {
     }
   } catch (e) {
     // ignore
+  }
+}
+
+/**
+ * Reconcilia y asegura los ajustes oficiales de negocio:
+ * 1. Caso Emilia: Limpia pagos duplicados o erróneos anteriores de comisiones en la Caja
+ *    y deja registrado en el historial UN ÚNICO pago real a Emilia por $6.000.
+ * 2. Brecha entre socios: Aplica y asegura el abono directo de $2.300 a favor de Juanjo
+ *    (Juanjo pagó a Mati), descontando -$2.300 de la deuda hacia Mati.
+ * 3. Normaliza el estado de pedidos existentes al flujo de 3 estados.
+ */
+function reconcileBusinessDataDefaults(state) {
+  if (!state || !state.finances) return;
+
+  // 1. Caso Emilia
+  const emiliaCode = 'EMILIA';
+  const hasEmiliaAmb = (state.ambassadors || []).some(
+    (a) => (a.code || '').toUpperCase() === emiliaCode || (a.name || '').toUpperCase() === emiliaCode
+  );
+  if (!hasEmiliaAmb && !(state.deletedIds || []).includes('AMB-EMILIA')) {
+    state.ambassadors.push({
+      id: 'AMB-EMILIA',
+      name: 'Emilia',
+      code: emiliaCode,
+      createdAt: '26-10-2026',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  }
+
+  // Limpiar pagos duplicados/erróneos a Emilia en supplierPayments y dejar exactamente uno de $6.000
+  const isEmiliaPayoutRecord = (sp) => {
+    const conc = (sp.concept || '').toUpperCase();
+    return conc.includes('EMILIA') && (conc.includes('COMISI') || conc.includes('AMB') || conc.includes('EMBAJADOR'));
+  };
+
+  if (Array.isArray(state.finances.supplierPayments)) {
+    state.finances.supplierPayments = state.finances.supplierPayments.filter(
+      (sp) => !isEmiliaPayoutRecord(sp)
+    );
+    state.finances.supplierPayments.unshift({
+      id: 'SP-AMB-EMILIA-6000',
+      date: '2026-10-26',
+      amount: 6000,
+      concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
+      payer: 'Caja',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  }
+
+  // Dejar exactamente un único pago a Emilia en ambassadorPayouts
+  if (!Array.isArray(state.finances.ambassadorPayouts)) {
+    state.finances.ambassadorPayouts = [];
+  }
+  state.finances.ambassadorPayouts = state.finances.ambassadorPayouts.filter(
+    (p) => (p.code || '').toUpperCase() !== emiliaCode
+  );
+  state.finances.ambassadorPayouts.unshift({
+    id: 'PAY-AMB-EMILIA-6000',
+    date: '2026-10-26',
+    code: emiliaCode,
+    name: 'Emilia',
+    amount: 6000,
+    concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
+    payer: 'Caja',
+    timestamp: 1729960000000,
+    updatedAt: 1729960000000
+  });
+
+  // 2. Ajuste Brecha Entre Socios: $2.300 a favor de Juanjo
+  if (!Array.isArray(state.finances.partnerAdjustments)) {
+    state.finances.partnerAdjustments = [];
+  }
+  const hasAbono2300 = state.finances.partnerAdjustments.some(
+    (a) => a.id === 'ADJ-JUANJO-MATI-2300' || (a.from === 'Juanjo' && Number(a.amount) === 2300)
+  );
+  if (!hasAbono2300) {
+    state.finances.partnerAdjustments.unshift({
+      id: 'ADJ-JUANJO-MATI-2300',
+      date: '2026-10-26',
+      from: 'Juanjo',
+      to: 'Morensex',
+      amount: 2300,
+      concept: 'Abono directo de Juanjo a Mati (ajuste de brecha -$2.300)',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  }
+
+  // 3. Normalizar pedidos existentes
+  if (Array.isArray(state.orders)) {
+    state.orders.forEach((o) => {
+      if (typeof o.paid !== 'boolean') {
+        o.paid = Boolean(o.approved && o.status === 'Completado');
+      }
+      if (!o.deliveryStatus) {
+        o.deliveryStatus = (o.status === 'Entregado' || o.status === 'Completado') ? 'Entregado' : 'Falta Entregar';
+      }
+      if (!o.status || o.status === 'Aprobado' || o.status === 'Completado' || o.status === 'Pendiente Aprobación') {
+        if (o.deliveryStatus === 'Entregado') {
+          o.status = 'Entregado';
+        } else if (o.paid) {
+          o.status = 'Pagado - Falta Entregar';
+        } else {
+          o.status = 'Pendiente de Pago';
+        }
+      }
+    });
   }
 }
 
@@ -366,7 +481,7 @@ function normalizeStateObject(raw) {
     }
   }
 
-  return {
+  const normState = {
     orders: Array.isArray(raw.orders) ? raw.orders : [],
     finances: {
       partnerMovements:
@@ -376,6 +491,14 @@ function normalizeStateObject(raw) {
       supplierPayments:
         raw.finances && Array.isArray(raw.finances.supplierPayments)
           ? raw.finances.supplierPayments
+          : [],
+      ambassadorPayouts:
+        raw.finances && Array.isArray(raw.finances.ambassadorPayouts)
+          ? raw.finances.ambassadorPayouts
+          : [],
+      partnerAdjustments:
+        raw.finances && Array.isArray(raw.finances.partnerAdjustments)
+          ? raw.finances.partnerAdjustments
           : [],
       debtSettlements:
         raw.finances && Array.isArray(raw.finances.debtSettlements)
@@ -390,6 +513,9 @@ function normalizeStateObject(raw) {
     updatedBy: raw.updatedBy || 'system',
     supabaseConfig: raw.supabaseConfig || SUPABASE_CREDENTIALS
   };
+
+  reconcileBusinessDataDefaults(normState);
+  return normState;
 }
 
 /**
@@ -487,6 +613,14 @@ function mergeCloudStates(stateA, stateB) {
       supplierPayments: mergeCollectionById(
         a.finances.supplierPayments,
         b.finances.supplierPayments
+      ),
+      ambassadorPayouts: mergeCollectionById(
+        a.finances.ambassadorPayouts || [],
+        b.finances.ambassadorPayouts || []
+      ),
+      partnerAdjustments: mergeCollectionById(
+        a.finances.partnerAdjustments || [],
+        b.finances.partnerAdjustments || []
       ),
       debtSettlements: mergeCollectionById(
         a.finances.debtSettlements || [],
@@ -2342,18 +2476,298 @@ function handleCreateManualOrder(event) {
     ambassadorCode,
     commissionAmount,
     approved: true,
-    status: 'Aprobado'
+    paid: true,
+    deliveryStatus: 'Falta Entregar',
+    status: 'Pagado - Falta Entregar'
   });
 
   document.getElementById('admin-manual-order-form').reset();
   document.getElementById('manual-order-qty').value = 1;
-  persistCloudState(`Pedido manual ${displayId} creado y aprobado`);
+  persistCloudState(`Pedido manual ${displayId} creado y pagado`);
 
   showToast(
-    `✅ Pedido ${displayId} guardado en la nube${
+    `✅ Pedido ${displayId} guardado en la nube como Pagado (Listo para despachar)${
       ambassadorCode ? ` • Comisión ${formatCLP(commissionAmount)} sumada a ${ambassadorCode}` : ''
     }`
   );
+}
+
+// Filtro activo para las Listas Automáticas de Trabajo de Pedidos
+let currentOrderWorklistFilter = 'all'; // 'all' | 'pending_payment' | 'to_dispatch' | 'delivered'
+
+function setOrderWorklistFilter(filterKey) {
+  currentOrderWorklistFilter = filterKey;
+
+  const btnAll = document.getElementById('order-worklist-all');
+  const btnPending = document.getElementById('order-worklist-pending');
+  const btnDispatch = document.getElementById('order-worklist-dispatch');
+  const btnDelivered = document.getElementById('order-worklist-delivered');
+
+  const baseInactive = 'order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 hover:bg-white/20 transition ';
+  const baseActive = 'order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold shadow-lg transition ';
+
+  if (btnAll) {
+    btnAll.className = filterKey === 'all'
+      ? baseActive + 'bg-qh-brown text-white'
+      : baseInactive + 'text-slate-300';
+  }
+  if (btnPending) {
+    btnPending.className = filterKey === 'pending_payment'
+      ? baseActive + 'bg-amber-500 text-qh-navyDark'
+      : baseInactive + 'text-amber-300';
+  }
+  if (btnDispatch) {
+    btnDispatch.className = filterKey === 'to_dispatch'
+      ? baseActive + 'bg-emerald-500 text-qh-navyDark'
+      : baseInactive + 'text-emerald-300';
+  }
+  if (btnDelivered) {
+    btnDelivered.className = filterKey === 'delivered'
+      ? baseActive + 'bg-sky-500 text-qh-navyDark'
+      : baseInactive + 'text-sky-300';
+  }
+
+  renderAdminDashboard();
+}
+
+/**
+ * Transición a Estado 2: "Pagado / Aprobado — Falta Entregar"
+ * Marca el pedido en verde e ingresa el monto directo a la Caja de la Empresa.
+ */
+function markOrderAsPaid(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.paid = true;
+  target.approved = true;
+  target.deliveryStatus = 'Falta Entregar';
+  target.status = 'Pagado - Falta Entregar';
+  target.updatedAt = Date.now();
+
+  persistCloudState(`Pedido ${target.displayId || orderId} pagado e ingresado a Caja (${formatCLP(target.subtotal)})`);
+  showToast(`💰 Pedido ${target.displayId || orderId} marcado como PAGADO. Dinero sumado a Caja Disponible.`);
+}
+
+/**
+ * Transición a Estado 3: "Entregado / Completado"
+ * Marca cuando las bandejas ya fueron despachadas físicamente.
+ */
+function markOrderAsDelivered(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.paid = true;
+  target.approved = true;
+  target.deliveryStatus = 'Entregado';
+  target.status = 'Entregado';
+  target.updatedAt = Date.now();
+
+  persistCloudState(`Pedido ${target.displayId || orderId} entregado físicamente`);
+  showToast(`🚚 Pedido ${target.displayId || orderId} marcado como ENTREGADO / COMPLETADO.`);
+}
+
+/**
+ * Revierte a Estado 1: "Pendiente de Pago"
+ */
+function markOrderPendingPayment(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.paid = false;
+  target.approved = false;
+  target.deliveryStatus = 'Falta Entregar';
+  target.status = 'Pendiente de Pago';
+  target.updatedAt = Date.now();
+
+  persistCloudState(`Pedido ${target.displayId || orderId} desmarcado de Caja`);
+  showToast(`⏳ Pedido ${target.displayId || orderId} devuelto a Pendiente de Pago.`);
+}
+
+/**
+ * Revierte a Estado 2: "Falta Entregar"
+ */
+function markOrderPendingDelivery(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.deliveryStatus = 'Falta Entregar';
+  target.status = target.paid ? 'Pagado - Falta Entregar' : 'Pendiente de Pago';
+  target.updatedAt = Date.now();
+
+  persistCloudState(`Pedido ${target.displayId || orderId} devuelto a lista de despacho`);
+  showToast(`🚚 Pedido ${target.displayId || orderId} devuelto a Falta Entregar.`);
+}
+
+/**
+ * Abre el modal para editar cualquier dato del pedido existente:
+ * - Modificar bandejas y cantidades
+ * - Modificar manualmente el subtotal / total a pagar (descuentos)
+ * - Modificar o quitar el código de embajador
+ * - Modificar estado de pago y entrega
+ */
+function openEditOrderModal(orderId) {
+  const orders = loadOrders();
+  const order = orders.find((o) => o.id === orderId);
+  if (!order) return;
+
+  const modal = document.getElementById('edit-order-modal');
+  if (!modal) return;
+
+  document.getElementById('edit-order-id').value = order.id;
+  document.getElementById('edit-order-display-id').textContent = order.displayId || order.id;
+  document.getElementById('edit-order-date').textContent = order.date || '-';
+  document.getElementById('edit-order-client-name').value = order.clientName || '';
+  document.getElementById('edit-order-client-phone').value = order.clientPhone || '';
+  document.getElementById('edit-order-client-address').value = order.clientAddress || '';
+  document.getElementById('edit-order-type').value = order.orderType || 'Pedido Único';
+  document.getElementById('edit-order-delivery-day').value = order.deliveryDay || 'Lunes';
+
+  let qtyCampo = 0;
+  let qtyBlanco = 0;
+  (order.items || []).forEach((it) => {
+    const q = Number(it.qty) || 0;
+    if (it.id === 'campo-30' || (it.name && it.name.toLowerCase().includes('campo'))) {
+      qtyCampo += q;
+    } else if (it.id === 'blanco-30' || (it.name && it.name.toLowerCase().includes('blanco'))) {
+      qtyBlanco += q;
+    }
+  });
+
+  if (qtyCampo === 0 && qtyBlanco === 0 && (order.items || []).length > 0) {
+    qtyCampo = Number(order.items[0].qty) || 1;
+  }
+
+  document.getElementById('edit-order-qty-campo').value = qtyCampo;
+  document.getElementById('edit-order-qty-blanco').value = qtyBlanco;
+  document.getElementById('edit-order-subtotal').value = Number(order.subtotal) || 0;
+  document.getElementById('edit-order-ambassador-code').value = order.ambassadorCode || '';
+
+  const stateSel = document.getElementById('edit-order-state');
+  if (stateSel) {
+    if (order.deliveryStatus === 'Entregado') {
+      stateSel.value = 'Entregado';
+    } else if (order.paid) {
+      stateSel.value = 'Pagado';
+    } else {
+      stateSel.value = 'Pendiente';
+    }
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeEditOrderModal() {
+  const modal = document.getElementById('edit-order-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function recalculateModalOrderSubtotal() {
+  const qtyCampo = Math.max(0, parseInt(document.getElementById('edit-order-qty-campo').value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt(document.getElementById('edit-order-qty-blanco').value, 10) || 0);
+  const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
+  document.getElementById('edit-order-subtotal').value = subtotal;
+}
+
+function clearOrderAmbassadorCodeInModal() {
+  const codeInp = document.getElementById('edit-order-ambassador-code');
+  if (codeInp) {
+    codeInp.value = '-';
+  }
+}
+
+function handleSaveEditOrder(event) {
+  event.preventDefault();
+  const orderId = document.getElementById('edit-order-id').value;
+  const orders = loadOrders();
+  const order = orders.find((o) => o.id === orderId);
+  if (!order) return;
+
+  const clientName = (document.getElementById('edit-order-client-name').value || '').trim();
+  const clientPhone = (document.getElementById('edit-order-client-phone').value || '').trim();
+  const clientAddress = (document.getElementById('edit-order-client-address').value || '').trim();
+  const orderType = document.getElementById('edit-order-type').value;
+  const deliveryDay = document.getElementById('edit-order-delivery-day').value;
+
+  const qtyCampo = Math.max(0, parseInt(document.getElementById('edit-order-qty-campo').value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt(document.getElementById('edit-order-qty-blanco').value, 10) || 0);
+  const manualSubtotal = Math.max(0, Number(document.getElementById('edit-order-subtotal').value) || 0);
+
+  const rawCode = (document.getElementById('edit-order-ambassador-code').value || '').trim().toUpperCase();
+  const cleanCode = (rawCode === '-' || rawCode === 'SIN CODIGO' || rawCode === 'SIN CÓDIGO') ? '' : rawCode;
+
+  const orderState = document.getElementById('edit-order-state').value;
+
+  // Reconstruir items
+  const newItems = [];
+  if (qtyCampo > 0) {
+    const prodCampo = PRODUCTS.find((p) => p.id === 'campo-30');
+    newItems.push({
+      id: 'campo-30',
+      name: prodCampo ? prodCampo.name : 'Bandeja Huevo de Campo',
+      format: '30 unidades',
+      eggsCount: 30,
+      qty: qtyCampo,
+      price: 11500
+    });
+  }
+  if (qtyBlanco > 0) {
+    const prodBlanco = PRODUCTS.find((p) => p.id === 'blanco-30');
+    newItems.push({
+      id: 'blanco-30',
+      name: prodBlanco ? prodBlanco.name : 'Bandeja Huevo Blanco Seleccionado',
+      format: '30 unidades',
+      eggsCount: 30,
+      qty: qtyBlanco,
+      price: 9000
+    });
+  }
+
+  order.clientName = clientName;
+  order.clientPhone = clientPhone;
+  order.clientAddress = clientAddress;
+  order.orderType = orderType;
+  order.deliveryDay = orderType === 'Pedido Fijo Semanal' ? deliveryDay : null;
+  order.items = newItems;
+  order.totalEggs = (qtyCampo + qtyBlanco) * 30;
+  order.subtotal = manualSubtotal;
+
+  order.ambassadorCode = cleanCode;
+  order.commissionAmount = cleanCode ? calculateOrderCommission(newItems) : 0;
+  if (cleanCode) {
+    ensureAmbassadorExistsByCode(cleanCode);
+  }
+
+  // Actualizar según estado
+  if (orderState === 'Entregado') {
+    order.paid = true;
+    order.approved = true;
+    order.deliveryStatus = 'Entregado';
+    order.status = 'Entregado';
+  } else if (orderState === 'Pagado') {
+    order.paid = true;
+    order.approved = true;
+    order.deliveryStatus = 'Falta Entregar';
+    order.status = 'Pagado - Falta Entregar';
+  } else {
+    order.paid = false;
+    order.approved = false;
+    order.deliveryStatus = 'Falta Entregar';
+    order.status = 'Pendiente de Pago';
+  }
+
+  order.updatedAt = Date.now();
+
+  persistCloudState(`Pedido ${order.displayId || order.id} editado manualmente`);
+  showToast(`✏️ Pedido ${order.displayId || order.id} actualizado con éxito en la nube`);
+  closeEditOrderModal();
 }
 
 /* ==========================================================================
@@ -2408,13 +2822,34 @@ function calculateFinancialState() {
 
   const cajaDisponible = totalCajaInflows - cajaExpenses;
 
-  // 2. LÓGICA DE DIVISIÓN 50% EXCLUSIVA PARA PAGOS A PROVEEDOR DESDE EL BOLSILLO DE LOS SOCIOS
-  // - Cada gasto pagado a un proveedor o distribuidor por uno de los socios se divide automáticamente en 50% y 50%.
-  // - Si paga Bolsillo de Mati: mitad (+50%) saldo a favor en Saldo de Mati, y la otra mitad (-50%) deuda en Saldo de Juanjo.
-  // - Si paga Bolsillo de Juanjo: mitad (+50%) saldo a favor en Saldo de Juanjo, y la otra mitad (-50%) deuda en Saldo de Mati.
-  // - Si ambos parten de cero o no han pagado, ambos saldos son $0.
-  const saldoBolsilloMati = Math.round(matiOutOfPocket * 0.5 - juanjoOutOfPocket * 0.5);
-  const saldoBolsilloJuanjo = Math.round(juanjoOutOfPocket * 0.5 - matiOutOfPocket * 0.5);
+  // 2. LÓGICA DE DIVISIÓN 50% + AJUSTE DE BRECHA ENTRE SOCIOS ($2.300 ABONO DE JUANJO A MATI)
+  // - Cada gasto pagado a un proveedor o distribuidor por uno de los socios se divide al 50%.
+  // - Si paga Bolsillo de Mati: Juanjo debe el 50% de ese gasto a Mati.
+  // - Si paga Bolsillo de Juanjo: Mati debe el 50% de ese gasto a Juanjo.
+  // - Ajuste oficial: Abono directo de $2.300 a favor de Juanjo (Juanjo le pagó a Mati),
+  //   lo que reduce la brecha/deuda de Juanjo hacia Mati en exactamente $2.300 (+2.300 a favor de Juanjo)
+  //   y reduce el saldo a favor de Mati en $2.300 (-2.300 a Mati), conservando el cálculo base del pedido de huevos.
+  const baseMati50 = Math.round(matiOutOfPocket * 0.5 - juanjoOutOfPocket * 0.5);
+  const baseJuanjo50 = Math.round(juanjoOutOfPocket * 0.5 - matiOutOfPocket * 0.5);
+
+  let juanjoAbonosToMati = 0;
+  let matiAbonosToJuanjo = 0;
+  (finances.partnerAdjustments || []).forEach((adj) => {
+    const amt = Number(adj.amount) || 0;
+    if (adj.from === 'Juanjo' && (adj.to === 'Morensex' || adj.to === 'Mati')) {
+      juanjoAbonosToMati += amt;
+    } else if ((adj.from === 'Morensex' || adj.from === 'Mati') && adj.to === 'Juanjo') {
+      matiAbonosToJuanjo += amt;
+    }
+  });
+
+  if (juanjoAbonosToMati === 0 && (!finances.partnerAdjustments || finances.partnerAdjustments.length === 0)) {
+    juanjoAbonosToMati = 2300;
+  }
+  const netAbonoToJuanjo = juanjoAbonosToMati - matiAbonosToJuanjo;
+
+  const saldoBolsilloMati = baseMati50 - netAbonoToJuanjo;
+  const saldoBolsilloJuanjo = baseJuanjo50 + netAbonoToJuanjo;
 
   return {
     cajaDisponible,
@@ -2426,6 +2861,9 @@ function calculateFinancialState() {
     totalSuppliersExpenses,
     matiOutOfPocket,
     juanjoOutOfPocket,
+    baseMati50,
+    baseJuanjo50,
+    netAbonoToJuanjo,
     saldoBolsilloMati,
     saldoBolsilloJuanjo
   };
@@ -2601,112 +3039,86 @@ function handleSaveEditFinanceRecord(event) {
 
 /**
  * Alterna el estado de cobro en Caja de un pedido ('Cobrado en Caja' vs 'Pendiente')
- * permitiendo ingresar de inmediato su dinero a la Caja Disponible.
  */
 function toggleOrderPaid(orderId) {
   const orders = loadOrders();
   const target = orders.find((o) => o.id === orderId);
   if (!target) return;
 
-  target.paid = !target.paid;
   if (target.paid) {
-    target.approved = true;
-    target.status = 'Completado';
+    markOrderPendingPayment(orderId);
   } else {
-    target.status = target.approved ? 'Aprobado' : 'Pendiente Aprobación';
+    markOrderAsPaid(orderId);
   }
-  target.updatedAt = Date.now();
-
-  const msg = target.paid
-    ? `💰 Pedido ${target.displayId || orderId} cobrado e ingresado a Caja (${formatCLP(target.subtotal)})`
-    : `↩️ Pedido ${target.displayId || orderId} desmarcado de Caja`;
-
-  persistCloudState(msg);
-  showToast(msg);
 }
 
 /**
- * Paga la comisión acumulada de un embajador descontándola directamente de la Caja de la Empresa.
+ * Paga y salda la comisión acumulada de un embajador a $0 descontándola de la Caja de la Empresa.
+ * Si su código se vuelve a usar en pedidos nuevos posteriores, la cuenta vuelve a sumar desde $0.
  */
 function payAmbassadorCommission(code, name, amount) {
   if (!amount || amount <= 0) {
-    showToast('⚠️ Este embajador no registra comisiones acumuladas.');
+    showToast('⚠️ Este embajador no registra comisiones pendientes por pagar ($0).');
     return;
   }
+  const cleanCode = (code || '').trim().toUpperCase();
   const confirmed = confirm(
-    `¿Confirmas registrar el pago de comisión de ${formatCLP(amount)} a ${name} (${code}) descontándolo directamente de la Caja Disponible de la Empresa?`
+    `¿Confirmas registrar el pago de comisión de ${formatCLP(amount)} a ${name} (${cleanCode})?\n\n• Se descontará de la Caja de la Empresa.\n• Su saldo pendiente actual quedará saldado en $0.\n• Nuevos pedidos posteriores sumarán comisiones desde $0.`
   );
   if (!confirmed) return;
 
   const nowMs = Date.now();
   const finances = loadFinances();
-  finances.supplierPayments.unshift({
-    id: 'SP-AMB-' + nowMs + '-' + Math.random().toString(36).slice(2, 6),
+  const payoutId = 'PAY-AMB-' + nowMs + '-' + Math.random().toString(36).slice(2, 6);
+
+  if (!finances.ambassadorPayouts) finances.ambassadorPayouts = [];
+  finances.ambassadorPayouts.unshift({
+    id: payoutId,
     date: getTodayISODate(),
-    amount,
-    concept: `Pago Comisión Embajador: ${name} (${code})`,
+    code: cleanCode,
+    name: name,
+    amount: amount,
+    concept: `Pago Comisión Embajador: ${name} (${cleanCode})`,
     payer: 'Caja',
     timestamp: nowMs,
     updatedAt: nowMs
   });
 
-  persistCloudState(`Pago de comisión a ${code}: ${formatCLP(amount)} desde Caja`);
-  showToast(`💸 Comisión de ${formatCLP(amount)} pagada a ${name} y descontada de Caja de la Empresa`);
+  finances.supplierPayments.unshift({
+    id: 'SP-AMB-' + nowMs + '-' + Math.random().toString(36).slice(2, 6),
+    payoutId: payoutId,
+    date: getTodayISODate(),
+    amount: amount,
+    concept: `Pago Comisión Embajador: ${name} (${cleanCode})`,
+    payer: 'Caja',
+    timestamp: nowMs,
+    updatedAt: nowMs
+  });
+
+  persistCloudState(`Pago de comisión a ${cleanCode}: ${formatCLP(amount)} desde Caja`);
+  showToast(`💸 Comisión de ${formatCLP(amount)} pagada a ${name}. Saldo pendiente saldado a $0.`);
 }
 
 /**
- * Alterna el estado de cobro en Caja de un pedido ('Cobrado en Caja' vs 'Pendiente')
- * permitiendo ingresar de inmediato su dinero a la Caja Disponible.
+ * Elimina un registro del historial de pagos a embajadores y reintegra el monto a Caja.
  */
-function toggleOrderPaid(orderId) {
-  const orders = loadOrders();
-  const target = orders.find((o) => o.id === orderId);
-  if (!target) return;
-
-  target.paid = !target.paid;
-  if (target.paid) {
-    target.approved = true;
-    target.status = 'Completado';
-  } else {
-    target.status = target.approved ? 'Aprobado' : 'Pendiente Aprobación';
-  }
-  target.updatedAt = Date.now();
-
-  const msg = target.paid
-    ? `💰 Pedido ${target.displayId || orderId} cobrado e ingresado a Caja (${formatCLP(target.subtotal)})`
-    : `↩️ Pedido ${target.displayId || orderId} desmarcado de Caja`;
-
-  persistCloudState(msg);
-  showToast(msg);
-}
-
-/**
- * Paga la comisión acumulada de un embajador descontándola directamente de la Caja de la Empresa.
- */
-function payAmbassadorCommission(code, name, amount) {
-  if (!amount || amount <= 0) {
-    showToast('⚠️ Este embajador no registra comisiones acumuladas.');
-    return;
-  }
-  const confirmed = confirm(
-    `¿Confirmas registrar el pago de comisión de ${formatCLP(amount)} a ${name} (${code}) descontándolo directamente de la Caja Disponible de la Empresa?`
-  );
+function deleteAmbassadorPayout(payoutId) {
+  const confirmed = confirm('¿Confirmas eliminar esta transacción del historial de pagos a embajadores?');
   if (!confirmed) return;
 
-  const nowMs = Date.now();
   const finances = loadFinances();
-  finances.supplierPayments.unshift({
-    id: 'SP-AMB-' + nowMs + '-' + Math.random().toString(36).slice(2, 6),
-    date: getTodayISODate(),
-    amount,
-    concept: `Pago Comisión Embajador: ${name} (${code})`,
-    payer: 'Caja',
-    timestamp: nowMs,
-    updatedAt: nowMs
-  });
+  const payout = (finances.ambassadorPayouts || []).find((p) => p.id === payoutId);
+  const amt = payout ? payout.amount : 0;
+  const code = payout ? payout.code : '';
 
-  persistCloudState(`Pago de comisión a ${code}: ${formatCLP(amount)} desde Caja`);
-  showToast(`💸 Comisión de ${formatCLP(amount)} pagada a ${name} y descontada de Caja de la Empresa`);
+  CLOUD_STATE.deletedIds.push(payoutId);
+  finances.ambassadorPayouts = (finances.ambassadorPayouts || []).filter((p) => p.id !== payoutId);
+  finances.supplierPayments = (finances.supplierPayments || []).filter(
+    (sp) => sp.payoutId !== payoutId && sp.id !== payoutId
+  );
+
+  persistCloudState(`Transacción de comisión eliminada (${code})`);
+  showToast('🗑️ Pago a embajador eliminado y reintegrado a la contabilidad');
 }
 
 /* ==========================================================================
@@ -2832,8 +3244,10 @@ function renderAdminDashboard() {
   const badgeMatiEl = document.getElementById('partner-mati-badge');
   const totalMatiPaidEl = document.getElementById('partner-mati-total-paid');
   const statusNoteMatiEl = document.getElementById('partner-mati-status-note');
+  const adjMatiEl = document.getElementById('partner-mati-adjustment-note');
 
   if (totalMatiPaidEl) totalMatiPaidEl.textContent = formatCLP(fin.matiOutOfPocket);
+  if (adjMatiEl) adjMatiEl.textContent = `-${formatCLP(fin.netAbonoToJuanjo || 2300)}`;
 
   if (balMatiEl) {
     if (fin.saldoBolsilloMati > 0) {
@@ -2872,8 +3286,10 @@ function renderAdminDashboard() {
   const badgeJuanjoEl = document.getElementById('partner-juanjo-badge');
   const totalJuanjoPaidEl = document.getElementById('partner-juanjo-total-paid');
   const statusNoteJuanjoEl = document.getElementById('partner-juanjo-status-note');
+  const adjJuanjoEl = document.getElementById('partner-juanjo-adjustment-note');
 
   if (totalJuanjoPaidEl) totalJuanjoPaidEl.textContent = formatCLP(fin.juanjoOutOfPocket);
+  if (adjJuanjoEl) adjJuanjoEl.textContent = `+${formatCLP(fin.netAbonoToJuanjo || 2300)}`;
 
   if (balJuanjoEl) {
     if (fin.saldoBolsilloJuanjo > 0) {
@@ -2910,29 +3326,29 @@ function renderAdminDashboard() {
   const supTotalBadge = document.getElementById('supplier-payments-total-badge');
   if (supTotalBadge) supTotalBadge.textContent = `Total: ${formatCLP(fin.totalSuppliersExpenses)}`;
 
-  // 3. Calcular Comisiones de Embajadores sobre Pedidos Aprobados con Código
+  // 3. Calcular Comisiones de Embajadores y Saldos Pendientes
   const ambassadorStatsMap = {};
   ambassadors.forEach((amb) => {
-    const key = amb.code.toUpperCase();
+    const key = (amb.code || '').toUpperCase();
     ambassadorStatsMap[key] = {
       id: amb.id,
       name: amb.name,
-      code: amb.code.toUpperCase(),
+      code: key,
       ordersCount: 0,
-      count12: 0,
       count30: 0,
-      count60: 0,
-      totalCommission: 0
+      totalCommission: 0,
+      totalPaid: 0,
+      pendingCommission: 0
     };
   });
 
-  let totalAllCommissions = 0;
+  let totalAllCommissionsEarned = 0;
   let approvedOrdersWithCode = 0;
 
   orders.forEach((o) => {
-    if (!o.approved) return;
+    if (!o.approved && !o.paid) return;
     const rawCode = (o.ambassadorCode || '').trim().toUpperCase();
-    if (!rawCode) return;
+    if (!rawCode || rawCode === '-') return;
 
     let matchedKey = rawCode;
     Object.keys(ambassadorStatsMap).forEach((k) => {
@@ -2948,10 +3364,10 @@ function renderAdminDashboard() {
         name: rawCode,
         code: rawCode,
         ordersCount: 0,
-        count12: 0,
         count30: 0,
-        count60: 0,
-        totalCommission: 0
+        totalCommission: 0,
+        totalPaid: 0,
+        pendingCommission: 0
       };
     }
 
@@ -2961,25 +3377,44 @@ function renderAdminDashboard() {
 
     (o.items || []).forEach((it) => {
       const qty = Number(it.qty) || 0;
-      const prod = PRODUCTS.find((p) => p.id === it.id);
-      const eggs = prod ? prod.eggsCount : parseInt(it.format, 10) || 0;
-      if (eggs === 12) {
-        stat.count12 += qty;
-        stat.totalCommission += qty * 800;
-        totalAllCommissions += qty * 800;
-      } else if (eggs === 30) {
-        stat.count30 += qty;
-        stat.totalCommission += qty * 2000;
-        totalAllCommissions += qty * 2000;
-      } else if (eggs === 60) {
-        stat.count60 += qty;
-        stat.totalCommission += qty * 4000;
-        totalAllCommissions += qty * 4000;
-      }
+      stat.count30 += qty;
+      const commItem = qty * 2000;
+      stat.totalCommission += commItem;
+      totalAllCommissionsEarned += commItem;
     });
   });
 
-  // 4. Actualizar los 4 KPIs Superiores
+  // Facturar pagos ya realizados desde finances.ambassadorPayouts
+  const ambassadorPayouts = finances.ambassadorPayouts || [];
+  let totalAllPaidCommissions = 0;
+
+  ambassadorPayouts.forEach((pay) => {
+    const payAmt = Number(pay.amount) || 0;
+    totalAllPaidCommissions += payAmt;
+    const rawCode = (pay.code || '').trim().toUpperCase();
+    if (!rawCode) return;
+
+    let matchedKey = rawCode;
+    Object.keys(ambassadorStatsMap).forEach((k) => {
+      const entry = ambassadorStatsMap[k];
+      if (entry.code === rawCode || entry.name.toUpperCase() === rawCode) {
+        matchedKey = k;
+      }
+    });
+
+    if (ambassadorStatsMap[matchedKey]) {
+      ambassadorStatsMap[matchedKey].totalPaid = (ambassadorStatsMap[matchedKey].totalPaid || 0) + payAmt;
+    }
+  });
+
+  let totalAllPendingCommissions = 0;
+  Object.values(ambassadorStatsMap).forEach((stat) => {
+    stat.totalPaid = stat.totalPaid || 0;
+    stat.pendingCommission = Math.max(0, stat.totalCommission - stat.totalPaid);
+    totalAllPendingCommissions += stat.pendingCommission;
+  });
+
+  // 4. Actualizar KPIs Superiores
   const kpiRevEl = document.getElementById('kpi-total-revenue');
   const kpiProjEl = document.getElementById('kpi-monthly-projection');
   const kpiOrdEl = document.getElementById('kpi-total-orders');
@@ -2989,46 +3424,75 @@ function renderAdminDashboard() {
   const kpiAmbCommEl = document.getElementById('kpi-ambassadors-commission');
   const kpiAmbCountEl = document.getElementById('kpi-ambassadors-count');
 
-  if (kpiRevEl) kpiRevEl.textContent = formatCLP(approvedRevenue);
+  if (kpiRevEl) kpiRevEl.textContent = formatCLP(fin.ordersPaidRevenue);
   if (kpiProjEl) {
-    kpiProjEl.textContent = `Total en bandeja (c/pendientes): ${formatCLP(totalOrdersRevenue)}`;
+    kpiProjEl.textContent = `Total ventas (c/pendientes): ${formatCLP(totalOrdersRevenue)}`;
   }
   if (kpiOrdEl) kpiOrdEl.textContent = orders.length;
   if (kpiOrdBreakEl) {
-    kpiOrdBreakEl.textContent = `${approvedOrdersCount} Aprobados • ${pendingOrdersCount} Pendientes`;
+    kpiOrdBreakEl.textContent = `${fin.paidOrdersCount} Pagados • ${orders.length - fin.paidOrdersCount} Pendientes de Pago`;
   }
   if (kpiPartnersEl) kpiPartnersEl.textContent = formatCLP(fin.cajaDisponible);
   if (kpiSuppliersEl) {
     kpiSuppliersEl.textContent = `Pagado a proveedores: ${formatCLP(fin.totalSuppliersExpenses)}`;
   }
-  if (kpiAmbCommEl) kpiAmbCommEl.textContent = formatCLP(totalAllCommissions);
+  if (kpiAmbCommEl) kpiAmbCommEl.textContent = formatCLP(totalAllPendingCommissions);
   if (kpiAmbCountEl) {
-    kpiAmbCountEl.textContent = `${Object.keys(ambassadorStatsMap).length} embajadores • ${approvedOrdersWithCode} pedidos c/código`;
+    kpiAmbCountEl.textContent = `${Object.keys(ambassadorStatsMap).length} embajadores • Pagado: ${formatCLP(totalAllPaidCommissions)}`;
   }
 
-  // 5. Renderizar Tabla de Pedidos y Aprobación Manual
+  // 5. Renderizar Listas de Trabajo (Worklists) y Tabla de Pedidos
   const filterType = (document.getElementById('admin-filter-order-type') || {}).value || 'all';
   const sortMode = (document.getElementById('admin-sort-orders') || {}).value || 'newest';
 
+  // Conteos para las pestañas de listas automáticas de trabajo
+  const countAll = orders.length;
+  const countPending = orders.filter((o) => !o.paid).length;
+  const countDispatch = orders.filter((o) => o.paid && o.deliveryStatus !== 'Entregado').length;
+  const countDelivered = orders.filter((o) => o.deliveryStatus === 'Entregado').length;
+
+  const countAllEl = document.getElementById('count-worklist-all');
+  const countPendingEl = document.getElementById('count-worklist-pending');
+  const countDispatchEl = document.getElementById('count-worklist-dispatch');
+  const countDeliveredEl = document.getElementById('count-worklist-delivered');
+
+  if (countAllEl) countAllEl.textContent = countAll;
+  if (countPendingEl) countPendingEl.textContent = countPending;
+  if (countDispatchEl) countDispatchEl.textContent = countDispatch;
+  if (countDeliveredEl) countDeliveredEl.textContent = countDelivered;
+
+  // Filtrar según la Lista de Trabajo activa y modalidad
   const filteredOrders = orders.filter((o) => {
-    if (filterType === 'all') return true;
-    return o.orderType === filterType;
+    if (currentOrderWorklistFilter === 'pending_payment' && o.paid) return false;
+    if (currentOrderWorklistFilter === 'to_dispatch' && (!o.paid || o.deliveryStatus === 'Entregado')) return false;
+    if (currentOrderWorklistFilter === 'delivered' && o.deliveryStatus !== 'Entregado') return false;
+
+    if (filterType !== 'all' && o.orderType !== filterType) return false;
+    return true;
   });
 
   filteredOrders.sort((a, b) => {
-    if (sortMode === 'amount-desc') return b.subtotal - a.subtotal;
-    if (sortMode === 'amount-asc') return a.subtotal - b.subtotal;
-    if (sortMode === 'eggs-desc') return b.totalEggs - a.totalEggs;
+    if (sortMode === 'amount-desc') return (b.subtotal || 0) - (a.subtotal || 0);
+    if (sortMode === 'amount-asc') return (a.subtotal || 0) - (b.subtotal || 0);
+    if (sortMode === 'eggs-desc') return (b.totalEggs || 0) - (a.totalEggs || 0);
     return (b.timestamp || 0) - (a.timestamp || 0);
   });
 
   const ordersTbody = document.getElementById('admin-orders-tbody');
   if (ordersTbody) {
     if (filteredOrders.length === 0) {
+      let emptyMsg = '0 pedidos en esta vista.';
+      if (currentOrderWorklistFilter === 'pending_payment') {
+        emptyMsg = '🎉 No hay pedidos pendientes de pago. Todos los pedidos registrados están al día o despachados.';
+      } else if (currentOrderWorklistFilter === 'to_dispatch') {
+        emptyMsg = '🚚 No hay pedidos pendientes de despacho por entregar en este momento.';
+      } else if (currentOrderWorklistFilter === 'delivered') {
+        emptyMsg = '📦 Historial de pedidos entregados vacío.';
+      }
       ordersTbody.innerHTML = `
         <tr>
-          <td colspan="6" class="py-8 text-center text-slate-400">
-            0 pedidos registrados en la Base de Datos Cloud. Listo para recibir ventas reales.
+          <td colspan="7" class="py-8 text-center text-slate-400">
+            ${emptyMsg}
           </td>
         </tr>
       `;
@@ -3036,26 +3500,128 @@ function renderAdminDashboard() {
       ordersTbody.innerHTML = filteredOrders
         .map((order) => {
           const isWeekly = order.orderType === 'Pedido Fijo Semanal';
+          const isPaid = Boolean(order.paid);
+          const isDelivered = order.deliveryStatus === 'Entregado';
           const commission = calculateOrderCommission(order.items);
+
+          // Estilo de la fila:
+          // Estado 2: Pagado — Falta Entregar (Fila verde destacada para despacho)
+          // Estado 3: Entregado (Fila completada)
+          // Estado 1: Pendiente de pago (Fila en amarillo)
+          let rowClass = 'hover:bg-white/5 transition';
+          let statusBadge = '';
+          let actionButtons = '';
+
+          if (isDelivered) {
+            rowClass += ' bg-white/5';
+            statusBadge = `
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-extrabold">
+                🚚 Entregado
+              </span>
+            `;
+            actionButtons = `
+              <button type="button" onclick="markOrderPendingDelivery('${order.id}')"
+                      class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[11px] font-bold text-slate-300 transition"
+                      title="Volver a lista de pendientes de entrega">
+                ↩️ Falta Entregar
+              </button>
+            `;
+          } else if (isPaid) {
+            rowClass += ' bg-emerald-500/10 border-l-4 border-emerald-500';
+            statusBadge = `
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold shadow-sm">
+                ✅ Pagado — Falta Entregar
+              </span>
+            `;
+            actionButtons = `
+              <button type="button" onclick="markOrderAsDelivered('${order.id}')"
+                      class="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition"
+                      title="Marcar como entregado físicamente">
+                🚚 Marcar Entregado
+              </button>
+              <button type="button" onclick="markOrderPendingPayment('${order.id}')"
+                      class="px-2 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[10px] font-bold text-slate-400 transition"
+                      title="Desmarcar pago (volver a Pendiente)">
+                ↩️
+              </button>
+            `;
+          } else {
+            rowClass += ' bg-amber-500/5';
+            statusBadge = `
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-extrabold">
+                ⏳ Pendiente de Pago
+              </span>
+            `;
+            actionButtons = `
+              <button type="button" onclick="markOrderAsPaid('${order.id}')"
+                      class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition"
+                      title="Confirmar transferencia e ingresar dinero a Caja">
+                💰 Marcar Pagado
+              </button>
+            `;
+          }
+
+          // Botones estándar: Editar y Eliminar
+          actionButtons += `
+            <button type="button" onclick="openEditOrderModal('${order.id}')"
+                    class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs transition"
+                    title="Editar pedido (bandejas, subtotal o código)">
+              ✏️
+            </button>
+            <button type="button" onclick="deleteOrderRecord('${order.id}')"
+                    class="px-2 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/30 text-red-300 font-bold text-xs transition"
+                    title="Eliminar pedido">
+              🗑️
+            </button>
+          `;
+
+          // Cliente y ruta de reparto
+          const clientDisplay = `
+            <div class="space-y-1">
+              <span class="font-display font-extrabold text-white text-sm block">${order.clientName || 'Cliente'}</span>
+              ${
+                order.clientPhone
+                  ? `<a href="https://wa.me/${order.clientPhone.replace(/[^0-9]/g, '')}" target="_blank" rel="noopener noreferrer"
+                        class="text-xs text-emerald-400 hover:underline font-semibold block">
+                       📞 ${order.clientPhone}
+                     </a>`
+                  : ''
+              }
+              ${
+                order.clientAddress
+                  ? `<span class="text-xs text-amber-200/90 font-bold block leading-snug">📍 ${order.clientAddress}</span>`
+                  : '<span class="text-[11px] text-slate-500 block italic">Sin dirección registrada</span>'
+              }
+            </div>
+          `;
+
+          // Detalle de bandejas
           const itemsSummary = (order.items || [])
-            .map((it) => `<span class="inline-block mr-2">• <strong>${it.qty}x</strong> ${it.name} (${it.format})</span>`)
+            .map((it) => `<span class="inline-block mr-1">📦 <strong>${it.qty}x</strong> ${it.name} (${it.format || '30 un.'})</span>`)
             .join('<br/>');
 
+          // Código de embajador
+          const ambCode = (order.ambassadorCode || '').trim().toUpperCase();
+          const hasAmb = ambCode && ambCode !== '-';
+          const ambDisplay = hasAmb
+            ? `<div>
+                 <span class="px-2.5 py-1 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display font-extrabold text-xs inline-block">
+                   ${ambCode}
+                 </span>
+                 <span class="text-[10px] text-emerald-400 font-bold block mt-0.5">
+                   Comisión: ${formatCLP(commission)}
+                 </span>
+               </div>`
+            : `<span class="text-slate-500 text-xs italic">- (Sin código)</span>`;
+
           return `
-            <tr class="hover:bg-white/5 transition ${order.approved ? 'bg-emerald-500/5' : ''}">
+            <tr class="${rowClass}">
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <span class="font-display font-extrabold text-white block">${order.displayId || order.id}</span>
+                <span class="font-display font-extrabold text-white block text-sm">${order.displayId || order.id}</span>
                 <span class="text-[11px] text-slate-400 block">${order.date}</span>
-                ${
-                  order.clientName
-                    ? `<span class="text-xs text-amber-300 font-bold block">${order.clientName}</span>`
-                    : ''
-                }
-                ${
-                  order.clientAddress
-                    ? `<span class="text-[11px] text-slate-300 block truncate max-w-[200px]" title="${order.clientAddress}">📍 ${order.clientAddress}</span>`
-                    : ''
-                }
+              </td>
+              <td class="py-3.5 px-4 min-w-[200px]">
+                ${clientDisplay}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
@@ -3063,81 +3629,23 @@ function renderAdminDashboard() {
                     ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
                     : 'bg-sky-400/15 text-sky-300 border border-sky-400/30'
                 }">
-                  ${isWeekly ? `🔁 Semanal (${order.deliveryDay || 'Lunes'})` : '1️⃣ Pedido Único'}
+                  ${isWeekly ? `🔁 Semanal (${order.deliveryDay || 'Lunes'})` : '1️⃣ Único'}
                 </span>
               </td>
-              <td class="py-3.5 px-4 text-slate-200 leading-relaxed">
+              <td class="py-3.5 px-4 text-slate-200 leading-relaxed min-w-[180px]">
                 ${itemsSummary}
-                <span class="block text-[11px] text-slate-400 mt-0.5">${order.totalEggs} huevos en total</span>
+                <span class="block text-[11px] text-slate-400 mt-0.5">${order.totalEggs || 30} huevos en total</span>
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap font-display font-extrabold text-base text-amber-400">
                 ${formatCLP(order.subtotal)}
               </td>
-              <td class="py-3.5 px-4">
-                <div class="space-y-1.5 max-w-[200px]">
-                  <input id="order-amb-input-${order.id}"
-                         type="text"
-                         value="${order.ambassadorCode || ''}"
-                         placeholder="Sin código (o escribe aquí)"
-                         class="w-full px-2.5 py-1.5 rounded-lg bg-qh-navyDark border border-amber-400/40 text-xs font-extrabold text-amber-300 uppercase placeholder-slate-500 focus:outline-none focus:border-amber-400" />
-                  <span class="block text-[11px] ${
-                    order.ambassadorCode ? 'text-emerald-400 font-bold' : 'text-slate-400'
-                  }">
-                    Comisión potencial: ${formatCLP(commission)}
-                  </span>
-                </div>
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                ${ambDisplay}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <div class="flex flex-wrap items-center gap-2">
-                  ${
-                    order.approved
-                      ? `
-                        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold">
-                          ✅ Aprobado
-                        </span>
-                        ${
-                          order.paid
-                            ? `
-                              <span class="px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-extrabold" title="Dinero ingresado a Caja de la Empresa">
-                                💰 Cobrado en Caja
-                              </span>
-                              <button type="button" onclick="toggleOrderPaid('${order.id}')"
-                                      class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold text-slate-300 transition"
-                                      title="Desmarcar cobro en caja">
-                                ↩️ Pendiente Pago
-                              </button>
-                            `
-                            : `
-                              <button type="button" onclick="toggleOrderPaid('${order.id}')"
-                                      class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition"
-                                      title="Marcar como cobrado e ingresar a Caja de la Empresa">
-                                💰 Marcar Cobrado en Caja
-                              </button>
-                            `
-                        }
-                        <button type="button" onclick="approveAndConfirmOrder('${order.id}')"
-                                class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white transition"
-                                title="Guardar cambios en el código de embajador">
-                          💾 Actualizar Código
-                        </button>
-                        <button type="button" onclick="unapproveOrder('${order.id}')"
-                                class="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-[11px] font-bold text-amber-300 transition"
-                                title="Marcar como pendiente">
-                          ↩️
-                        </button>
-                      `
-                      : `
-                        <button type="button" onclick="approveAndConfirmOrder('${order.id}')"
-                                class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition">
-                          ✅ Aprobar y Cobrado en Caja
-                        </button>
-                      `
-                  }
-                  <button type="button" onclick="deleteOrderRecord('${order.id}')"
-                          class="px-2 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-300 text-xs font-bold transition"
-                          title="Eliminar pedido">
-                    🗑️
-                  </button>
+                <div class="flex flex-col gap-2">
+                  <div>${statusBadge}</div>
+                  <div class="flex flex-wrap items-center gap-1.5">${actionButtons}</div>
                 </div>
               </td>
             </tr>
@@ -3213,15 +3721,15 @@ function renderAdminDashboard() {
     }
   }
 
-  // 7. Renderizar Tabla de Embajadores y Comisiones Acumuladas
+  // 7. Renderizar Tabla de Embajadores y Saldos de Comisiones
   const ambassadorsTbody = document.getElementById('admin-ambassadors-tbody');
   if (ambassadorsTbody) {
     const ambassadorRows = Object.values(ambassadorStatsMap);
     if (ambassadorRows.length === 0) {
       ambassadorsTbody.innerHTML = `
         <tr>
-          <td colspan="6" class="py-8 text-center text-slate-400">
-            0 embajadores registrados y $0 en comisiones en la nube. Crea un código arriba para comenzar.
+          <td colspan="8" class="py-8 text-center text-slate-400">
+            0 embajadores registrados en la nube. Crea un código arriba para comenzar.
           </td>
         </tr>
       `;
@@ -3240,36 +3748,50 @@ function renderAdminDashboard() {
                 </span>
               </td>
               <td class="py-3.5 px-4 font-bold text-slate-200">
-                ${amb.ordersCount} pedido(s) aprobado(s)
+                ${amb.ordersCount} pedido(s)
               </td>
               <td class="py-3.5 px-4 text-xs text-slate-300">
-                <span class="inline-block">📦 Bandejas (30 un.): <strong>${amb.count30}</strong> ($2.000 c/u)</span>
+                <span>📦 <strong>${amb.count30}</strong> bandejas</span>
+              </td>
+              <td class="py-3.5 px-4 whitespace-nowrap font-display font-bold text-slate-300">
+                ${formatCLP(amb.totalCommission)}
+              </td>
+              <td class="py-3.5 px-4 whitespace-nowrap font-display font-bold text-emerald-400">
+                ${formatCLP(amb.totalPaid || 0)}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <span class="font-display font-extrabold text-xl text-emerald-400">
-                  ${formatCLP(amb.totalCommission)}
+                <span class="font-display font-extrabold text-lg ${
+                  amb.pendingCommission > 0 ? 'text-amber-400' : 'text-slate-400'
+                }">
+                  ${formatCLP(amb.pendingCommission)}
                 </span>
               </td>
               <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 <button type="button" onclick="copyAmbassadorCode('${amb.code}')"
-                        class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white mr-1 transition">
-                  📋 Copiar Código
+                        class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white mr-1 transition"
+                        title="Copiar código al portapapeles">
+                  📋 Copiar
                 </button>
                 ${
-                  amb.totalCommission > 0
+                  amb.pendingCommission > 0
                     ? `
-                      <button type="button" onclick="payAmbassadorCommission('${amb.code}', '${safeName}', ${amb.totalCommission})"
-                              class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-xs font-bold text-emerald-300 border border-emerald-500/30 mr-1 transition"
-                              title="Pagar comisión descontándola de Caja de la Empresa">
-                        💸 Pagar (${formatCLP(amb.totalCommission)})
+                      <button type="button" onclick="payAmbassadorCommission('${amb.code}', '${safeName}', ${amb.pendingCommission})"
+                              class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow mr-1 transition"
+                              title="Pagar comisión y saldar deuda a $0 desde Caja">
+                        💸 Pagar / Saldar (${formatCLP(amb.pendingCommission)})
                       </button>
                     `
-                    : ''
+                    : `
+                      <span class="px-2 py-1 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold mr-1">
+                        ✅ Al Día
+                      </span>
+                    `
                 }
                 ${
                   amb.id
                     ? `<button type="button" onclick="deleteAmbassador('${amb.id}')"
-                               class="px-2.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-xs font-bold text-red-300 transition">
+                               class="px-2.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-xs font-bold text-red-300 transition"
+                               title="Eliminar embajador y código de la base de datos">
                          🗑️
                        </button>`
                     : ''
@@ -3282,7 +3804,55 @@ function renderAdminDashboard() {
     }
   }
 
-  // 8. Renderizar Comportamiento por Producto (Más pinchados vs Ignorados)
+  // 8. Renderizar Historial de Transacciones a Embajadores
+  const payoutsTbody = document.getElementById('admin-ambassador-payouts-tbody');
+  const payoutsBadge = document.getElementById('ambassador-payouts-total-badge');
+  if (payoutsBadge) payoutsBadge.textContent = `Total Saldado: ${formatCLP(totalAllPaidCommissions)}`;
+
+  if (payoutsTbody) {
+    if (ambassadorPayouts.length === 0) {
+      payoutsTbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-6 text-center text-slate-500">
+            Sin pagos a embajadores registrados en la nube ($0).
+          </td>
+        </tr>
+      `;
+    } else {
+      payoutsTbody.innerHTML = ambassadorPayouts
+        .map((p) => {
+          return `
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-2.5 px-3 whitespace-nowrap text-slate-400">${p.date}</td>
+              <td class="py-2.5 px-3 text-white font-semibold">${p.name}</td>
+              <td class="py-2.5 px-3 whitespace-nowrap">
+                <span class="px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/30 text-amber-300 font-bold text-xs">
+                  ${p.code}
+                </span>
+              </td>
+              <td class="py-2.5 px-3 font-display font-extrabold text-emerald-400 whitespace-nowrap">
+                ${formatCLP(p.amount)}
+              </td>
+              <td class="py-2.5 px-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                  🏦 Caja de la Empresa
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                <button type="button" onclick="deleteAmbassadorPayout('${p.id}')"
+                        class="px-2 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-300 font-bold text-xs transition"
+                        title="Revertir este pago">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  // 9. Renderizar Exclusivamente "Productos Más Pinchados" (Analítica Optimizada)
   const productSort = (document.getElementById('admin-sort-products') || {}).value || 'clicks-desc';
   const productList = PRODUCTS.map((p) => {
     const st = analytics.productStats[p.id] || { clicks: 0, addedToCart: 0, checkouts: 0 };
@@ -3313,150 +3883,37 @@ function renderAdminDashboard() {
             : `<span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Activo (${p.clicks})</span>`;
 
         return `
-          <div class="p-4 rounded-2xl bg-qh-navyDark/90 border border-white/10 space-y-2">
+          <div class="p-5 rounded-2xl bg-qh-navyDark/90 border border-white/10 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span class="font-display font-bold text-sm text-white">${p.name}</span>
-                <span class="text-xs text-slate-400 ml-1">(${p.format} • ${formatCLP(p.price)})</span>
+                <span class="font-display font-extrabold text-base text-white">${p.name}</span>
+                <span class="text-xs text-amber-300 font-bold ml-1.5">(${p.format} • ${formatCLP(p.price)})</span>
               </div>
               ${statusBadge}
             </div>
 
-            <div class="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+            <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
               <div class="h-full rounded-full bg-gradient-to-r from-qh-brown to-amber-400 analytics-bar-fill" style="width: ${pct}%"></div>
             </div>
 
-            <div class="flex items-center justify-between text-[11px] text-slate-300 pt-1">
-              <span>🖱️ <strong>${p.clicks}</strong> clics en producto</span>
-              <span>🛒 <strong>${p.addedToCart}</strong> añadidos al carrito</span>
-              <span>📲 <strong>${p.checkouts}</strong> bandejas en checkouts</span>
-            </div>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  // 9. Renderizar Ranking de Botones Pinchados vs No Pinchados
-  const btnSort = (document.getElementById('admin-sort-buttons') || {}).value || 'most';
-  const buttonsArray = Object.keys(analytics.buttonClicks).map((label) => ({
-    label,
-    clicks: analytics.buttonClicks[label] || 0
-  }));
-
-  buttonsArray.sort((a, b) => {
-    if (btnSort === 'ignored') return a.clicks - b.clicks;
-    return b.clicks - a.clicks;
-  });
-
-  const maxBtnClicks = Math.max(1, ...buttonsArray.map((b) => b.clicks));
-  const buttonsContainer = document.getElementById('admin-buttons-analytics');
-
-  if (buttonsContainer) {
-    buttonsContainer.innerHTML = buttonsArray
-      .map((b) => {
-        const pct = b.clicks === 0 ? 0 : Math.round((b.clicks / maxBtnClicks) * 100);
-        const zeroClicks = b.clicks === 0;
-        return `
-          <div class="p-3 rounded-xl bg-qh-navyDark/80 border border-white/10 space-y-1.5">
-            <div class="flex items-center justify-between gap-2 text-xs">
-              <span class="font-semibold ${zeroClicks ? 'text-slate-400' : 'text-slate-200'} truncate">${b.label}</span>
-              <span class="px-2 py-0.5 rounded-md font-display font-extrabold text-[11px] ${
-                zeroClicks ? 'bg-white/5 text-slate-400' : 'bg-qh-brown/25 text-qh-brownLight'
-              }">
-                ${b.clicks} clics
-              </span>
-            </div>
-            <div class="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div class="h-full rounded-full bg-emerald-400" style="width: ${pct}%"></div>
-            </div>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  // 10. Renderizar Embudo de Conversión
-  const funnelContainer = document.getElementById('admin-funnel-bars');
-  if (funnelContainer) {
-    const totalViews = analytics.pageViews || 0;
-    const totalProductClicks = productList.reduce((acc, item) => acc + item.clicks, 0);
-    const baseDenominator = Math.max(1, totalViews);
-    const steps = [
-      {
-        label: '1. Visitas a la Página',
-        count: totalViews,
-        pct: totalViews > 0 ? 100 : 0,
-        color: 'bg-sky-400'
-      },
-      {
-        label: '2. Clics en Tarjetas de Producto',
-        count: totalProductClicks,
-        pct: totalViews > 0 ? Math.min(100, Math.round((totalProductClicks / baseDenominator) * 100)) : 0,
-        color: 'bg-qh-brown'
-      },
-      {
-        label: '3. Productos Añadidos al Carrito',
-        count: analytics.addToCartEvents || 0,
-        pct: totalViews > 0 ? Math.min(100, Math.round(((analytics.addToCartEvents || 0) / baseDenominator) * 100)) : 0,
-        color: 'bg-amber-400'
-      },
-      {
-        label: '4. Checkouts Iniciados a WhatsApp',
-        count: orders.length,
-        pct: totalViews > 0 ? Math.min(100, Math.round((orders.length / baseDenominator) * 100)) : 0,
-        color: 'bg-emerald-400'
-      }
-    ];
-
-    funnelContainer.innerHTML = steps
-      .map(
-        (st) => `
-        <div class="space-y-1">
-          <div class="flex justify-between text-xs">
-            <span class="font-bold text-slate-200">${st.label}</span>
-            <span class="font-display font-extrabold text-white">${st.count} (${st.pct}%)</span>
-          </div>
-          <div class="w-full h-3 rounded-full bg-qh-navyDark overflow-hidden p-0.5 border border-white/10">
-            <div class="h-full rounded-full ${st.color}" style="width: ${st.pct}%"></div>
-          </div>
-        </div>
-      `
-      )
-      .join('');
-  }
-
-  // 11. Renderizar Stream de Eventos en Tiempo Real
-  const streamEl = document.getElementById('admin-event-stream');
-  if (streamEl) {
-    const events = analytics.eventLog || [];
-    if (events.length === 0) {
-      streamEl.innerHTML = `
-        <div class="p-4 rounded-xl bg-qh-navyDark/60 border border-white/10 text-center text-slate-400">
-          Sin eventos registrados aún en la Base de Datos Cloud. Los clics e interacciones reales aparecerán aquí en vivo.
-        </div>
-      `;
-    } else {
-      streamEl.innerHTML = events
-        .map((ev) => {
-          const badgeColor =
-            ev.type === 'CHECKOUT_WHATSAPP'
-              ? 'bg-emerald-500/20 text-emerald-300'
-              : ev.type === 'ADD_TO_CART'
-              ? 'bg-amber-500/20 text-amber-300'
-              : 'bg-white/10 text-slate-300';
-          return `
-            <div class="p-2.5 rounded-xl bg-qh-navyDark/75 border border-white/10 flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${badgeColor}">${ev.type}</span>
-                <span class="text-slate-200 truncate">${ev.detail}</span>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+              <div class="p-2 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Clics Producto</span>
+                <strong class="font-display text-white text-sm">${p.clicks}</strong>
               </div>
-              <span class="text-[11px] text-slate-400 whitespace-nowrap">${ev.time}</span>
+              <div class="p-2 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Al Carrito</span>
+                <strong class="font-display text-amber-300 text-sm">${p.addedToCart}</strong>
+              </div>
+              <div class="p-2 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">En Checkouts</span>
+                <strong class="font-display text-emerald-400 text-sm">${p.checkouts}</strong>
+              </div>
             </div>
-          `;
-        })
-        .join('');
-    }
+          </div>
+        `;
+      })
+      .join('');
   }
 }
 
