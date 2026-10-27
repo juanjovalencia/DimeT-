@@ -8,15 +8,15 @@
    ========================================================================== */
 
 :root {
-  --qh-navy: #1E293B;
-  --qh-navy-dark: #0F172A;
-  --qh-navy-light: #334155;
-  --qh-brown: #C1844D;
-  --qh-brown-hover: #A96E38;
-  --qh-brown-light: #E6B587;
-  --qh-bone: #F3F4F6;
-  --qh-bone-pure: #FFFFFF;
-  --qh-yolk: #F59E0B;
+  --qh-navy: #0B2826;
+  --qh-navy-dark: #071D1B;
+  --qh-navy-light: #123834;
+  --qh-brown: #C89B48;
+  --qh-brown-hover: #B08332;
+  --qh-brown-light: #F9E8B2;
+  --qh-bone: #F7F5EE;
+  --qh-bone-pure: #FCFBF7;
+  --qh-yolk: #E8C170;
 }
 
 html {
@@ -55,13 +55,13 @@ h1, h2, h3, h4, .font-display {
 
 /* Background Patterns & Subtle Textures */
 .bg-grid-pattern {
-  background-image: radial-gradient(rgba(193, 132, 77, 0.16) 1.5px, transparent 1.5px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(249, 232, 178, 0.10) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 .bg-light-dots {
-  background-image: radial-gradient(rgba(30, 41, 59, 0.08) 1.5px, transparent 1.5px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgba(11, 40, 38, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* Floating & Boxing Microanimations */

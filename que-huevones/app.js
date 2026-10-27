@@ -1791,15 +1791,15 @@ function selectStoryStep(index) {
     const pText = tabBtn.querySelector('p');
 
     if (i === index) {
-      tabBtn.className = 'story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white shadow-xl transition-all';
-      if (badgeSpan) badgeSpan.className = 'w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0';
-      if (subtitleSpan) subtitleSpan.className = 'text-xs font-bold uppercase tracking-wider text-qh-brownLight';
-      if (pText) pText.className = 'text-xs sm:text-sm text-slate-300 mt-1.5';
+      tabBtn.className = 'story-tab text-left p-5 sm:p-6 rounded-2xl border border-[#E8C170]/60 bg-[#0B2826] text-[#FAF8F2] shadow-xl transition-all';
+      if (badgeSpan) badgeSpan.className = 'w-11 h-11 rounded-xl bg-[#E8C170] text-[#0B2420] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0';
+      if (subtitleSpan) subtitleSpan.className = 'text-xs font-bold uppercase tracking-wider text-[#F9E8B2]';
+      if (pText) pText.className = 'text-xs sm:text-sm text-[#E6EFEA]/80 mt-1.5';
     } else {
-      tabBtn.className = 'story-tab text-left p-5 sm:p-6 rounded-2xl border-2 border-slate-200 bg-white text-qh-navy hover:border-qh-brown/60 shadow-sm transition-all';
-      if (badgeSpan) badgeSpan.className = 'w-11 h-11 rounded-xl bg-qh-navy/10 text-qh-navy font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0';
-      if (subtitleSpan) subtitleSpan.className = 'text-xs font-bold uppercase tracking-wider text-qh-brown';
-      if (pText) pText.className = 'text-xs sm:text-sm text-slate-600 mt-1.5';
+      tabBtn.className = 'story-tab text-left p-5 sm:p-6 rounded-2xl border border-[#E5DFCE] bg-[#FCFBF7] text-[#0B2826] hover:border-[#C89B48]/60 shadow-sm transition-all';
+      if (badgeSpan) badgeSpan.className = 'w-11 h-11 rounded-xl bg-[#0B2826]/[0.07] text-[#0B2826] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0';
+      if (subtitleSpan) subtitleSpan.className = 'text-xs font-bold uppercase tracking-wider text-[#9E6E24]';
+      if (pText) pText.className = 'text-xs sm:text-sm text-[#4A635E] mt-1.5';
     }
   });
 
@@ -1812,9 +1812,9 @@ function selectStoryStep(index) {
   bulletsContainer.innerHTML = step.bullets
     .map(
       (b) => `
-      <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-        <p class="font-display font-bold text-qh-brownLight text-sm">${b.title}</p>
-        <p class="text-xs text-slate-300 mt-1">${b.text}</p>
+      <div class="p-4 rounded-2xl bg-white/[0.04] border border-[#F9E8B2]/15">
+        <p class="font-display font-bold text-[#F9E8B2] text-sm">${b.title}</p>
+        <p class="text-xs text-[#E6EFEA]/80 mt-1">${b.text}</p>
       </div>
     `
     )
@@ -1839,10 +1839,10 @@ function filterCatalog(category) {
     if (!btn) return;
     if (key === category) {
       btn.className =
-        'catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm bg-qh-navy text-white shadow transition-all flex items-center gap-2';
+        'catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm bg-[#0B2826] text-[#FAF8F2] shadow transition-all flex items-center gap-2';
     } else {
       btn.className =
-        'catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-qh-navy hover:bg-white transition-all flex items-center gap-2';
+        'catalog-tab px-4 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-[#0B2826] hover:bg-[#FCFBF7] transition-all flex items-center gap-2';
     }
   });
 
@@ -1868,22 +1868,22 @@ function renderCatalog() {
 
       return `
       <article onclick="handleProductCardClick('${product.id}', event)"
-               class="product-card rounded-3xl bg-qh-bone border-2 ${
-                 product.popular ? 'border-qh-brown ring-4 ring-qh-brown/15' : 'border-slate-200/90'
+               class="product-card rounded-3xl bg-[#F7F5EE] border ${
+                 product.popular ? 'border-[#C89B48] ring-2 ring-[#E8C170]/25' : 'border-[#E5DFCE]'
                } p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer">
         
         <div>
           <div class="flex items-center justify-between gap-2 mb-4">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
               isCampo
-                ? 'bg-qh-brown/15 text-qh-brown border border-qh-brown/30'
-                : 'bg-qh-navy/10 text-qh-navy border border-qh-navy/20'
+                ? 'bg-[#0B2826]/[0.07] text-[#0B2826] border border-[#0B2826]/15'
+                : 'bg-[#0B2826]/[0.05] text-[#0B2826] border border-[#0B2826]/15'
             }">
-              <span class="w-2.5 h-2.5 rounded-full ${isCampo ? 'bg-qh-brown' : 'bg-white border border-qh-navy'}"></span>
+              <span class="w-2.5 h-2.5 rounded-full ${isCampo ? 'bg-[#C89B48]' : 'bg-[#FCFBF7] border border-[#0B2826]'}"></span>
               ${product.typeLabel}
             </span>
             <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold ${
-              product.popular ? 'bg-qh-brown text-white' : 'bg-white text-qh-navy border border-slate-200'
+              product.popular ? 'bg-[#0B2826] text-[#F9E8B2] border border-[#E8C170]/40' : 'bg-[#FCFBF7] text-[#0B2826] border border-[#E5DFCE]'
             }">
               ${product.badge}
             </span>
@@ -1892,40 +1892,40 @@ function renderCatalog() {
           <div class="flex items-center gap-4 mb-4">
             <div class="w-14 h-16 ${isCampo ? 'egg-shape-campo' : 'egg-shape-blanco'} flex-shrink-0 flex items-center justify-center">
               <span class="font-display font-extrabold text-xs ${
-                isCampo ? 'text-white/90' : 'text-qh-navy'
+                isCampo ? 'text-white/95' : 'text-[#0B2826]'
               } bg-black/15 px-1.5 py-0.5 rounded-md">
                 ${product.eggsCount}u
               </span>
             </div>
             <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block">${product.format}</span>
-              <h3 class="font-display font-extrabold text-2xl text-qh-navy leading-tight">${product.name}</h3>
+              <span class="text-xs font-bold uppercase tracking-wider text-[#4A635E] block">${product.format}</span>
+              <h3 class="font-display font-extrabold text-2xl text-[#0B2826] leading-tight">${product.name}</h3>
             </div>
           </div>
 
-          <div class="mb-4 p-3 rounded-2xl bg-white border border-slate-200/90 flex items-center justify-between gap-2">
+          <div class="mb-4 p-3 rounded-2xl bg-[#FCFBF7] border border-[#E5DFCE] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <span class="text-base">🥊</span>
               <div>
-                <span class="text-xs font-extrabold text-qh-navy block">${product.caliberBadge}</span>
-                <span class="text-[11px] text-slate-600">${product.qualityNote}</span>
+                <span class="text-xs font-extrabold text-[#0B2826] block">${product.caliberBadge}</span>
+                <span class="text-[11px] text-[#4A635E]">${product.qualityNote}</span>
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-lg bg-amber-400/25 text-amber-950 font-display font-extrabold text-[11px] whitespace-nowrap">
+            <span class="px-2.5 py-1 rounded-lg bg-[#E8C170]/30 text-[#0B2826] font-display font-extrabold text-[11px] whitespace-nowrap">
               1ª Selección
             </span>
           </div>
 
-          <p class="text-sm text-slate-600 leading-relaxed mb-4">
+          <p class="text-sm text-[#354F4B] leading-relaxed mb-4">
             ${product.description}
           </p>
 
-          <ul class="space-y-1.5 mb-6 text-xs font-semibold text-slate-700">
+          <ul class="space-y-1.5 mb-6 text-xs font-semibold text-[#0B2826]/90">
             ${product.features
               .map(
                 (feat) => `
               <li class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-qh-brown/20 text-qh-brown flex items-center justify-center text-[10px] font-bold">✓</span>
+                <span class="w-4 h-4 rounded-full bg-[#0B2826]/10 text-[#0B2826] flex items-center justify-center text-[10px] font-bold">✓</span>
                 <span>${feat}</span>
               </li>
             `
@@ -1934,38 +1934,38 @@ function renderCatalog() {
           </ul>
         </div>
 
-        <div class="pt-5 border-t border-slate-200/90 space-y-4">
-          <div class="p-3.5 rounded-2xl bg-white border-2 border-qh-brown/40 shadow-sm flex items-center justify-between gap-3">
+        <div class="pt-5 border-t border-[#E5DFCE] space-y-4">
+          <div class="p-3.5 rounded-2xl bg-[#FCFBF7] border border-[#C89B48]/50 shadow-sm flex items-center justify-between gap-3">
             <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">Precio Fijo Bandeja (30 un.)</span>
-              <span class="font-display font-extrabold text-3xl sm:text-4xl text-qh-navy leading-none">${formatCLP(product.price)}</span>
+              <span class="text-[10px] font-black uppercase tracking-wider text-[#4A635E] block">Precio Fijo Bandeja (30 un.)</span>
+              <span class="font-display font-extrabold text-3xl sm:text-4xl text-[#0B2826] leading-none">${formatCLP(product.price)}</span>
             </div>
             <div class="text-right">
-              <span class="text-xs font-black text-qh-brown bg-qh-brown/15 px-3 py-1.5 rounded-xl inline-block shadow-xs">
+              <span class="text-xs font-black text-[#0B2826] bg-[#E8C170]/35 border border-[#C89B48]/30 px-3 py-1.5 rounded-xl inline-block shadow-xs">
                 ${formatCLP(unitPrice)} c/huevo
               </span>
               ${
                 inCartQty > 0
-                  ? `<span class="block text-[11px] font-extrabold text-emerald-700 mt-1">✓ ${inCartQty} en tu carrito</span>`
-                  : `<span class="block text-[10px] font-bold text-slate-400 mt-1">30 unidades</span>`
+                  ? `<span class="block text-[11px] font-extrabold text-[#2E4812] mt-1">✓ ${inCartQty} en tu carrito</span>`
+                  : `<span class="block text-[10px] font-bold text-[#4A635E] mt-1">30 unidades</span>`
               }
             </div>
           </div>
 
-          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
+          <div class="p-3.5 rounded-2xl bg-[#FCFBF7] border border-[#E5DFCE] flex items-center justify-between gap-3">
             <div>
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Cantidad</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#4A635E] block">Cantidad</span>
               <div class="inline-flex items-center gap-2 mt-1">
                 <button type="button" onclick="event.stopPropagation(); updateCardQty('${product.id}', -1)"
-                        class="w-8 h-8 rounded-lg bg-qh-bone hover:bg-qh-navy hover:text-white text-qh-navy font-extrabold text-base flex items-center justify-center transition"
+                        class="w-8 h-8 rounded-lg bg-[#F2EFE4] hover:bg-[#0B2826] hover:text-[#FAF8F2] text-[#0B2826] font-extrabold text-base flex items-center justify-center transition"
                         aria-label="Disminuir cantidad">
                   −
                 </button>
-                <span id="card-qty-${product.id}" class="w-7 text-center font-display font-extrabold text-base text-qh-navy">
+                <span id="card-qty-${product.id}" class="w-7 text-center font-display font-extrabold text-base text-[#0B2826]">
                   ${qty}
                 </span>
                 <button type="button" onclick="event.stopPropagation(); updateCardQty('${product.id}', 1)"
-                        class="w-8 h-8 rounded-lg bg-qh-bone hover:bg-qh-navy hover:text-white text-qh-navy font-extrabold text-base flex items-center justify-center transition"
+                        class="w-8 h-8 rounded-lg bg-[#F2EFE4] hover:bg-[#0B2826] hover:text-[#FAF8F2] text-[#0B2826] font-extrabold text-base flex items-center justify-center transition"
                         aria-label="Aumentar cantidad">
                   +
                 </button>
@@ -1973,10 +1973,10 @@ function renderCatalog() {
             </div>
 
             <div class="text-right">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#4A635E] block">
                 Subtotal (${qty * product.eggsCount} huevos)
               </span>
-              <span id="card-subtotal-${product.id}" class="font-display font-extrabold text-xl text-qh-brown">
+              <span id="card-subtotal-${product.id}" class="font-display font-extrabold text-xl text-[#9E6E24]">
                 ${formatCLP(subtotal)}
               </span>
             </div>
@@ -1984,11 +1984,11 @@ function renderCatalog() {
 
           <div class="grid grid-cols-5 gap-2">
             <button type="button" onclick="event.stopPropagation(); orderImmediately('${product.id}')"
-                    class="col-span-3 py-3.5 px-3 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-extrabold text-xs sm:text-sm shadow-lg shadow-qh-brown/25 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                    class="col-span-3 py-3.5 px-3 rounded-xl bg-[#E8C170] hover:bg-[#F3D289] text-[#0B2420] font-display font-extrabold text-xs sm:text-sm shadow-lg shadow-[#E8C170]/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
               <span>🥊 Pedir al tiro</span>
             </button>
             <button type="button" onclick="event.stopPropagation(); addToOrderCart('${product.id}')"
-                    class="col-span-2 py-3.5 px-3 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1 active:scale-95 transition-all">
+                    class="col-span-2 py-3.5 px-3 rounded-xl bg-[#0B2826] hover:bg-[#123834] text-[#FAF8F2] font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1 active:scale-95 transition-all">
               <span>+ Carrito</span>
             </button>
           </div>
@@ -2202,13 +2202,13 @@ function syncOrderUI() {
     const btnDrawer = document.querySelector(`.day-btn-drawer[data-day="${day}"]`);
     if (btnMain) {
       btnMain.className = isDaySelected
-        ? 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-extrabold text-xs bg-amber-400 text-qh-navyDark shadow-md ring-2 ring-amber-300 transition'
-        : 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-white text-qh-navy border border-slate-300 hover:border-qh-brown transition';
+        ? 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-extrabold text-xs bg-[#0B2826] text-[#F9E8B2] shadow-md ring-2 ring-[#E8C170] transition'
+        : 'day-btn-main py-2.5 px-1 text-center rounded-xl font-display font-bold text-xs bg-[#FCFBF7] text-[#0B2826] border border-[#D8D0BC] hover:border-[#C89B48] transition';
     }
     if (btnDrawer) {
       btnDrawer.className = isDaySelected
-        ? 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-extrabold text-[11px] bg-amber-400 text-qh-navyDark shadow transition'
-        : 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-white text-qh-navy border border-slate-300 transition';
+        ? 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-extrabold text-[11px] bg-[#0B2826] text-[#F9E8B2] shadow transition'
+        : 'day-btn-drawer py-1.5 px-0.5 text-center rounded-lg font-display font-bold text-[11px] bg-[#FCFBF7] text-[#0B2826] border border-[#D8D0BC] transition';
     }
   });
 
@@ -2226,55 +2226,55 @@ function syncOrderUI() {
 
   if (btnUnicoMain && btnSemanalMain) {
     if (!isSemanal) {
-      btnUnicoMain.className = 'p-5 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-qh-brown/20';
-      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      btnUnicoMain.className = 'p-5 rounded-2xl border-2 border-[#E8C170] bg-[#0B2826] text-[#FAF8F2] text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-[#E8C170]/20';
+      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-[#E8C170] text-[#0B2420] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
       if (unicoStatus) {
-        unicoStatus.className = 'px-3 py-1 rounded-full bg-amber-400 text-qh-navyDark text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
+        unicoStatus.className = 'px-3 py-1 rounded-full bg-[#E8C170] text-[#0B2420] text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
         unicoStatus.textContent = '✓ Seleccionado';
       }
-      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-white leading-tight';
-      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/15 text-amber-300 text-xs font-extrabold';
-      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed mt-2';
+      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-[#FAF8F2] leading-tight';
+      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-[#F9E8B2] text-xs font-extrabold';
+      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-[#E6EFEA]/85 font-medium leading-relaxed mt-2';
 
-      btnSemanalMain.className = 'p-5 rounded-2xl border-2 border-slate-300 bg-white hover:border-qh-brown text-qh-navy text-left transition-all flex flex-col justify-between gap-3 shadow-md';
-      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-qh-navy text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      btnSemanalMain.className = 'p-5 rounded-2xl border border-[#D8D0BC] bg-[#FCFBF7] hover:border-[#C89B48] text-[#0B2826] text-left transition-all flex flex-col justify-between gap-3 shadow-sm';
+      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-[#0B2826] text-[#FAF8F2] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
       if (semanalStatus) {
-        semanalStatus.className = 'px-3 py-1 rounded-full bg-slate-100 text-qh-navy border border-slate-300 text-[11px] font-extrabold uppercase tracking-wider';
+        semanalStatus.className = 'px-3 py-1 rounded-full bg-[#F2EFE4] text-[#0B2826] border border-[#D8D0BC] text-[11px] font-extrabold uppercase tracking-wider';
         semanalStatus.textContent = 'Elegir opción';
       }
-      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-qh-navy leading-tight';
-      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-amber-400/30 text-amber-950 text-xs font-extrabold';
-      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-2';
+      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-[#0B2826] leading-tight';
+      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-[#E8C170]/30 text-[#0B2826] text-xs font-extrabold';
+      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-[#4A635E] font-medium leading-relaxed mt-2';
     } else {
-      btnSemanalMain.className = 'p-5 rounded-2xl border-2 border-qh-brown bg-qh-navy text-white text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-qh-brown/20';
-      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-qh-brown text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      btnSemanalMain.className = 'p-5 rounded-2xl border-2 border-[#E8C170] bg-[#0B2826] text-[#FAF8F2] text-left transition-all flex flex-col justify-between gap-3 shadow-xl ring-4 ring-[#E8C170]/20';
+      if (semanalIcon) semanalIcon.className = 'w-11 h-11 rounded-xl bg-[#E8C170] text-[#0B2420] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
       if (semanalStatus) {
-        semanalStatus.className = 'px-3 py-1 rounded-full bg-amber-400 text-qh-navyDark text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
+        semanalStatus.className = 'px-3 py-1 rounded-full bg-[#E8C170] text-[#0B2420] text-[11px] font-extrabold uppercase tracking-wider shadow-xs';
         semanalStatus.textContent = '✓ Seleccionado';
       }
-      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-white leading-tight';
-      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/15 text-amber-300 text-xs font-extrabold';
-      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-slate-100 font-medium leading-relaxed mt-2';
+      if (semanalTitle) semanalTitle.className = 'font-display font-extrabold text-xl text-[#FAF8F2] leading-tight';
+      if (semanalSubbadge) semanalSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-white/10 text-[#F9E8B2] text-xs font-extrabold';
+      if (semanalDesc) semanalDesc.className = 'text-xs sm:text-sm text-[#E6EFEA]/85 font-medium leading-relaxed mt-2';
 
-      btnUnicoMain.className = 'p-5 rounded-2xl border-2 border-slate-300 bg-white hover:border-qh-brown text-qh-navy text-left transition-all flex flex-col justify-between gap-3 shadow-md';
-      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-qh-navy text-white font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
+      btnUnicoMain.className = 'p-5 rounded-2xl border border-[#D8D0BC] bg-[#FCFBF7] hover:border-[#C89B48] text-[#0B2826] text-left transition-all flex flex-col justify-between gap-3 shadow-sm';
+      if (unicoIcon) unicoIcon.className = 'w-11 h-11 rounded-xl bg-[#0B2826] text-[#FAF8F2] font-display font-extrabold text-lg flex items-center justify-center flex-shrink-0 shadow';
       if (unicoStatus) {
-        unicoStatus.className = 'px-3 py-1 rounded-full bg-slate-100 text-qh-navy border border-slate-300 text-[11px] font-extrabold uppercase tracking-wider';
+        unicoStatus.className = 'px-3 py-1 rounded-full bg-[#F2EFE4] text-[#0B2826] border border-[#D8D0BC] text-[11px] font-extrabold uppercase tracking-wider';
         unicoStatus.textContent = 'Elegir opción';
       }
-      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-qh-navy leading-tight';
-      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-qh-brown/20 text-qh-navy text-xs font-extrabold';
-      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mt-2';
+      if (unicoTitle) unicoTitle.className = 'font-display font-extrabold text-xl text-[#0B2826] leading-tight';
+      if (unicoSubbadge) unicoSubbadge.className = 'inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-[#E8C170]/30 text-[#0B2826] text-xs font-extrabold';
+      if (unicoDesc) unicoDesc.className = 'text-xs sm:text-sm text-[#4A635E] font-medium leading-relaxed mt-2';
     }
   }
 
   if (btnUnicoDrawer && btnSemanalDrawer) {
     if (!isSemanal) {
-      btnUnicoDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-qh-navy text-white shadow transition';
-      btnSemanalDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs text-qh-navy hover:bg-white transition';
+      btnUnicoDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-[#0B2826] text-[#FAF8F2] shadow transition';
+      btnSemanalDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs text-[#0B2826] hover:bg-[#FCFBF7] transition';
     } else {
-      btnSemanalDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-qh-navy text-white shadow transition';
-      btnUnicoDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs text-qh-navy hover:bg-white transition';
+      btnSemanalDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs bg-[#0B2826] text-[#FAF8F2] shadow transition';
+      btnUnicoDrawer.className = 'py-2.5 px-3 rounded-xl font-display font-bold text-xs text-[#0B2826] hover:bg-[#FCFBF7] transition';
     }
   }
 
@@ -2293,7 +2293,7 @@ function syncOrderUI() {
 
   if (productIds.length === 0) {
     const emptyHtml = `
-      <div class="p-4 rounded-xl bg-white border border-dashed border-slate-300 text-center text-xs text-slate-500">
+      <div class="p-4 rounded-xl bg-[#FCFBF7] border border-dashed border-[#D8D0BC] text-center text-xs text-[#4A635E]">
         Tu carrito está vacío. Suma una bandeja desde el catálogo o con el selector superior.
       </div>
     `;
@@ -2311,18 +2311,18 @@ function syncOrderUI() {
         totalEggs += product.eggsCount * qty;
 
         return `
-          <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-3 shadow-xs">
+          <div class="p-3 rounded-xl bg-[#FCFBF7] border border-[#E5DFCE] flex items-center justify-between gap-3 shadow-xs">
             <div class="min-w-0">
-              <p class="font-display font-bold text-xs sm:text-sm text-qh-navy truncate">${product.name}</p>
-              <p class="text-[11px] text-slate-500">${product.format} • ${formatCLP(product.price)} c/u</p>
+              <p class="font-display font-bold text-xs sm:text-sm text-[#0B2826] truncate">${product.name}</p>
+              <p class="text-[11px] text-[#4A635E]">${product.format} • ${formatCLP(product.price)} c/u</p>
             </div>
             <div class="flex items-center gap-2.5 flex-shrink-0">
-              <div class="inline-flex items-center gap-1.5 bg-qh-bone px-2 py-1 rounded-lg border border-slate-200">
-                <button type="button" onclick="updateFormItemQty('${id}', -1)" class="w-6 h-6 rounded bg-white hover:bg-qh-navy hover:text-white text-qh-navy font-extrabold text-xs flex items-center justify-center transition">−</button>
-                <span class="font-display font-extrabold text-xs text-qh-navy w-5 text-center">${qty}</span>
-                <button type="button" onclick="updateFormItemQty('${id}', 1)" class="w-6 h-6 rounded bg-white hover:bg-qh-navy hover:text-white text-qh-navy font-extrabold text-xs flex items-center justify-center transition">+</button>
+              <div class="inline-flex items-center gap-1.5 bg-[#F2EFE4] px-2 py-1 rounded-lg border border-[#E5DFCE]">
+                <button type="button" onclick="updateFormItemQty('${id}', -1)" class="w-6 h-6 rounded bg-[#FCFBF7] hover:bg-[#0B2826] hover:text-[#FAF8F2] text-[#0B2826] font-extrabold text-xs flex items-center justify-center transition">−</button>
+                <span class="font-display font-extrabold text-xs text-[#0B2826] w-5 text-center">${qty}</span>
+                <button type="button" onclick="updateFormItemQty('${id}', 1)" class="w-6 h-6 rounded bg-[#FCFBF7] hover:bg-[#0B2826] hover:text-[#FAF8F2] text-[#0B2826] font-extrabold text-xs flex items-center justify-center transition">+</button>
               </div>
-              <span class="font-display font-extrabold text-xs sm:text-sm text-qh-brown w-20 text-right">${formatCLP(itemSub)}</span>
+              <span class="font-display font-extrabold text-xs sm:text-sm text-[#9E6E24] w-20 text-right">${formatCLP(itemSub)}</span>
             </div>
           </div>
         `;
