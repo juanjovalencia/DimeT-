@@ -177,242 +177,155 @@
   <main id="storefront-view">
 
     <!-- ======================================================================
-         2. HERO SECTION (IMPACTANTE)
+         2. HERO SECTION (REDISEÑO EDITORIAL MINIMALISTA & PREMIUM)
+         Paleta extraída directamente de la fotografía de campo al atardecer:
+         - Teal Profundo Cielo:   #0B2826 / #123834
+         - Dorado Solar Horizonte:#F9E8B2 / #E8C170 / #D49B38
+         - Verde Pradera Al Sol:  #9EC447 / #23360E
+         - Marfil Cálido Puro:    #FAF8F2
          ====================================================================== -->
-    <section id="inicio" class="relative pt-28 pb-20 lg:pt-36 lg:pb-28 bg-qh-navy text-qh-bone overflow-hidden bg-grid-pattern">
-      <div class="absolute -top-24 -left-24 w-96 h-96 bg-qh-brown/25 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute top-1/2 right-0 w-[28rem] h-[28rem] bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    <section id="inicio" class="relative min-h-[88vh] lg:min-h-[92vh] flex items-center pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden bg-[#0B2826] text-[#FAF8F2]">
+      
+      <!-- Fotografía de Fondo Oficial (Campo al Sol) -->
+      <div class="absolute inset-0 z-0">
+        <img src="hero-field.jpg"
+             alt="Pradera verde iluminada por el sol de la tarde — Origen de Qué Huevones"
+             class="w-full h-full object-cover object-center scale-[1.01] select-none pointer-events-none" />
+        <!-- Degradado direccional orgánico (Teal profundo del cielo a la izquierda hacia luz solar limpia a la derecha) -->
+        <div class="absolute inset-0"
+             style="background: linear-gradient(102deg, rgba(8, 29, 27, 0.86) 0%, rgba(11, 38, 35, 0.72) 38%, rgba(16, 44, 34, 0.30) 70%, rgba(25, 45, 18, 0.10) 100%);"></div>
+        <!-- Viñeta atmosférica vertical sutil para garantizar contraste impecable arriba y abajo -->
+        <div class="absolute inset-0"
+             style="background: linear-gradient(180deg, rgba(7, 24, 23, 0.52) 0%, rgba(11, 34, 31, 0.08) 45%, rgba(15, 29, 10, 0.76) 100%);"></div>
+      </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <!-- Contenedor Principal con Amplio Espacio de Respiración (Breathing Room) -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        
+        <div class="max-w-3xl space-y-8 text-left">
           
-          <!-- Columna Izquierda -->
-          <div class="lg:col-span-7 space-y-6 text-left">
-            
-            <!-- Badge / Quote Interactivo del 80% -->
-            <div id="hero-quote-badge" onclick="cycleCustomerQuote()" data-track-btn="Hero: Badge 80% Clientes" role="button" tabindex="0"
-                 class="inline-flex flex-wrap items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-qh-brown/50 cursor-pointer transition-all group shadow-lg"
-                 title="Haz clic para ver más reacciones de clientes">
-              <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-qh-brown text-white text-sm shadow">⭐</span>
-              <p class="text-xs sm:text-sm font-bold text-qh-bone">
-                El <span class="text-amber-400 underline decoration-qh-brown decoration-2 underline-offset-2">80% de nuestros clientes</span> dice:
-                <span id="dynamic-quote-text" class="text-qh-brownLight font-extrabold ml-1">"¡Tremendo huevo al conocer!"</span>
-              </p>
-              <span class="text-[11px] px-2 py-0.5 rounded-full bg-qh-brown/30 text-qh-brownLight group-hover:bg-qh-brown group-hover:text-white transition">
-                ↻ Ver otra opinión
-              </span>
-            </div>
+          <!-- Etiqueta Superior Minimalista + Opinión Interactiva de Clientes -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B2826]/65 border border-[#F9E8B2]/25 backdrop-blur-md text-[11px] font-bold uppercase tracking-[0.18em] text-[#F9E8B2]">
+              <span class="w-2 h-2 rounded-full bg-[#9EC447] shadow-[0_0_8px_#9EC447]"></span>
+              <span>Libre Pastoreo • Origen Natural</span>
+            </span>
 
-            <!-- Título Principal Potente -->
-            <h1 class="font-display font-extrabold text-4xl sm:text-6xl lg:text-[4.1rem] leading-[1.04] tracking-tight text-white">
-              QUÉ HUEVONES: <br class="hidden sm:inline" />
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-qh-brownLight via-qh-brown to-amber-400">
+            <div id="hero-quote-badge" onclick="cycleCustomerQuote()" data-track-btn="Hero: Badge 80% Clientes" role="button" tabindex="0"
+                 class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 backdrop-blur-md cursor-pointer transition-all group"
+                 title="Haz clic para ver más opiniones verificadas">
+              <span class="text-xs text-[#E8C170]">★</span>
+              <p class="text-xs font-medium text-[#FAF8F2]/90">
+                80% de nuestros clientes:
+                <span id="dynamic-quote-text" class="text-[#F9E8B2] font-semibold ml-1 transition-opacity duration-150">"¡Tremendo huevo al conocer!"</span>
+              </p>
+              <span class="text-[10px] text-[#F9E8B2]/70 group-hover:text-[#F9E8B2] transition">↻</span>
+            </div>
+          </div>
+
+          <!-- Jerarquía Tipográfica Principal: Limpia, Elegante y de Alto Contraste -->
+          <div class="space-y-4">
+            <p class="text-xs sm:text-sm font-semibold uppercase tracking-[0.24em] text-[#F9E8B2]/90">
+              Recolección Diaria del Campo a tu Mesa
+            </p>
+            <h1 class="font-display font-extrabold text-5xl sm:text-6xl lg:text-[4.5rem] leading-[1.03] tracking-tight text-[#FAF8F2] drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+              QUÉ HUEVONES
+              <span class="block mt-2 text-2xl sm:text-4xl lg:text-[2.65rem] font-semibold leading-[1.15] tracking-normal text-transparent bg-clip-text bg-gradient-to-r from-[#FFFDF7] via-[#F9E8B2] to-[#E8C170]">
                 Para con los cuentos, prueba los verdaderos huevos.
               </span>
             </h1>
-
-            <!-- Subtítulo -->
-            <p class="text-base sm:text-lg lg:text-xl text-slate-300 max-w-2xl leading-relaxed font-normal">
-              Huevos de gallinas <strong class="text-white font-semibold">100% libres, felices y alimentadas de forma natural</strong>.
-              Frescura del día, yema dorada intensa y tamaño peso pesado directo del campo a tu puerta.
-            </p>
-
-            <!-- Botones CTA -->
-            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-4 pt-2">
-              <a href="#catalogo" data-track-btn="Hero CTA: Ver Bandejas Disponibles"
-                 class="inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-base sm:text-lg shadow-xl shadow-qh-brown/30 hover:-translate-y-0.5 transition-all">
-                <span>Ver Bandejas Disponibles</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-              </a>
-
-              <button type="button" onclick="openCartDrawer()" data-track-btn="Hero CTA: Hacer Pedido Rápido"
-                      class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-qh-bone hover:bg-white text-qh-navy font-display font-bold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
-                <span>🛒 Hacer Pedido Rápido</span>
-              </button>
-
-              <button type="button" onclick="openAmbassadorAuthModal('register')"
-                      class="inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-qh-navyDark border-2 border-amber-400/60 font-display font-extrabold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
-                <span>🥚 Quiero ser Embajador</span>
-              </button>
-            </div>
-
-            <!-- Mini Estadísticas de Confianza -->
-            <div class="pt-6 grid grid-cols-3 gap-4 border-t border-white/10 max-w-xl">
-              <div>
-                <span class="font-display font-extrabold text-2xl sm:text-3xl text-qh-brownLight block">100%</span>
-                <span class="text-xs sm:text-sm text-slate-300">Gallinas Libres de Jaula</span>
-              </div>
-              <div>
-                <span class="font-display font-extrabold text-xl sm:text-2xl text-amber-400 block">Calibre Primera</span>
-                <span class="text-xs sm:text-sm text-slate-300">Huevos de Selección Grande</span>
-              </div>
-              <div>
-                <span class="font-display font-extrabold text-2xl sm:text-3xl text-emerald-400 block">24/48 hrs</span>
-                <span class="text-xs sm:text-sm text-slate-300">Del Nido a tu Cocina</span>
-              </div>
-            </div>
           </div>
 
-          <!-- Columna Derecha: Escena Visual Dinámica -->
-          <div class="lg:col-span-5 relative lg:pl-4">
-            
-            <!-- Contenedor Principal del Ring "QUÉ HUEVONES" -->
-            <div class="relative rounded-3xl bg-gradient-to-b from-slate-800/90 to-qh-navyDark p-5 sm:p-7 border border-white/15 shadow-2xl overflow-visible">
-              
-              <!-- Encabezado Superior del Ring -->
-              <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-qh-brown/25 text-qh-brownLight border border-qh-brown/40">
-                  🥊 El Ring del Desayuno
-                </span>
-                <span class="text-xs font-bold text-amber-400">Calibre Primera / Tamaño Grande</span>
-              </div>
+          <!-- Subtítulo Editorial Ordenado -->
+          <p class="text-base sm:text-lg lg:text-xl text-[#E6EFEA]/90 max-w-xl leading-relaxed font-normal drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+            Huevos de gallinas <strong class="text-[#FAF8F2] font-semibold">100% libres, criadas al sol y alimentadas de forma natural</strong>.
+            Frescura del día, yema dorada intensa y calibre de primera directo a tu puerta.
+          </p>
 
-              <!-- Bloques Laterales de Esquina (Ubicados en los extremos laterales sin solapar textos) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 sm:-mx-3 lg:-mx-5 relative z-20">
-                <!-- Esquina Izquierda: Esquina Marrón (Huevo de Campo) -->
-                <div class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-qh-bone text-qh-navy shadow-xl border-2 border-qh-brown animate-float-slow">
-                  <div class="w-8 h-10 egg-shape-campo flex-shrink-0"></div>
-                  <div class="min-w-0">
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-brown/20 text-qh-navy block w-fit">Esquina Marrón</span>
-                    <p class="font-display font-extrabold text-sm text-qh-navy leading-tight mt-0.5 truncate">Huevo de Campo</p>
-                    <p class="text-[11px] font-medium text-slate-700">Cáscara firme • Yema Sol</p>
-                  </div>
-                </div>
+          <!-- Botones de Acción (Armonizados con el Dorado Solar y el Teal Profundo de la foto) -->
+          <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3.5 pt-2">
+            <a href="#catalogo" data-track-btn="Hero CTA: Ver Bandejas Disponibles"
+               class="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-[#E8C170] hover:bg-[#F3D289] text-[#0B2420] font-display font-extrabold text-base shadow-[0_14px_34px_-8px_rgba(232,193,112,0.45)] hover:-translate-y-0.5 transition-all">
+              <span>Ver Bandejas Disponibles</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
 
-                <!-- Esquina Derecha: Esquina Blanca (Blanco Seleccionado) -->
-                <div class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-qh-bone text-qh-navy shadow-xl border-2 border-slate-300 animate-float-reverse sm:justify-self-end w-full">
-                  <div class="w-8 h-10 egg-shape-blanco flex-shrink-0"></div>
-                  <div class="min-w-0">
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-qh-navy/15 text-qh-navy block w-fit">Esquina Blanca</span>
-                    <p class="font-display font-extrabold text-sm text-qh-navy leading-tight mt-0.5 truncate">Blanco Seleccionado</p>
-                    <p class="text-[11px] font-medium text-slate-700">Selección Grande • Sabor Puro</p>
-                  </div>
-                </div>
-              </div>
+            <button type="button" onclick="openCartDrawer()" data-track-btn="Hero CTA: Hacer Pedido Rápido"
+                    class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-[#0B2826]/65 hover:bg-[#0B2826]/85 text-[#FAF8F2] border border-[#F9E8B2]/35 backdrop-blur-md font-display font-bold text-base shadow-lg hover:-translate-y-0.5 transition-all">
+              <span>🛒 Hacer Pedido Rápido</span>
+            </button>
 
-              <!-- Ilustración SVG Animada: Huevos Boxeando -->
-              <div class="relative flex items-center justify-center py-2">
-                <svg viewBox="0 0 420 270" class="w-full max-w-[390px] h-auto drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración de dos huevos con guantes de boxeo: Huevo de Campo vs Huevo Blanco Seleccionado">
-                  <ellipse cx="210" cy="242" rx="165" ry="18" fill="#0F172A" fill-opacity="0.75"/>
-                  <line x1="25" y1="150" x2="395" y2="150" stroke="#C1844D" stroke-opacity="0.3" stroke-width="3" stroke-dasharray="8 6"/>
-                  <line x1="25" y1="185" x2="395" y2="185" stroke="#F3F4F6" stroke-opacity="0.2" stroke-width="3" stroke-dasharray="8 6"/>
-
-                  <!-- HUEVO DE CAMPO (IZQUIERDA) -->
-                  <g class="animate-boxer-left">
-                    <path d="M115 210L108 236M145 210L152 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
-                    <ellipse cx="104" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-                    <ellipse cx="156" cy="238" rx="12" ry="6" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-                    <path d="M130 58C96 58 74 106 74 148C74 188 98 214 130 214C162 214 186 188 186 148C186 106 164 58 130 58Z" fill="url(#campoGrad)" stroke="#0F172A" stroke-width="4"/>
-                    <path d="M98 92C90 108 87 125 87 140" stroke="#FDE68A" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M77 175Q130 190 183 175L180 194Q130 208 80 194Z" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5"/>
-                    <circle cx="130" cy="186" r="12" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
-                    <text x="130" y="190" text-anchor="middle" fill="#0F172A" font-size="9" font-weight="900" font-family="sans-serif">1ª</text>
-                    <path d="M106 108L126 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                    <path d="M158 108L138 116" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                    <circle cx="116" cy="124" r="5.5" fill="#0F172A"/>
-                    <circle cx="118" cy="122" r="2" fill="#FFFFFF"/>
-                    <circle cx="146" cy="124" r="5.5" fill="#0F172A"/>
-                    <circle cx="148" cy="122" r="2" fill="#FFFFFF"/>
-                    <path d="M116 142Q132 155 148 140" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
-                    <g>
-                      <circle cx="84" cy="152" r="17" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
-                      <path d="M76 145C79 140 86 140 90 144" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
-                    </g>
-                    <g class="animate-glove-jab">
-                      <circle cx="182" cy="138" r="20" fill="#DC2626" stroke="#0F172A" stroke-width="3.5"/>
-                      <path d="M172 128C178 123 188 124 192 130" stroke="#FCA5A5" stroke-width="3.5" stroke-linecap="round"/>
-                    </g>
-                  </g>
-
-                  <!-- HUEVO BLANCO SELECCIONADO (DERECHA) -->
-                  <g class="animate-boxer-right">
-                    <path d="M275 210L268 236M305 210L312 236" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
-                    <ellipse cx="264" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
-                    <ellipse cx="316" cy="238" rx="12" ry="6" fill="#F3F4F6" stroke="#0F172A" stroke-width="2.5"/>
-                    <path d="M290 58C256 58 234 106 234 148C234 188 258 214 290 214C322 214 346 188 346 148C346 106 324 58 290 58Z" fill="url(#blancoGrad)" stroke="#0F172A" stroke-width="4"/>
-                    <path d="M256 92C248 108 245 125 245 140" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M244 95Q290 106 336 95L333 82Q290 92 247 82Z" fill="#C1844D" stroke="#0F172A" stroke-width="2.5"/>
-                    <path d="M264 110L282 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                    <path d="M314 110L296 117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
-                    <circle cx="273" cy="125" r="5.5" fill="#0F172A"/>
-                    <circle cx="275" cy="123" r="2" fill="#FFFFFF"/>
-                    <circle cx="303" cy="125" r="5.5" fill="#0F172A"/>
-                    <circle cx="305" cy="123" r="2" fill="#FFFFFF"/>
-                    <path d="M274 143Q289 154 305 142" stroke="#0F172A" stroke-width="4" stroke-linecap="round" fill="none"/>
-                    <g>
-                      <circle cx="236" cy="138" r="20" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
-                      <path d="M227 128C233 123 242 124 246 130" stroke="#FDE68A" stroke-width="3.5" stroke-linecap="round"/>
-                    </g>
-                    <g>
-                      <circle cx="336" cy="152" r="17" fill="#C1844D" stroke="#0F172A" stroke-width="3.5"/>
-                      <path d="M328 145C331 140 338 140 342 144" stroke="#FDE68A" stroke-width="3" stroke-linecap="round"/>
-                    </g>
-                  </g>
-
-                  <!-- CHISPA DE PODER CENTRAL -->
-                  <g>
-                    <path d="M210 20L215 38L233 32L221 47L235 60L216 58L210 76L204 58L185 60L199 47L187 32L205 38L210 20Z" fill="#F59E0B" stroke="#0F172A" stroke-width="2.5"/>
-                    <text x="210" y="53" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="900" font-family="sans-serif">VS</text>
-                  </g>
-
-                  <defs>
-                    <radialGradient id="campoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(112 105) rotate(65) scale(115 95)">
-                      <stop offset="0%" stop-color="#EBB98B"/>
-                      <stop offset="55%" stop-color="#C1844D"/>
-                      <stop offset="100%" stop-color="#8A5627"/>
-                    </radialGradient>
-                    <radialGradient id="blancoGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(272 105) rotate(65) scale(115 95)">
-                      <stop offset="0%" stop-color="#FFFFFF"/>
-                      <stop offset="65%" stop-color="#F3F4F6"/>
-                      <stop offset="100%" stop-color="#CBD5E1"/>
-                    </radialGradient>
-                  </defs>
-                </svg>
-              </div>
-
-              <!-- Widget Interactivo en el Hero: "¡Haz la Prueba de la Yema!" -->
-              <div class="mt-2 pt-4 border-t border-white/10">
-                <div class="flex items-center justify-between gap-2 mb-3">
-                  <div>
-                    <p class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight">🔬 Micro-Laboratorio en Vivo</p>
-                    <h2 class="font-display font-bold text-sm sm:text-base text-white">Prueba de Sartén: ¿Qué pasa al quebrar uno?</h2>
-                  </div>
-                  <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-white/10">
-                    <button type="button" id="yolk-btn-qh" onclick="switchYolkTest('qh')" data-track-btn="Laboratorio Yema: Qué Huevones"
-                            class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-qh-brown text-white transition">
-                      Qué Huevones
-                    </button>
-                    <button type="button" id="yolk-btn-ind" onclick="switchYolkTest('ind')" data-track-btn="Laboratorio Yema: Industrial"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-                      Industrial
-                    </button>
-                  </div>
-                </div>
-
-                <div id="yolk-test-display" class="rounded-2xl bg-slate-900/80 p-3.5 border border-white/10 flex items-center gap-4">
-                  <div class="relative w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-inner flex-shrink-0">
-                    <div id="yolk-circle" class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 shadow-lg shadow-orange-500/50 flex items-center justify-center animate-yolk-pop">
-                      <span class="w-3 h-2 rounded-full bg-white/60 -mt-3 -ml-2"></span>
-                    </div>
-                  </div>
-                  <div class="text-xs space-y-1">
-                    <div class="flex items-center gap-2">
-                      <span id="yolk-title" class="font-display font-extrabold text-sm text-amber-400">Yema Dorada Firme y Alta</span>
-                      <span id="yolk-tag" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">100% Campo Libre</span>
-                    </div>
-                    <p id="yolk-desc" class="text-slate-300 leading-snug">
-                      Clara densa que no se desparrama en la paila y yema color naranja intenso gracias al pastoreo libre al sol.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
+            <button type="button" onclick="openAmbassadorAuthModal('register')"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white/5 hover:bg-[#F9E8B2]/15 text-[#F9E8B2] border border-[#F9E8B2]/25 backdrop-blur-md font-display font-semibold text-sm sm:text-base hover:-translate-y-0.5 transition-all">
+              <span>🥚 Quiero ser Embajador</span>
+            </button>
           </div>
 
         </div>
+
+        <!-- Barra Inferior Minimalista de Atributos y Formatos (Ordenada y con Aire Visual) -->
+        <div class="mt-16 lg:mt-20 pt-8 border-t border-[#F9E8B2]/20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+          
+          <!-- 3 Pilares de Valor (Izquierda) -->
+          <div class="lg:col-span-7 grid grid-cols-3 gap-6 sm:gap-8">
+            <div class="space-y-1">
+              <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9EC447] block">Bienestar Real</span>
+              <span class="font-display font-extrabold text-2xl sm:text-3xl text-[#FAF8F2] block">100% Libres</span>
+              <span class="text-xs text-[#E6EFEA]/75 block">Gallinas libres de jaula al sol</span>
+            </div>
+            <div class="space-y-1 border-l border-[#F9E8B2]/15 pl-5 sm:pl-7">
+              <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F9E8B2] block">Selección</span>
+              <span class="font-display font-extrabold text-2xl sm:text-3xl text-[#FAF8F2] block">Primera</span>
+              <span class="text-xs text-[#E6EFEA]/75 block">Yema firme y cáscara densa</span>
+            </div>
+            <div class="space-y-1 border-l border-[#F9E8B2]/15 pl-5 sm:pl-7">
+              <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9EC447] block">Despacho</span>
+              <span class="font-display font-extrabold text-2xl sm:text-3xl text-[#FAF8F2] block">24/48 hrs</span>
+              <span class="text-xs text-[#E6EFEA]/75 block">Directo del nido a tu cocina</span>
+            </div>
+          </div>
+
+          <!-- Resumen Minimalista de los 2 Formatos Oficiales (Derecha) -->
+          <div class="lg:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+            <a href="#catalogo" class="flex-1 px-4 py-3.5 rounded-2xl bg-[#0B2826]/65 hover:bg-[#0B2826]/85 border border-[#F9E8B2]/25 backdrop-blur-md transition group">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#F9E8B2]">Huevo de Campo</span>
+                <span class="text-[10px] font-semibold text-[#E6EFEA]/70">30 un.</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span class="font-display font-extrabold text-lg text-[#FAF8F2] group-hover:text-[#E8C170] transition">$11.500</span>
+                <span class="text-[11px] text-[#9EC447] font-semibold">Ver →</span>
+              </div>
+            </a>
+
+            <a href="#catalogo" class="flex-1 px-4 py-3.5 rounded-2xl bg-[#0B2826]/65 hover:bg-[#0B2826]/85 border border-white/15 backdrop-blur-md transition group">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#E6EFEA]/90">Blanco Seleccionado</span>
+                <span class="text-[10px] font-semibold text-[#E6EFEA]/70">30 un.</span>
+              </div>
+              <div class="flex items-baseline justify-between mt-1">
+                <span class="font-display font-extrabold text-lg text-[#FAF8F2] group-hover:text-[#E8C170] transition">$9.000</span>
+                <span class="text-[11px] text-[#F9E8B2] font-semibold">Ver →</span>
+              </div>
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Elementos de compatibilidad interna (ocultos) -->
+        <div class="sr-only" aria-hidden="true">
+          <button type="button" id="yolk-btn-qh"></button>
+          <button type="button" id="yolk-btn-ind"></button>
+          <div id="yolk-test-display">
+            <div id="yolk-circle"></div>
+            <span id="yolk-title"></span>
+            <span id="yolk-tag"></span>
+            <p id="yolk-desc"></p>
+          </div>
+        </div>
+
       </div>
     </section>
 
