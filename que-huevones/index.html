@@ -110,10 +110,17 @@
           <span>Pide por WhatsApp</span>
         </button>
 
+        <!-- Botón Destacado: Quiero ser Embajador -->
+        <button type="button" onclick="openAmbassadorAuthModal('register')" id="navbar-ambassador-btn"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-qh-navyDark font-display font-extrabold text-xs border border-amber-400/50 shadow transition-all"
+                title="Regístrate o entra a tu Portal de Embajador">
+          <span>🥚 Quiero ser Embajador</span>
+        </button>
+
         <!-- Botón muy discreto "Entrar" para acceso administrativo -->
         <button type="button" onclick="openAdminLoginModal()" id="navbar-admin-btn"
                 class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center gap-1"
-                title="Acceso Dueños">
+                title="Acceso Usuarios y Dueños">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
@@ -149,12 +156,16 @@
       <a href="#catalogo" data-track-btn="Mobile Nav: Catalogo" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">📦 Precios / Formatos</a>
       <a href="#contacto" data-track-btn="Mobile Nav: Carrito" class="mobile-nav-link block px-4 py-3 rounded-xl text-qh-bone font-semibold hover:bg-white/10 transition">🛒 Mi Carrito y Contacto</a>
       <div class="pt-3 border-t border-white/10 flex flex-col gap-2">
+        <button type="button" onclick="openAmbassadorAuthModal('register')"
+                class="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-amber-400 text-qh-navyDark font-display font-extrabold shadow-lg">
+          <span>🥚 Quiero ser Embajador</span>
+        </button>
         <button type="button" onclick="triggerDirectWhatsAppCheckout('Mobile Menu: WhatsApp')"
                 class="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-emerald-500 text-qh-navyDark font-extrabold shadow-lg">
           <span>📲 Quiero pedir mi bandeja directo</span>
         </button>
         <button type="button" onclick="openAdminLoginModal()" class="w-full py-2 text-xs text-slate-400 hover:text-white text-center">
-          🔒 Entrar (Acceso Dueños)
+          🔒 Entrar (Usuarios / Administración)
         </button>
       </div>
     </div>
@@ -207,7 +218,7 @@
             </p>
 
             <!-- Botones CTA -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-4 pt-2">
               <a href="#catalogo" data-track-btn="Hero CTA: Ver Bandejas Disponibles"
                  class="inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-qh-brown hover:bg-qh-brownHover text-white font-display font-bold text-base sm:text-lg shadow-xl shadow-qh-brown/30 hover:-translate-y-0.5 transition-all">
                 <span>Ver Bandejas Disponibles</span>
@@ -219,6 +230,11 @@
               <button type="button" onclick="openCartDrawer()" data-track-btn="Hero CTA: Hacer Pedido Rápido"
                       class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-qh-bone hover:bg-white text-qh-navy font-display font-bold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
                 <span>🛒 Hacer Pedido Rápido</span>
+              </button>
+
+              <button type="button" onclick="openAmbassadorAuthModal('register')"
+                      class="inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-qh-navyDark border-2 border-amber-400/60 font-display font-extrabold text-base sm:text-lg shadow-lg hover:-translate-y-0.5 transition-all">
+                <span>🥚 Quiero ser Embajador</span>
               </button>
             </div>
 
@@ -1008,7 +1024,383 @@
   </main>
 
   <!-- ========================================================================
-       VISTA DEL DASHBOARD ADMINISTRATIVO (PARA JUANJO Y MORENSEX)
+       PORTAL PERSONAL DEL EMBAJADOR (CARGA DIRECTA DE PEDIDOS Y DESPACHOS)
+       ======================================================================== -->
+  <section id="ambassador-portal-view" class="hidden min-h-screen pt-24 pb-20 bg-qh-navyDark text-qh-bone">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <!-- Top Bar del Portal de Embajador -->
+      <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border-2 border-amber-400/40 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-qh-brown text-qh-navyDark flex items-center justify-center text-2xl font-extrabold shadow-lg shrink-0">
+            🥚
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>☁️ Portal Personal del Embajador • En Vivo</span>
+              </span>
+              <span id="portal-amb-invited-badge" class="px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-[11px] font-bold">
+                Invitado por: Directo
+              </span>
+            </div>
+            <h1 class="font-display font-extrabold text-2xl sm:text-4xl text-white mt-1">
+              Hola, <span id="portal-amb-name" class="text-amber-400">Embajador</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
+              Carga tus pedidos directos para despacho, revisa tus comisiones ($2.000 por bandeja) y sigue el progreso de bonos de tus invitados.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-2xl bg-qh-navyDark border border-amber-400/50 flex items-center gap-2.5">
+            <div>
+              <span class="text-[10px] font-bold uppercase text-slate-400 block">Tu Código Único Web:</span>
+              <span id="portal-amb-code" class="font-display font-extrabold text-base text-amber-300 tracking-wider">CODIGO</span>
+            </div>
+            <button type="button" onclick="copyCurrentAmbassadorPortalCode()"
+                    class="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-qh-navyDark font-display font-extrabold text-xs transition">
+              📋 Copiar
+            </button>
+          </div>
+
+          <button type="button" id="portal-back-to-admin-btn" onclick="returnFromPortalToAdmin()"
+                  class="hidden px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark text-xs sm:text-sm font-extrabold shadow transition">
+            📊 Volver al Panel de Control
+          </button>
+
+          <button type="button" onclick="forceCloudRefresh()"
+                  class="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-500/30 transition">
+            🔄 Sincronizar
+          </button>
+          <button type="button" onclick="closeAmbassadorPortal()"
+                  class="px-4 py-2.5 rounded-xl bg-qh-brown hover:bg-qh-brownHover text-white text-xs sm:text-sm font-bold shadow transition">
+            👁️ Ir a la Tienda
+          </button>
+          <button type="button" onclick="logoutAdmin()"
+                  class="px-4 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500 hover:text-white text-red-300 text-xs sm:text-sm font-bold border border-red-500/30 transition">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- KPIs Personales del Embajador -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Bandejas Propias Vendidas</span>
+            <span class="text-lg">📦</span>
+          </div>
+          <p id="portal-kpi-own-trays" class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-2">0</p>
+          <p id="portal-kpi-own-breakdown" class="text-xs text-qh-brownLight font-semibold mt-1">
+            0 Café • 0 Blanco (0 en revisión)
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Comisión Directa Ganada</span>
+            <span class="text-lg">💵</span>
+          </div>
+          <p id="portal-kpi-own-commission" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
+          <p class="text-xs text-slate-300 font-semibold mt-1">
+            $2.000 por cada bandeja aprobada
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Bonos por Mis Invitados</span>
+            <span class="text-lg">🏆</span>
+          </div>
+          <p id="portal-kpi-guest-bonuses" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-2">$0</p>
+          <p id="portal-kpi-guests-summary" class="text-xs text-amber-300 font-semibold mt-1">
+            0 invitados • 0 bandejas de red
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-gradient-to-br from-qh-navy to-slate-900 p-6 border-2 border-emerald-400/50 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-emerald-300 uppercase tracking-wider">
+            <span>Total Pendiente a Cobrar</span>
+            <span class="text-lg">💸</span>
+          </div>
+          <p id="portal-kpi-total-pending" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
+          <p id="portal-kpi-paid-history" class="text-xs text-slate-300 font-semibold mt-1">
+            Ya pagado histórico: $0
+          </p>
+        </div>
+      </div>
+
+      <!-- Grid Principal: Cargar Nuevo Pedido + Progreso de Ventas de Mis Invitados -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Columna Izquierda (7 cols): Formulario "Cargar Nuevo Pedido / Despacho" -->
+        <div class="lg:col-span-7 rounded-3xl bg-qh-navy p-6 sm:p-8 border-2 border-emerald-500/40 shadow-2xl space-y-6">
+          <div class="border-b border-white/10 pb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🚀 Carga Directa de Venta y Despacho</span>
+              <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
+                Cargar Nuevo Pedido / Despacho
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                Ingresa los datos de tu cliente. El pedido se atribuye automáticamente a tu cuenta y se envía directo a la lista de despacho de Juanjo y Mati.
+              </p>
+            </div>
+          </div>
+
+          <form id="portal-load-order-form" onsubmit="handleAmbassadorPortalCreateOrder(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="portal-order-client-name" class="block text-xs font-extrabold uppercase tracking-wider text-white mb-1.5">
+                  👤 Nombre del Cliente <strong class="text-emerald-400">*</strong>
+                </label>
+                <input id="portal-order-client-name" type="text" required placeholder="Ej: María Ignacia Soto"
+                       class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-sm font-semibold placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+              </div>
+
+              <div>
+                <label for="portal-order-client-phone" class="block text-xs font-extrabold uppercase tracking-wider text-white mb-1.5">
+                  📞 Teléfono / WhatsApp Cliente <span class="text-[10px] text-slate-400 font-normal">(Opcional)</span>
+                </label>
+                <input id="portal-order-client-phone" type="text" placeholder="Ej: +56 9 8765 4321"
+                       class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-sm font-semibold placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+              </div>
+            </div>
+
+            <div>
+              <label for="portal-order-client-address" class="block text-xs font-extrabold uppercase tracking-wider text-white mb-1.5">
+                📍 Dirección Exacta de Entrega (Calle, Número, Depto, Comuna) <strong class="text-emerald-400">*</strong>
+              </label>
+              <input id="portal-order-client-address" type="text" required placeholder="Ej: Av. Providencia 2140, Depto 804, Providencia"
+                     class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-sm font-semibold placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="portal-order-modality" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Modalidad del Pedido
+                </label>
+                <select id="portal-order-modality" onchange="togglePortalWeeklyDay()"
+                        class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-bold focus:outline-none focus:border-emerald-400">
+                  <option value="Pedido Único">1️⃣ Pedido Único (Entrega 24/48 hrs)</option>
+                  <option value="Pedido Fijo Semanal">🔁 Pedido Fijo Semanal</option>
+                </select>
+              </div>
+
+              <div id="portal-order-day-wrapper" class="hidden">
+                <label for="portal-order-delivery-day" class="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1.5">
+                  📅 Día de Entrega Semanal
+                </label>
+                <select id="portal-order-delivery-day"
+                        class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-amber-400/40 text-white text-xs sm:text-sm font-bold focus:outline-none focus:border-amber-400">
+                  <option value="Lunes">Lunes</option>
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                </select>
+              </div>
+
+              <div id="portal-order-notes-wrapper" class="sm:col-span-1">
+                <label for="portal-order-notes" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
+                  📝 Notas de Entrega (Opcional)
+                </label>
+                <input id="portal-order-notes" type="text" placeholder="Ej: Dejar en conserjería / llamar al llegar"
+                       class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-400" />
+              </div>
+            </div>
+
+            <!-- Selección de Tipo y Cantidad de Bandejas -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-qh-navyDark border border-white/10 space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">
+                  🥚 Selecciona Tipo y Cantidad de Bandejas (30 unidades):
+                </span>
+                <span class="text-[11px] font-bold text-emerald-400">+$2.000 comisión c/bandeja</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Bandeja Campo -->
+                <div class="p-4 rounded-2xl bg-qh-navy border-2 border-qh-brown/50 flex flex-col justify-between gap-3">
+                  <div>
+                    <span class="px-2 py-0.5 rounded bg-qh-brown/25 text-qh-brownLight text-[10px] font-extrabold uppercase">Huevo de Campo (Café)</span>
+                    <h4 class="font-display font-extrabold text-base text-white mt-1">Bandeja 30 un. Campo</h4>
+                    <p class="font-display font-black text-xl text-amber-400">$11.500 <span class="text-xs font-normal text-slate-400">c/u</span></p>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span class="text-xs font-bold text-slate-300">Cantidad:</span>
+                    <div class="inline-flex items-center gap-2">
+                      <button type="button" onclick="adjustPortalTrayQty('campo', -1)"
+                              class="w-8 h-8 rounded-lg bg-white/10 hover:bg-qh-brown text-white font-extrabold text-base flex items-center justify-center transition">−</button>
+                      <input id="portal-order-qty-campo" type="number" min="0" max="100" value="1" oninput="updatePortalOrderPreview()"
+                             class="w-12 text-center py-1 rounded-lg bg-qh-navyDark border border-white/15 font-display font-extrabold text-sm text-white" />
+                      <button type="button" onclick="adjustPortalTrayQty('campo', 1)"
+                              class="w-8 h-8 rounded-lg bg-white/10 hover:bg-qh-brown text-white font-extrabold text-base flex items-center justify-center transition">+</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bandeja Blanco -->
+                <div class="p-4 rounded-2xl bg-qh-navy border-2 border-slate-500/40 flex flex-col justify-between gap-3">
+                  <div>
+                    <span class="px-2 py-0.5 rounded bg-white/15 text-white text-[10px] font-extrabold uppercase">Blanco Seleccionado</span>
+                    <h4 class="font-display font-extrabold text-base text-white mt-1">Bandeja 30 un. Blanco</h4>
+                    <p class="font-display font-black text-xl text-amber-400">$9.000 <span class="text-xs font-normal text-slate-400">c/u</span></p>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span class="text-xs font-bold text-slate-300">Cantidad:</span>
+                    <div class="inline-flex items-center gap-2">
+                      <button type="button" onclick="adjustPortalTrayQty('blanco', -1)"
+                              class="w-8 h-8 rounded-lg bg-white/10 hover:bg-qh-brown text-white font-extrabold text-base flex items-center justify-center transition">−</button>
+                      <input id="portal-order-qty-blanco" type="number" min="0" max="100" value="0" oninput="updatePortalOrderPreview()"
+                             class="w-12 text-center py-1 rounded-lg bg-qh-navyDark border border-white/15 font-display font-extrabold text-sm text-white" />
+                      <button type="button" onclick="adjustPortalTrayQty('blanco', 1)"
+                              class="w-8 h-8 rounded-lg bg-white/10 hover:bg-qh-brown text-white font-extrabold text-base flex items-center justify-center transition">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen en vivo del pedido a cargar -->
+            <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-300 block">Atribución Automática a tu Cuenta</span>
+                <p id="portal-order-preview-trays" class="text-xs sm:text-sm font-bold text-white mt-0.5">
+                  1 bandeja (30 huevos) • Tu comisión: +$2.000
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-slate-300 block">Total a cobrar al cliente:</span>
+                <span id="portal-order-preview-total" class="font-display font-extrabold text-2xl sm:text-3xl text-amber-400">$11.500</span>
+              </div>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-base sm:text-lg shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition">
+              <span>🚀 Cargar Pedido y Enviar a Despacho</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Columna Derecha (5 cols): Mis Invitados y Progreso de Bono de Producción -->
+        <div class="lg:col-span-5 rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
+          <div class="border-b border-white/10 pb-4">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">📈 Red de Invitados ("Mis Cargas")</span>
+            <h3 class="font-display font-extrabold text-2xl text-white mt-0.5">
+              Producción de Invitados y Bonos
+            </h3>
+            <p class="text-xs text-slate-300 mt-1">
+              Suma grupal de bandejas vendidas por las personas que invitaste al negocio (en pedidos pagados/aprobados):
+            </p>
+          </div>
+
+          <!-- Reglas de Bono -->
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-2xl bg-qh-brown/15 border border-qh-brown/40">
+              <span class="font-extrabold text-qh-brownLight block">🥚 Bono Huevo Campo</span>
+              <strong class="font-display text-base text-white">+$10.000</strong>
+              <span class="text-[11px] text-slate-300 block">Cada 10 bandejas Café</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-white/5 border border-white/15">
+              <span class="font-extrabold text-amber-300 block">🥚 Bono Huevo Blanco</span>
+              <strong class="font-display text-base text-white">+$8.000</strong>
+              <span class="text-[11px] text-slate-300 block">Cada 10 bandejas Blanco</span>
+            </div>
+          </div>
+
+          <!-- Barras de Progreso hacia los Bonos -->
+          <div class="space-y-4 p-4 rounded-2xl bg-qh-navyDark border border-white/10">
+            <!-- Barra Café -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span id="portal-progress-campo-title" class="font-bold text-qh-brownLight">
+                  Bandejas Café de tus invitados: 0/10 para bono de $10.000
+                </span>
+                <span id="portal-progress-campo-pct" class="font-extrabold text-amber-400">0/10</span>
+              </div>
+              <div class="w-full h-3.5 rounded-full bg-white/10 overflow-hidden p-0.5">
+                <div id="portal-progress-campo-bar" class="h-full rounded-full bg-gradient-to-r from-qh-brown to-amber-400 transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <p id="portal-progress-campo-note" class="text-[11px] text-slate-400">
+                Total acumulado invitados: 0 bandejas Café • 0 bonos ganados ($0)
+              </p>
+            </div>
+
+            <!-- Barra Blanco -->
+            <div class="space-y-1.5 pt-3 border-t border-white/10">
+              <div class="flex items-center justify-between text-xs">
+                <span id="portal-progress-blanco-title" class="font-bold text-slate-200">
+                  Bandejas Blanco de tus invitados: 0/10 para bono de $8.000
+                </span>
+                <span id="portal-progress-blanco-pct" class="font-extrabold text-emerald-400">0/10</span>
+              </div>
+              <div class="w-full h-3.5 rounded-full bg-white/10 overflow-hidden p-0.5">
+                <div id="portal-progress-blanco-bar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <p id="portal-progress-blanco-note" class="text-[11px] text-slate-400">
+                Total acumulado invitados: 0 bandejas Blanco • 0 bonos ganados ($0)
+              </p>
+            </div>
+          </div>
+
+          <!-- Lista de Personas Invitadas por Mí -->
+          <div class="space-y-2.5">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300 block">
+              👥 Mi Red de Invitados Activos:
+            </span>
+            <div id="portal-guests-list-container" class="space-y-2 max-h-64 overflow-y-auto">
+              <!-- Renderizado por app.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tabla de Todos los Pedidos del Embajador (Cargados en su perfil + Web con su código) -->
+      <div class="rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">📋 Mis Ventas y Despachos</span>
+            <h3 class="font-display font-extrabold text-2xl text-white mt-0.5">
+              Mis Pedidos Cargados y Ventas con Mi Código
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Seguimiento en vivo del estado de cada pedido (Pendiente de Pago, Pagado/Aprobado o Entregado).
+            </p>
+          </div>
+          <span id="portal-orders-count-badge" class="px-3.5 py-1.5 rounded-xl bg-white/10 text-amber-300 text-xs font-extrabold">
+            0 pedidos registrados
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4">ID / Fecha</th>
+                <th class="py-3 px-4">Cliente &amp; Entrega</th>
+                <th class="py-3 px-4">Origen</th>
+                <th class="py-3 px-4">Bandejas</th>
+                <th class="py-3 px-4">Total Pedido</th>
+                <th class="py-3 px-4">Mi Comisión</th>
+                <th class="py-3 px-4">Estado del Pedido</th>
+              </tr>
+            </thead>
+            <tbody id="portal-orders-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+              <!-- Renderizado por app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VISTA DEL DASHBOARD ADMINISTRATIVO (SOCIOS FUNDADORES Y ENCARGADA DE REDES)
        ======================================================================== -->
   <section id="admin-dashboard-view" class="hidden min-h-screen pt-24 pb-20 bg-qh-navyDark text-qh-bone">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -1028,21 +1420,25 @@
               <span id="admin-session-badge" class="text-xs font-bold text-qh-brownLight">Sesión: Juanjo</span>
               <span id="cloud-last-sync-text" class="text-[11px] text-slate-400">Sincronizado en vivo</span>
             </div>
-            <h1 class="font-display font-extrabold text-2xl sm:text-4xl text-white mt-1">
+            <h1 id="admin-dashboard-main-title" class="font-display font-extrabold text-2xl sm:text-4xl text-white mt-1">
               Centro de Control • QUÉ HUEVONES
             </h1>
-            <p class="text-xs sm:text-sm text-slate-400">
-              Persistencia permanente en la nube y sincronización instantánea entre Juanjo y Morensex (Mati). Cero uso de almacenamiento local.
+            <p id="admin-dashboard-main-subtitle" class="text-xs sm:text-sm text-slate-400">
+              Persistencia permanente en la nube y sincronización instantánea en tiempo real.
             </p>
           </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="admin-open-my-portal-btn" onclick="openMyAmbassadorPortalFromAdmin()"
+                  class="hidden px-3.5 py-2.5 rounded-xl bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-qh-navyDark text-xs font-extrabold border border-amber-400/50 transition">
+            🥚 Mi Portal de Ventas
+          </button>
           <button type="button" onclick="forceCloudRefresh()"
                   class="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-500/30 transition">
             🔄 Sincronizar Nube
           </button>
-          <button type="button" onclick="openSupabaseConfigModal()"
+          <button type="button" id="admin-supabase-config-btn" onclick="openSupabaseConfigModal()"
                   class="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-amber-300 text-xs font-bold border border-white/15 transition">
             ☁️ Conexión Supabase
           </button>
@@ -1073,7 +1469,11 @@
         </button>
         <button type="button" id="admin-tab-embajadores" onclick="switchAdminTab('embajadores')"
                 class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
-          🤝 Embajadores y Comisiones
+          🤝 Embajadores, Invitados y Bonos
+        </button>
+        <button type="button" id="admin-tab-usuarios" onclick="switchAdminTab('usuarios')"
+                class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
+          👥 Crear / Gestionar Usuarios
         </button>
         <button type="button" id="admin-tab-analitica" onclick="switchAdminTab('analitica')"
                 class="admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition">
@@ -1081,8 +1481,8 @@
         </button>
       </div>
 
-      <!-- 1. KPIs PRINCIPALES EN CERO ABSOLUTO HASTA RECIBIR DATOS REALES -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- 1. KPIs PRINCIPALES (PARA SOCIOS FUNDADORES) -->
+      <div id="admin-founder-kpis-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
             <span>Ventas Aprobadas / Totales</span>
@@ -1118,12 +1518,59 @@
 
         <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
           <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Comisiones Embajadores</span>
+            <span>Comisiones y Bonos</span>
             <span class="text-lg">🤝</span>
           </div>
           <p id="kpi-ambassadors-commission" class="font-display font-extrabold text-3xl sm:text-4xl text-qh-brownLight mt-2">$0</p>
           <p id="kpi-ambassadors-count" class="text-xs text-slate-300 mt-1 truncate">
             0 embajadores activos • 0 con código
+          </p>
+        </div>
+      </div>
+
+      <!-- KPIs EXCLUSIVOS PARA ENCARGADA DE EMBAJADORES Y REDES (EMILIA) -->
+      <div id="admin-encargada-kpis-grid" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Embajadores Activos</span>
+            <span class="text-lg">🤝</span>
+          </div>
+          <p id="enc-kpi-ambassadors-total" class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-2">0</p>
+          <p id="enc-kpi-ambassadors-sub" class="text-xs text-emerald-400 font-semibold mt-1">
+            0 reclutadores con invitados
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Bandejas Red Embajadores</span>
+            <span class="text-lg">📦</span>
+          </div>
+          <p id="enc-kpi-total-trays" class="font-display font-extrabold text-3xl sm:text-4xl text-amber-400 mt-2">0</p>
+          <p id="enc-kpi-trays-breakdown" class="text-xs text-qh-brownLight font-semibold mt-1">
+            0 Campo Café • 0 Blanco
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Bonos Producción Invitados</span>
+            <span class="text-lg">🏆</span>
+          </div>
+          <p id="enc-kpi-total-bonuses" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
+          <p id="enc-kpi-bonuses-sub" class="text-xs text-slate-300 mt-1 truncate">
+            $10.000 Café (10u) • $8.000 Blanco (10u)
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-qh-navy p-6 border border-white/10 shadow-xl">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span>Total Pendiente a Pagar</span>
+            <span class="text-lg">💸</span>
+          </div>
+          <p id="enc-kpi-pending-payouts" class="font-display font-extrabold text-3xl sm:text-4xl text-qh-brownLight mt-2">$0</p>
+          <p id="enc-kpi-paid-sub" class="text-xs text-slate-300 mt-1 truncate">
+            Saldado histórico: $0
           </p>
         </div>
       </div>
@@ -1484,87 +1931,170 @@
       </div>
 
       <!-- ====================================================================
-           MÓDULO C: 🤝 SISTEMA DE EMBAJADORES Y COMISIONES
+           MÓDULO C: 🤝 SISTEMA DE EMBAJADORES, INVITADOS Y BONOS DE PRODUCCIÓN
            ==================================================================== -->
-      <div id="admin-section-embajadores" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
+      <div id="admin-section-embajadores" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🤝 Programa de Referidos</span>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🤝 Planta de Control de Embajadores y Redes</span>
             <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
-              Embajadores y Comisiones
+              Embajadores, Cargas / Invitados, Comisiones y Bonos
             </h2>
             <p class="text-xs sm:text-sm text-slate-400 mt-1">
-              Genera códigos únicos para cada embajador y calcula automáticamente cuánto se le debe pagar según los pedidos aprobados con su código.
+              Gestiona embajadores, asigna quién invitó a quién, supervisa el progreso de bonos por producción de invitados y liquida comisiones y bonos.
             </p>
           </div>
 
-          <!-- Regla Proporcional Oficial de Comisiones -->
+          <!-- Reglas Oficiales de Comisiones y Bonos -->
           <div class="flex flex-wrap items-center gap-2 bg-qh-navyDark p-3 rounded-2xl border border-white/10 text-xs">
-            <span class="font-extrabold text-amber-400 uppercase px-2">Regla de Comisión:</span>
-            <span class="px-3 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-extrabold text-xs">📦 Bandeja 30 un: <strong class="text-emerald-400">$2.000</strong> de comisión por unidad</span>
+            <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs">
+              📦 Venta Propia: <strong class="text-white">$2.000</strong> / bandeja
+            </span>
+            <span class="px-3 py-1.5 rounded-xl bg-qh-brown/25 border border-qh-brown/50 text-qh-brownLight font-extrabold text-xs">
+              🏆 Bono Invitados Café (10u): <strong class="text-amber-300">+$10.000</strong>
+            </span>
+            <span class="px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-slate-200 font-extrabold text-xs">
+              🏆 Bono Invitados Blanco (10u): <strong class="text-amber-300">+$8.000</strong>
+            </span>
           </div>
         </div>
 
-        <!-- Formulario para Crear Embajador y Generar Código Único -->
-        <div class="p-5 rounded-2xl bg-qh-navyDark border border-white/10 space-y-3">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight block">
-            ➕ Registrar Nuevo Embajador y Asignar Código Único
-          </span>
-          <form id="admin-ambassador-form" onsubmit="handleCreateAmbassador(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-            <div class="sm:col-span-4">
-              <label for="ambassador-name-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Nombre del Embajador</label>
-              <input id="ambassador-name-input" type="text" required placeholder="Ej: Cata Gómez / Seba Fit"
+        <!-- Formulario para Crear Embajador, Asignar Reclutador y Crear Acceso -->
+        <div class="p-5 sm:p-6 rounded-2xl bg-qh-navyDark border border-white/10 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-qh-brownLight block">
+              ➕ Registrar Nuevo Embajador, Código Único y Asignar Reclutador ("Invitado de")
+            </span>
+            <span class="text-[11px] text-slate-400">
+              💡 También crea automáticamente su cuenta para el Portal Personal del Embajador
+            </span>
+          </div>
+
+          <form id="admin-ambassador-form" onsubmit="handleCreateAmbassador(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+            <div class="lg:col-span-3">
+              <label for="ambassador-name-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Nombre Completo *</label>
+              <input id="ambassador-name-input" type="text" required placeholder="Ej: Cata Gómez"
                      oninput="suggestAmbassadorCode()"
                      class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
             </div>
-            <div class="sm:col-span-4">
-              <label for="ambassador-code-create" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Código Único Asignado</label>
-              <div class="flex gap-2">
-                <input id="ambassador-code-create" type="text" required placeholder="Ej: CATAHUEVOS"
-                       class="flex-1 px-3.5 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wider placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+
+            <div class="lg:col-span-3">
+              <label for="ambassador-code-create" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Código Único Asignado *</label>
+              <div class="flex gap-1.5">
+                <input id="ambassador-code-create" type="text" required placeholder="Ej: CATA10"
+                       class="flex-1 px-3 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wider placeholder-slate-500 focus:outline-none focus:border-amber-400" />
                 <button type="button" onclick="generateRandomAmbassadorCode()"
-                        class="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white whitespace-nowrap transition" title="Autogenerar código único">
-                  🎲 Generar
+                        class="px-2.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white whitespace-nowrap transition" title="Autogenerar código único">
+                  🎲
                 </button>
               </div>
             </div>
-            <div class="sm:col-span-4">
+
+            <div class="lg:col-span-3">
+              <label for="ambassador-invited-by-select" class="block text-[11px] font-bold uppercase text-amber-300 mb-1">
+                🤝 Reclutado por / Invitado de
+              </label>
+              <select id="ambassador-invited-by-select"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400">
+                <option value="Directo">Llegué directo / Nadie</option>
+              </select>
+            </div>
+
+            <div class="lg:col-span-3">
+              <label for="ambassador-phone-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Teléfono WhatsApp</label>
+              <input id="ambassador-phone-input" type="text" placeholder="Ej: +56 9 1234 5678"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+            </div>
+
+            <div class="lg:col-span-4">
+              <label for="ambassador-username-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Usuario para su Portal (Opcional)</label>
+              <input id="ambassador-username-input" type="text" placeholder="Ej: cata (se autogenera si lo dejas vacío)"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+            </div>
+
+            <div class="lg:col-span-4">
+              <label for="ambassador-password-input" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Contraseña para su Portal</label>
+              <input id="ambassador-password-input" type="text" placeholder="Por defecto: 12345" value="12345"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-qh-brown" />
+            </div>
+
+            <div class="lg:col-span-4">
               <button type="submit"
                       class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
-                🤝 Guardar Embajador y Código
+                🤝 Guardar Embajador y Crear Cuenta
               </button>
             </div>
           </form>
         </div>
 
-        <!-- Tabla de Embajadores y Saldos de Comisiones -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                <th class="py-3 px-4">Embajador</th>
-                <th class="py-3 px-4">Código Único</th>
-                <th class="py-3 px-4">Pedidos Aprobados</th>
-                <th class="py-3 px-4">Bandejas Vendidas</th>
-                <th class="py-3 px-4">Total Ganado</th>
-                <th class="py-3 px-4">Pagado</th>
-                <th class="py-3 px-4">Saldo Pendiente a Pagar</th>
-                <th class="py-3 px-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="admin-ambassadors-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
-              <!-- Renderizado por app.js -->
-            </tbody>
-          </table>
+        <!-- ==================================================================
+             SECCIÓN 5: 📈 PRODUCCIÓN DE INVITADOS Y BONOS ($10.000 CAFÉ / $8.000 BLANCO)
+             ================================================================== -->
+        <div class="p-5 sm:p-6 rounded-3xl bg-qh-navyDark/90 border-2 border-amber-400/30 space-y-5">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">📈 Seguimiento de Red y Metas de Bloques de 10 Bandejas</span>
+              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white mt-0.5">
+                Producción de Invitados y Bonos Automáticos
+              </h3>
+              <p class="text-xs text-slate-300 mt-1">
+                Suma automática de todas las bandejas vendidas (en pedidos pagados/aprobados, cargados en portal o con código web) por la red de invitados de cada embajador reclutador.
+                <span class="text-amber-300 font-semibold">(Regla: Juanjo y Mati no generan bonos para sí mismos por ser socios fundadores).</span>
+              </p>
+            </div>
+            <span id="guest-bonuses-total-summary-badge" class="px-3.5 py-2 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display font-extrabold text-xs whitespace-nowrap">
+              Bonos de Producción Activos: $0
+            </span>
+          </div>
+
+          <div id="admin-guest-production-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <!-- Tarjetas de reclutadores con barras de progreso inyectadas por app.js -->
+          </div>
         </div>
 
-        <!-- Historial de Transacciones y Pagos de Comisiones a Embajadores -->
+        <!-- ==================================================================
+             SECCIÓN 6: 💸 CONTROL DE PAGOS DE COMISIONES Y BONOS
+             ================================================================== -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">💸 Liquidación Integral</span>
+              <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white">
+                Control de Pagos de Comisiones y Bonos por Embajador
+              </h3>
+              <p class="text-xs text-slate-400">
+                Detalle de quién invitó a cada embajador, sus ventas propias ($2.000/bandeja), ventas de sus invitados, bonos ganados ($10.000 Café / $8.000 Blanco) y saldo total a pagar.
+              </p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <th class="py-3 px-4">Embajador &amp; Código</th>
+                  <th class="py-3 px-4">¿Quién lo invitó? (A cargo de)</th>
+                  <th class="py-3 px-4">Bandejas Propias &amp; Comisión Directa</th>
+                  <th class="py-3 px-4">Producción de Invitados &amp; Bonos</th>
+                  <th class="py-3 px-4">Total Ganado / Pagado</th>
+                  <th class="py-3 px-4">Total a Pagar (Pendiente)</th>
+                  <th class="py-3 px-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="admin-ambassadors-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+                <!-- Renderizado por app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Historial de Transacciones y Pagos de Comisiones y Bonos a Embajadores -->
         <div class="pt-6 border-t border-white/10 space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">📜 Historial de Pagos</span>
-              <h3 class="font-display font-extrabold text-xl text-white">Transacciones a Embajadores</h3>
-              <p class="text-xs text-slate-400">Comisiones saldadas y descontadas de la Caja de la Empresa.</p>
+              <h3 class="font-display font-extrabold text-xl text-white">Transacciones Saldadas a Embajadores</h3>
+              <p class="text-xs text-slate-400">Comisiones y bonos de producción saldados y descontados de la Caja de la Empresa.</p>
             </div>
             <span id="ambassador-payouts-total-badge" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
               Total Saldado: $0
@@ -1588,6 +2118,137 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MÓDULO E: 👥 GESTIÓN DINÁMICA DE USUARIOS Y PERMISOS (ROLES INTERNOS)
+           ==================================================================== -->
+      <div id="admin-section-usuarios" class="admin-module-section rounded-3xl bg-qh-navy p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-sky-400">👥 Control de Accesos y Roles Internos</span>
+            <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-0.5">
+              Crear y Gestionar Usuarios del Sistema
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+              Crea usuarios manualmente, edita credenciales o asigna permisos según su rol en QUÉ HUEVONES.
+            </p>
+          </div>
+          <span id="admin-users-count-badge" class="px-3.5 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-extrabold self-start lg:self-center">
+            0 usuarios registrados
+          </span>
+        </div>
+
+        <!-- Tarjetas informativas de los 3 Roles -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-2xl bg-qh-navyDark border border-amber-400/40 space-y-1">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-extrabold text-[10px] uppercase">Rol 1 • Acceso Total</span>
+            <h4 class="font-display font-extrabold text-base text-white pt-1">👑 Socio Fundador (Juanjo y Mati)</h4>
+            <p class="text-slate-300 leading-relaxed">
+              Ven finanzas de la empresa, saldos entre socios, todos los pedidos y direcciones de despacho cargadas por embajadores o web, control de embajadores y usuarios.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-qh-navyDark border border-emerald-400/40 space-y-1">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-extrabold text-[10px] uppercase">Rol 2 • Vista Especial</span>
+            <h4 class="font-display font-extrabold text-base text-white pt-1">🌟 Encargada de Embajadores y Redes (Emilia)</h4>
+            <p class="text-slate-300 leading-relaxed">
+              Ve exclusivamente la planta de control de embajadores, estadísticas de quién vendió cuánto, comisiones, bonos de producción y creación de códigos/usuarios. No ve finanzas de socios ni direcciones de despacho.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-qh-navyDark border border-sky-400/40 space-y-1">
+            <span class="px-2.5 py-0.5 rounded-full bg-sky-400/20 text-sky-300 font-extrabold text-[10px] uppercase">Rol 3 • Portal Personal</span>
+            <h4 class="font-display font-extrabold text-base text-white pt-1">🥚 Embajador / Vendedor</h4>
+            <p class="text-slate-300 leading-relaxed">
+              Acceso exclusivo a su Portal Personal para cargar sus pedidos/despachos, ver sus ventas contabilizadas y revisar el avance de sus invitados.
+            </p>
+          </div>
+        </div>
+
+        <!-- Formulario para Crear Nuevo Usuario -->
+        <div class="p-5 sm:p-6 rounded-2xl bg-qh-navyDark border border-white/10 space-y-4">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-sky-300 block">
+            ➕ Crear Nuevo Usuario Manualmente
+          </span>
+
+          <form id="admin-create-user-form" onsubmit="handleAdminCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+            <div class="lg:col-span-3">
+              <label for="new-user-name" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Nombre Completo *</label>
+              <input id="new-user-name" type="text" required placeholder="Ej: Sofía Rojas"
+                     oninput="suggestNewUserFields()"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+            </div>
+
+            <div class="lg:col-span-2">
+              <label for="new-user-username" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Usuario (Login) *</label>
+              <input id="new-user-username" type="text" required placeholder="Ej: sofia"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+            </div>
+
+            <div class="lg:col-span-2">
+              <label for="new-user-password" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Contraseña *</label>
+              <input id="new-user-password" type="text" required placeholder="Ej: 12345" value="12345"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-amber-300 placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+            </div>
+
+            <div class="lg:col-span-5">
+              <label for="new-user-role" class="block text-[11px] font-bold uppercase text-sky-300 mb-1">Rol y Nivel de Acceso *</label>
+              <select id="new-user-role" required
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-sky-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400">
+                <option value="embajador">🥚 Embajador / Vendedor (Portal Personal de Pedidos)</option>
+                <option value="encargada">🌟 Encargada de Embajadores y Redes (Vista Especial)</option>
+                <option value="socio" id="new-user-role-socio-opt">👑 Socio Fundador (Acceso Total)</option>
+              </select>
+            </div>
+
+            <div class="lg:col-span-3">
+              <label for="new-user-code" class="block text-[11px] font-bold uppercase text-amber-300 mb-1">Código de Embajador</label>
+              <input id="new-user-code" type="text" placeholder="Ej: SOFIA10"
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-amber-400/40 text-xs sm:text-sm font-extrabold text-amber-300 uppercase placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+            </div>
+
+            <div class="lg:col-span-3">
+              <label for="new-user-invited-by" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">¿Quién lo invitó? (Reclutador)</label>
+              <select id="new-user-invited-by"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400">
+                <option value="Directo">Llegué directo / Nadie</option>
+              </select>
+            </div>
+
+            <div class="lg:col-span-3">
+              <label for="new-user-phone" class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Teléfono WhatsApp</label>
+              <input id="new-user-phone" type="text" placeholder="+56 9..."
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navy border border-white/15 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+            </div>
+
+            <div class="lg:col-span-3">
+              <button type="submit"
+                      class="w-full py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+                👤 Crear Usuario en la Nube
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabla de Usuarios del Sistema -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4">Nombre &amp; Contacto</th>
+                <th class="py-3 px-4">Usuario (Login)</th>
+                <th class="py-3 px-4">Contraseña</th>
+                <th class="py-3 px-4">Rol Asignado</th>
+                <th class="py-3 px-4">Código &amp; Reclutador</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody" class="divide-y divide-white/10 text-xs sm:text-sm">
+              <!-- Renderizado por app.js -->
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1889,7 +2550,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL DE LOGIN ADMINISTRATIVO
+       MODAL DE LOGIN (USUARIOS, EMBAJADORES, ENCARGADA Y SOCIOS)
        ======================================================================== -->
   <div id="admin-login-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-2 border-qh-brown relative animate-yolk-pop">
@@ -1900,7 +2561,7 @@
       <div class="flex items-center gap-3 mb-5">
         <span class="w-12 h-12 rounded-2xl bg-qh-navy text-qh-brownLight flex items-center justify-center text-2xl shadow">🔐</span>
         <div>
-          <span class="text-[11px] font-extrabold uppercase tracking-wider text-qh-brown">Acceso de Administración</span>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-qh-brown">Acceso de Usuarios y Administración</span>
           <h3 class="font-display font-extrabold text-2xl text-qh-navy">Iniciar Sesión</h3>
         </div>
       </div>
@@ -1928,7 +2589,159 @@
 
         <button type="submit"
                 class="w-full py-3.5 px-6 rounded-xl bg-qh-navy hover:bg-qh-navyLight text-white font-display font-extrabold text-sm shadow-lg transition">
-          Iniciar Sesión en Dashboard →
+          Entrar a mi Panel / Portal →
+        </button>
+
+        <div class="pt-3 border-t border-slate-200 text-center">
+          <button type="button" onclick="closeAdminLoginModal(); openAmbassadorAuthModal('register');"
+                  class="text-xs font-extrabold text-qh-brown hover:underline">
+            🥚 ¿Quieres vender con nosotros? Regístrate como Embajador aquí →
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL PÚBLICO: "🥚 QUIERO SER EMBAJADOR" (REGISTRO Y ACCESO DIRECTO)
+       ======================================================================== -->
+  <div id="ambassador-auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border-2 border-amber-400/60 relative space-y-5 my-8 animate-yolk-pop">
+      <button type="button" onclick="closeAmbassadorAuthModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3.5">
+        <span class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-qh-brown text-qh-navyDark flex items-center justify-center text-3xl shadow-lg shrink-0">
+          🥚
+        </span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">Programa Oficial de Embajadores • QUÉ HUEVONES</span>
+          <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white">Quiero ser Embajador</h3>
+          <p class="text-xs text-slate-300 mt-0.5">
+            Gana <strong>$2.000 por cada bandeja</strong> vendida y <strong>bonos de $10.000 / $8.000</strong> por las ventas de tus invitados.
+          </p>
+        </div>
+      </div>
+
+      <!-- Banner si ya tiene sesión activa -->
+      <div id="amb-modal-active-session-banner" class="hidden p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 items-center justify-between gap-3">
+        <div class="text-xs">
+          <span class="text-emerald-300 font-extrabold block">🟢 Tienes una sesión activa: <span id="amb-modal-active-name">-</span></span>
+          <span class="text-slate-300 text-[11px]">Puedes ir directo a tu portal o registrar otro embajador abajo.</span>
+        </div>
+        <button type="button" onclick="goToActiveUserPortal()"
+                class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs whitespace-nowrap transition">
+          🚀 Ir a mi Portal
+        </button>
+      </div>
+
+      <!-- Pestañas: Crear Cuenta vs Iniciar Sesión -->
+      <div class="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-qh-navyDark border border-white/10">
+        <button type="button" id="amb-auth-tab-register" onclick="switchAmbassadorAuthTab('register')"
+                class="py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition">
+          🚀 Crear mi Cuenta
+        </button>
+        <button type="button" id="amb-auth-tab-login" onclick="switchAmbassadorAuthTab('login')"
+                class="py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:text-white transition">
+          🔑 Ya tengo Cuenta (Entrar)
+        </button>
+      </div>
+
+      <!-- FORMULARIO 1: REGISTRO PÚBLICO DE EMBAJADOR -->
+      <form id="public-ambassador-register-form" onsubmit="handlePublicAmbassadorRegister(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="pub-amb-name" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+              👤 Nombre Completo <strong class="text-amber-400">*</strong>
+            </label>
+            <input id="pub-amb-name" type="text" required placeholder="Ej: Valentina Muñoz"
+                   oninput="suggestPublicAmbassadorFields()"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-semibold placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+          </div>
+
+          <div>
+            <label for="pub-amb-phone" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+              📞 Teléfono (WhatsApp) <strong class="text-amber-400">*</strong>
+            </label>
+            <input id="pub-amb-phone" type="text" required placeholder="Ej: +56 9 8765 4321"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-semibold placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="pub-amb-username" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+              🔑 Nombre de Usuario <strong class="text-amber-400">*</strong>
+            </label>
+            <input id="pub-amb-username" type="text" required autocomplete="username" placeholder="Ej: valentina"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-bold placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+          </div>
+
+          <div>
+            <label for="pub-amb-password" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+              🔒 Contraseña <strong class="text-amber-400">*</strong>
+            </label>
+            <input id="pub-amb-password" type="password" required autocomplete="new-password" placeholder="Crea tu contraseña"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-white text-xs sm:text-sm font-bold placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="pub-amb-code" class="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+              🏷️ Código de Embajador Deseado <strong class="text-amber-400">*</strong>
+            </label>
+            <input id="pub-amb-code" type="text" required placeholder="Ej: VALE10"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-amber-400/50 text-amber-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+            <span class="text-[10px] text-slate-400 block mt-1">Sirve en tu portal y si un cliente compra directo en la web.</span>
+          </div>
+
+          <div>
+            <label for="pub-amb-invited-by" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-300 mb-1">
+              🤝 ¿Quién te invitó? <strong class="text-emerald-400">*</strong>
+            </label>
+            <select id="pub-amb-invited-by" required
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-emerald-400/50 text-white text-xs sm:text-sm font-bold focus:outline-none focus:border-emerald-400">
+              <option value="Directo">Llegué directo / Nadie</option>
+            </select>
+            <span class="text-[10px] text-slate-400 block mt-1">Se te asignará como invitado de quien te reclutó.</span>
+          </div>
+        </div>
+
+        <p id="pub-amb-register-error" class="hidden text-xs font-bold text-rose-300 bg-rose-500/20 border border-rose-500/40 rounded-xl p-3"></p>
+
+        <button type="submit"
+                class="w-full py-4 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-xl transition flex items-center justify-center gap-2">
+          <span>🥚 Crear mi Cuenta y Entrar a mi Portal de Embajador →</span>
+        </button>
+      </form>
+
+      <!-- FORMULARIO 2: LOGIN DIRECTO DE EMBAJADOR -->
+      <form id="public-ambassador-login-form" onsubmit="handlePublicAmbassadorLogin(event)" class="hidden space-y-4">
+        <div>
+          <label for="pub-login-username" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+            Usuario
+          </label>
+          <input id="pub-login-username" type="text" required autocomplete="username" placeholder="Ingresa tu usuario"
+                 class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-sm font-semibold focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <div>
+          <label for="pub-login-password" class="block text-xs font-extrabold uppercase tracking-wider text-slate-200 mb-1">
+            Contraseña
+          </label>
+          <input id="pub-login-password" type="password" required autocomplete="current-password" placeholder="••••••••"
+                 class="w-full px-4 py-3 rounded-xl bg-qh-navyDark border border-white/15 text-white text-sm font-semibold focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <p id="pub-amb-login-error" class="hidden text-xs font-bold text-rose-300 bg-rose-500/20 border border-rose-500/40 rounded-xl p-3">
+          Usuario o contraseña incorrectos.
+        </p>
+
+        <button type="submit"
+                class="w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-sm sm:text-base shadow-xl transition">
+          🔑 Entrar a mi Portal de Embajador →
         </button>
       </form>
     </div>
@@ -2236,6 +3049,197 @@
             💾 Guardar Cambios en la Nube
           </button>
           <button type="button" onclick="closeEditOrderModal()"
+                  class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE EDICIÓN DE EMBAJADOR Y RECLUTADOR ("INVITADO DE")
+       ======================================================================== -->
+  <div id="edit-ambassador-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border-2 border-amber-400/50 relative space-y-5 my-8">
+      <button type="button" onclick="closeEditAmbassadorModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl shadow">🤝</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">Gestión de Embajador</span>
+          <h3 class="font-display font-extrabold text-2xl text-white">Editar Embajador y Reclutador</h3>
+        </div>
+      </div>
+
+      <form id="edit-ambassador-form" onsubmit="handleSaveEditAmbassador(event)" class="space-y-4">
+        <input type="hidden" id="edit-amb-id" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-amb-name" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Nombre del Embajador *
+            </label>
+            <input id="edit-amb-name" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400" />
+          </div>
+
+          <div>
+            <label for="edit-amb-code" class="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+              Código Único *
+            </label>
+            <input id="edit-amb-code" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-amber-400/50 text-xs sm:text-sm font-extrabold text-amber-300 uppercase focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-amb-invited-by" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-300 mb-1">
+              🤝 Reclutado por / Invitado de
+            </label>
+            <select id="edit-amb-invited-by"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-emerald-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+              <option value="Directo">Llegué directo / Nadie</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="edit-amb-phone" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Teléfono WhatsApp
+            </label>
+            <input id="edit-amb-phone" type="text" placeholder="+56 9..."
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-qh-navyDark/80 border border-white/10">
+          <div>
+            <label for="edit-amb-username" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Usuario Portal
+            </label>
+            <input id="edit-amb-username" type="text"
+                   class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-white" />
+          </div>
+          <div>
+            <label for="edit-amb-password" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Contraseña Portal
+            </label>
+            <input id="edit-amb-password" type="text"
+                   class="w-full px-3 py-2 rounded-xl bg-qh-navy border border-white/15 text-xs font-bold text-amber-300" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit"
+                  class="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+            💾 Guardar Cambios en la Nube
+          </button>
+          <button type="button" onclick="closeEditAmbassadorModal()"
+                  class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DE EDICIÓN DE USUARIO DEL SISTEMA
+       ======================================================================== -->
+  <div id="edit-user-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-qh-navyDark/85 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border-2 border-sky-400/50 relative space-y-5 my-8">
+      <button type="button" onclick="closeEditUserModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-2xl bg-sky-400/20 border border-sky-400/40 text-sky-300 flex items-center justify-center text-2xl shadow">👤</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-400">Gestión de Accesos</span>
+          <h3 class="font-display font-extrabold text-2xl text-white">Editar Usuario y Rol</h3>
+        </div>
+      </div>
+
+      <form id="edit-user-form" onsubmit="handleSaveEditUser(event)" class="space-y-4">
+        <input type="hidden" id="edit-usr-id" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-usr-name" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Nombre Completo *
+            </label>
+            <input id="edit-usr-name" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400" />
+          </div>
+
+          <div>
+            <label for="edit-usr-phone" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Teléfono WhatsApp
+            </label>
+            <input id="edit-usr-phone" type="text"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-sky-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-usr-username" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Usuario (Login) *
+            </label>
+            <input id="edit-usr-username" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400" />
+          </div>
+
+          <div>
+            <label for="edit-usr-password" class="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+              Contraseña *
+            </label>
+            <input id="edit-usr-password" type="text" required
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-amber-400/40 text-xs sm:text-sm font-bold text-amber-300 focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div>
+          <label for="edit-usr-role" class="block text-xs font-extrabold uppercase tracking-wider text-sky-300 mb-1">
+            Rol en el Sistema *
+          </label>
+          <select id="edit-usr-role" required
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-sky-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400">
+            <option value="embajador">🥚 Embajador / Vendedor (Portal Personal)</option>
+            <option value="encargada">🌟 Encargada de Embajadores y Redes (Vista Especial)</option>
+            <option value="socio" id="edit-usr-role-socio-opt">👑 Socio Fundador (Acceso Total)</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-usr-code" class="block text-xs font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+              Código de Embajador
+            </label>
+            <input id="edit-usr-code" type="text"
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-extrabold text-amber-300 uppercase focus:outline-none focus:border-amber-400" />
+          </div>
+
+          <div>
+            <label for="edit-usr-invited-by" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Reclutado por / Invitado de
+            </label>
+            <select id="edit-usr-invited-by"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-sky-400">
+              <option value="Directo">Llegué directo / Nadie</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit"
+                  class="flex-1 py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg transition">
+            💾 Guardar Cambios del Usuario
+          </button>
+          <button type="button" onclick="closeEditUserModal()"
                   class="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs transition">
             Cancelar
           </button>

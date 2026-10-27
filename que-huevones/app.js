@@ -75,7 +75,8 @@ function cloudStateHasBusinessData(st) {
     st.finances.partnerMovements.length > 0 ||
     st.finances.supplierPayments.length > 0 ||
     (st.finances.debtSettlements && st.finances.debtSettlements.length > 0) ||
-    st.ambassadors.length > 0
+    st.ambassadors.length > 0 ||
+    (st.users && st.users.length > 0)
   );
 }
 const CLIENT_INSTANCE_ID = 'qh-node-' + Math.random().toString(36).slice(2, 10);
@@ -159,6 +160,11 @@ let currentAmbassadorCode = '';
 let activeFilter = 'all';
 let activeAdminTab = 'all';
 let currentAdminUser = null;
+let currentUserRole = null; // 'socio' | 'encargada' | 'embajador'
+let currentUserUsername = null;
+let currentUserCode = null;
+const USER_SESSION_OBJECT_KEY = 'qh_user_session_obj_v4';
+const PORTAL_VIEW_OPEN_KEY = 'qh_portal_view_open_v4';
 
 // Frases rotativas del Badge del 80% en el Hero
 const CUSTOMER_QUOTES = [
@@ -285,6 +291,7 @@ function getEmptyCloudState(resetTimestamp = 0) {
       debtSettlements: []
     },
     ambassadors: [],
+    users: [],
     analytics: getDefaultAnalytics(),
     deletedIds: [],
     resetAt: resetTimestamp,
@@ -319,9 +326,23 @@ function loadLocalCloudMirror() {
       } else {
         reconcileBusinessDataDefaults(CLOUD_STATE);
       }
-      const savedAdmin = window.localStorage.getItem(ADMIN_SESSION_KEY);
-      if (savedAdmin) {
-        currentAdminUser = savedAdmin;
+      const savedSessionObj = window.localStorage.getItem(USER_SESSION_OBJECT_KEY);
+      if (savedSessionObj) {
+        try {
+          const sess = JSON.parse(savedSessionObj);
+          currentAdminUser = sess.name || null;
+          currentUserRole = sess.role || null;
+          currentUserUsername = sess.username || null;
+          currentUserCode = sess.ambassadorCode || null;
+        } catch (err) {
+          // ignore
+        }
+      } else {
+        const savedAdmin = window.localStorage.getItem(ADMIN_SESSION_KEY);
+        if (savedAdmin) {
+          currentAdminUser = savedAdmin;
+          currentUserRole = 'socio';
+        }
       }
       const savedName = window.localStorage.getItem('qh_customer_name');
       if (savedName) customerName = savedName;
@@ -339,68 +360,224 @@ function loadLocalCloudMirror() {
  * Reconcilia y asegura los ajustes oficiales de negocio:
  * 1. Caso Emilia: Limpia pagos duplicados o erróneos anteriores de comisiones en la Caja
  *    y deja registrado en el historial UN ÚNICO pago real a Emilia por $6.000.
+ *    Además, registra de forma predeterminada a la usuaria Emilia con contraseña 12345
+ *    y rol "Encargada de Embajadores y Redes", junto a los socios fundadores Juanjo y Mati.
  * 2. Brecha entre socios: Aplica y asegura el abono directo de $2.300 a favor de Juanjo
  *    (Juanjo pagó a Mati), descontando -$2.300 de la deuda hacia Mati.
- * 3. Normaliza el estado de pedidos existentes al flujo de 3 estados.
+ * 3. Normaliza el estado de pedidos existentes al flujo de 3 estados y sincroniza usuarios <-> embajadores.
  */
 function reconcileBusinessDataDefaults(state) {
   if (!state || !state.finances) return;
+  if (!Array.isArray(state.ambassadors)) state.ambassadors = [];
+  if (!Array.isArray(state.users)) state.users = [];
+  const deletedSet = new Set(state.deletedIds || []);
 
-  // 1. Caso Emilia
+  // 1. Caso Emilia (Embajadora y Encargada de Embajadores y Redes)
   const emiliaCode = 'EMILIA';
-  const hasEmiliaAmb = (state.ambassadors || []).some(
+  let emiliaAmb = state.ambassadors.find(
     (a) => (a.code || '').toUpperCase() === emiliaCode || (a.name || '').toUpperCase() === emiliaCode
   );
-  if (!hasEmiliaAmb && !(state.deletedIds || []).includes('AMB-EMILIA')) {
-    state.ambassadors.push({
+  if (!emiliaAmb && !deletedSet.has('AMB-EMILIA')) {
+    emiliaAmb = {
       id: 'AMB-EMILIA',
       name: 'Emilia',
       code: emiliaCode,
+      phone: '',
+      username: 'emilia',
+      invitedBy: 'Directo',
+      createdAt: '26-10-2026',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    };
+    state.ambassadors.push(emiliaAmb);
+  } else if (emiliaAmb) {
+    if (!emiliaAmb.invitedBy) emiliaAmb.invitedBy = 'Directo';
+    if (!emiliaAmb.username) emiliaAmb.username = 'emilia';
+  }
+
+  // Asegurar Usuarios Predeterminados: Juanjo (Socio), Mati (Socio) y Emilia (Encargada, pass: 12345)
+  const hasJuanjoUser = state.users.some((u) => (u.username || '').toLowerCase() === 'juanjo');
+  if (!hasJuanjoUser && !deletedSet.has('USR-JUANJO')) {
+    state.users.push({
+      id: 'USR-JUANJO',
+      name: 'Juanjo',
+      username: 'juanjo',
+      password: 'FOUNDER_HASH',
+      phone: '',
+      role: 'socio',
+      code: 'JUANJO',
+      ambassadorCode: 'JUANJO',
+      invitedBy: 'Directo',
+      isFounder: true,
       createdAt: '26-10-2026',
       timestamp: 1729960000000,
       updatedAt: 1729960000000
     });
   }
 
-  // Limpiar pagos duplicados/erróneos a Emilia en supplierPayments y dejar exactamente uno de $6.000
-  const isEmiliaPayoutRecord = (sp) => {
+  const hasMatiUser = state.users.some(
+    (u) => (u.username || '').toLowerCase() === 'morensex' || (u.username || '').toLowerCase() === 'mati'
+  );
+  if (!hasMatiUser && !deletedSet.has('USR-MORENSEX')) {
+    state.users.push({
+      id: 'USR-MORENSEX',
+      name: 'Mati (Morensex)',
+      username: 'morensex',
+      password: 'FOUNDER_HASH',
+      phone: '',
+      role: 'socio',
+      code: 'MATI10',
+      ambassadorCode: 'MATI10',
+      invitedBy: 'Directo',
+      isFounder: true,
+      createdAt: '26-10-2026',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  }
+
+  const hasEmiliaUser = state.users.some((u) => (u.username || '').toLowerCase() === 'emilia');
+  if (!hasEmiliaUser && !deletedSet.has('USR-EMILIA')) {
+    state.users.push({
+      id: 'USR-EMILIA',
+      name: 'Emilia',
+      username: 'emilia',
+      password: '12345',
+      phone: '',
+      role: 'encargada',
+      code: emiliaCode,
+      ambassadorCode: emiliaCode,
+      invitedBy: emiliaAmb ? emiliaAmb.invitedBy || 'Directo' : 'Directo',
+      createdAt: '26-10-2026',
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  }
+
+  // Sincronizar embajadores existentes con cuentas de usuario y viceversa
+  state.ambassadors.forEach((amb) => {
+    if (!amb.invitedBy) amb.invitedBy = 'Directo';
+    const cleanCode = (amb.code || '').trim().toUpperCase();
+    if (!cleanCode) return;
+    const defaultUsername = (amb.username || cleanCode).trim().toLowerCase().replace(/\s+/g, '');
+    if (!amb.username) amb.username = defaultUsername;
+
+    const existingUser = state.users.find(
+      (u) =>
+        (u.code || u.ambassadorCode || '').toUpperCase() === cleanCode ||
+        (u.username || '').toLowerCase() === defaultUsername
+    );
+    if (!existingUser) {
+      const usrId = 'USR-AMB-' + cleanCode;
+      if (!deletedSet.has(usrId)) {
+        state.users.push({
+          id: usrId,
+          name: amb.name || cleanCode,
+          username: defaultUsername,
+          password: amb.password || '12345',
+          phone: amb.phone || '',
+          role: cleanCode === 'EMILIA' || cleanCode === 'EMILIA10' ? 'encargada' : 'embajador',
+          code: cleanCode,
+          ambassadorCode: cleanCode,
+          invitedBy: amb.invitedBy || 'Directo',
+          createdAt: amb.createdAt || '27-10-2026',
+          timestamp: amb.timestamp || 1729960000000,
+          updatedAt: amb.updatedAt || 1729960000000
+        });
+      }
+    }
+  });
+
+  state.users.forEach((usr) => {
+    const cleanCode = (usr.code || usr.ambassadorCode || usr.username || '').trim().toUpperCase();
+    if (cleanCode) {
+      usr.code = cleanCode;
+      usr.ambassadorCode = cleanCode;
+    }
+    if (usr.role === 'socio' && !usr.password) {
+      usr.password = 'FOUNDER_HASH';
+    }
+    if (!usr.invitedBy) usr.invitedBy = 'Directo';
+    if (usr.role === 'embajador' || usr.role === 'encargada') {
+      if (!cleanCode) return;
+      const existingAmb = state.ambassadors.find(
+        (a) => (a.code || '').toUpperCase() === cleanCode
+      );
+      if (!existingAmb) {
+        const ambId = 'AMB-' + cleanCode;
+        if (!deletedSet.has(ambId)) {
+          state.ambassadors.push({
+            id: ambId,
+            name: usr.name || usr.username,
+            code: cleanCode,
+            phone: usr.phone || '',
+            username: usr.username,
+            password: usr.password || '12345',
+            invitedBy: usr.invitedBy || 'Directo',
+            createdAt: usr.createdAt || '27-10-2026',
+            timestamp: usr.timestamp || 1729960000000,
+            updatedAt: usr.updatedAt || 1729960000000
+          });
+        }
+      }
+    }
+  });
+
+  // Asegurar el pago histórico único a Emilia de $6.000 sin borrar futuros pagos nuevos
+  const isEmiliaDuplicateLegacy = (sp) => {
+    if (sp.id === 'SP-AMB-EMILIA-6000') return false;
+    if (sp.payoutId && sp.payoutId !== 'PAY-AMB-EMILIA-6000') return false; // conservar pagos nuevos posteriores
     const conc = (sp.concept || '').toUpperCase();
     return conc.includes('EMILIA') && (conc.includes('COMISI') || conc.includes('AMB') || conc.includes('EMBAJADOR'));
   };
 
   if (Array.isArray(state.finances.supplierPayments)) {
     state.finances.supplierPayments = state.finances.supplierPayments.filter(
-      (sp) => !isEmiliaPayoutRecord(sp)
+      (sp) => !isEmiliaDuplicateLegacy(sp)
     );
-    state.finances.supplierPayments.unshift({
-      id: 'SP-AMB-EMILIA-6000',
-      date: '2026-10-26',
-      amount: 6000,
-      concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
-      payer: 'Caja',
-      timestamp: 1729960000000,
-      updatedAt: 1729960000000
-    });
+    const hasSpEmilia6000 = state.finances.supplierPayments.some(
+      (sp) => sp.id === 'SP-AMB-EMILIA-6000'
+    );
+    if (!hasSpEmilia6000 && !deletedSet.has('SP-AMB-EMILIA-6000') && !deletedSet.has('PAY-AMB-EMILIA-6000')) {
+      state.finances.supplierPayments.push({
+        id: 'SP-AMB-EMILIA-6000',
+        payoutId: 'PAY-AMB-EMILIA-6000',
+        date: '2026-10-26',
+        amount: 6000,
+        concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
+        payer: 'Caja',
+        timestamp: 1729960000000,
+        updatedAt: 1729960000000
+      });
+    }
   }
 
-  // Dejar exactamente un único pago a Emilia en ambassadorPayouts
   if (!Array.isArray(state.finances.ambassadorPayouts)) {
     state.finances.ambassadorPayouts = [];
   }
-  state.finances.ambassadorPayouts = state.finances.ambassadorPayouts.filter(
-    (p) => (p.code || '').toUpperCase() !== emiliaCode
+  const hasPayEmilia6000 = state.finances.ambassadorPayouts.some(
+    (p) => p.id === 'PAY-AMB-EMILIA-6000'
   );
-  state.finances.ambassadorPayouts.unshift({
-    id: 'PAY-AMB-EMILIA-6000',
-    date: '2026-10-26',
-    code: emiliaCode,
-    name: 'Emilia',
-    amount: 6000,
-    concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
-    payer: 'Caja',
-    timestamp: 1729960000000,
-    updatedAt: 1729960000000
-  });
+  if (!hasPayEmilia6000 && !deletedSet.has('PAY-AMB-EMILIA-6000')) {
+    state.finances.ambassadorPayouts.push({
+      id: 'PAY-AMB-EMILIA-6000',
+      date: '2026-10-26',
+      code: emiliaCode,
+      name: 'Emilia',
+      amount: 6000,
+      concept: 'Pago Comisión Embajador: Emilia (EMILIA)',
+      payer: 'Caja',
+      isHistoricalSeed: true,
+      timestamp: 1729960000000,
+      updatedAt: 1729960000000
+    });
+  } else {
+    state.finances.ambassadorPayouts.forEach((p) => {
+      if (p.id === 'PAY-AMB-EMILIA-6000') {
+        p.isHistoricalSeed = true;
+      }
+    });
+  }
 
   // 2. Ajuste Brecha Entre Socios: $2.300 a favor de Juanjo
   if (!Array.isArray(state.finances.partnerAdjustments)) {
@@ -506,6 +683,7 @@ function normalizeStateObject(raw) {
           : []
     },
     ambassadors: Array.isArray(raw.ambassadors) ? raw.ambassadors : [],
+    users: Array.isArray(raw.users) ? raw.users : [],
     analytics: normalizedAnalytics,
     deletedIds: Array.isArray(raw.deletedIds) ? raw.deletedIds : [],
     resetAt: Number(raw.resetAt) || 0,
@@ -603,7 +781,7 @@ function mergeCloudStates(stateA, stateB) {
       ? a.supabaseConfig
       : SUPABASE_CREDENTIALS;
 
-  return {
+  const mergedResult = {
     orders: mergeCollectionById(a.orders, b.orders),
     finances: {
       partnerMovements: mergeCollectionById(
@@ -628,6 +806,7 @@ function mergeCloudStates(stateA, stateB) {
       )
     },
     ambassadors: mergeCollectionById(a.ambassadors, b.ambassadors),
+    users: mergeCollectionById(a.users || [], b.users || []),
     analytics: mergedAnalytics,
     deletedIds: Array.from(deletedSet).slice(-300),
     resetAt: effectiveResetAt,
@@ -635,6 +814,9 @@ function mergeCloudStates(stateA, stateB) {
     updatedBy: (b.updatedAt || 0) >= (a.updatedAt || 0) ? b.updatedBy : a.updatedBy,
     supabaseConfig: supabaseCfg
   };
+
+  reconcileBusinessDataDefaults(mergedResult);
+  return mergedResult;
 }
 
 function updateCloudStatusUI(statusText, isOnline = true) {
@@ -724,6 +906,7 @@ function buildCompactCloudState(stateObj) {
     orders: s.orders,
     finances: s.finances,
     ambassadors: s.ambassadors,
+    users: s.users || [],
     deletedIds: (s.deletedIds || []).slice(-100),
     resetAt: s.resetAt,
     updatedAt: s.updatedAt,
@@ -1186,6 +1369,11 @@ function loadFinances() {
 
 function loadAmbassadors() {
   return CLOUD_STATE.ambassadors;
+}
+
+function loadUsers() {
+  if (!Array.isArray(CLOUD_STATE.users)) CLOUD_STATE.users = [];
+  return CLOUD_STATE.users;
 }
 
 function trackButtonClick(buttonLabel) {
@@ -2164,12 +2352,13 @@ function syncOrderUI() {
 }
 
 /* ==========================================================================
-   MÓDULO 3: SISTEMA DE LOGIN Y DASHBOARD ADMINISTRATIVO ONLINE
+   MÓDULO 3: SISTEMA DE LOGIN MULTI-ROL, REGISTRO PÚBLICO Y PORTAL DE EMBAJADOR
    ========================================================================== */
 
 const ALLOWED_ADMINS = {
   juanjo: 'Juanjo',
-  morensex: 'Morensex'
+  morensex: 'Morensex',
+  mati: 'Morensex'
 };
 
 const AUTH_KEY_HASHES = [
@@ -2193,10 +2382,144 @@ async function computeSHA256(str) {
   return String(h);
 }
 
+/**
+ * Determina si un identificador pertenece a uno de los socios fundadores (Juanjo o Mati/Morensex).
+ * Regla de negocio: Los socios dueños no generan bonos de producción por reclutar invitados.
+ */
+function isFounderRecruiter(nameOrCode) {
+  const clean = (nameOrCode || '').trim().toUpperCase();
+  if (!clean) return false;
+  if (
+    clean === 'JUANJO' ||
+    clean === 'JUANJO10' ||
+    clean === 'MATI' ||
+    clean === 'MATI10' ||
+    clean === 'MORENSEX' ||
+    clean === 'MATI (MORENSEX)'
+  ) {
+    return true;
+  }
+  const users = loadUsers();
+  const matchedUser = users.find(
+    (u) =>
+      (u.username || '').trim().toUpperCase() === clean ||
+      (u.name || '').trim().toUpperCase() === clean ||
+      (u.code || '').trim().toUpperCase() === clean
+  );
+  if (matchedUser && matchedUser.role === 'socio') return true;
+  return false;
+}
+
+function saveActiveUserSession(userObj) {
+  currentAdminUser = userObj.name || userObj.username;
+  currentUserRole = userObj.role || 'embajador';
+  currentUserUsername = (userObj.username || '').toLowerCase();
+  currentUserCode = (userObj.code || '').toUpperCase();
+  try {
+    window.localStorage.setItem(ADMIN_SESSION_KEY, currentAdminUser);
+    window.localStorage.setItem(
+      USER_SESSION_OBJECT_KEY,
+      JSON.stringify({
+        name: currentAdminUser,
+        role: currentUserRole,
+        username: currentUserUsername,
+        code: currentUserCode
+      })
+    );
+  } catch (e) {
+    // ignore
+  }
+}
+
+/**
+ * Autentica un usuario contra Socios Fundadores, Emilia (12345) o cualquier cuenta en CLOUD_STATE.users / CLOUD_STATE.ambassadors
+ */
+async function authenticateCredentials(rawUsernameInput, rawPasswordInput) {
+  const rawUser = (rawUsernameInput || '').trim().toLowerCase();
+  const rawPass = (rawPasswordInput || '').trim();
+  if (!rawUser || !rawPass) return null;
+
+  const normalizedPass = rawPass.replace(/\s+/g, '');
+  const [hashA, hashB] = await Promise.all([computeSHA256(rawPass), computeSHA256(normalizedPass)]);
+  const isFounderMasterKey = AUTH_KEY_HASHES.includes(hashA) || AUTH_KEY_HASHES.includes(hashB);
+
+  // 1. Verificar si existe en CLOUD_STATE.users
+  const users = loadUsers();
+  const matchedUser = users.find(
+    (u) =>
+      (u.username || '').trim().toLowerCase() === rawUser ||
+      (u.name || '').trim().toLowerCase() === rawUser ||
+      (u.code || '').trim().toLowerCase() === rawUser
+  );
+
+  if (matchedUser) {
+    const storedPass = String(matchedUser.password || '').trim();
+    const isSocio = matchedUser.role === 'socio' || Object.prototype.hasOwnProperty.call(ALLOWED_ADMINS, rawUser);
+    if (
+      (storedPass && storedPass !== 'FOUNDER_HASH' && storedPass === rawPass) ||
+      (isSocio && isFounderMasterKey) ||
+      (rawUser === 'emilia' && rawPass === '12345')
+    ) {
+      return {
+        name: matchedUser.name || matchedUser.username,
+        username: (matchedUser.username || rawUser).toLowerCase(),
+        role: matchedUser.role || 'embajador',
+        code: (matchedUser.code || '').toUpperCase()
+      };
+    }
+  }
+
+  // 2. Verificar Socios Fundadores directos (Juanjo / Morensex / Mati)
+  if (Object.prototype.hasOwnProperty.call(ALLOWED_ADMINS, rawUser) && isFounderMasterKey) {
+    const displayName = ALLOWED_ADMINS[rawUser];
+    return {
+      name: displayName,
+      username: rawUser === 'mati' ? 'morensex' : rawUser,
+      role: 'socio',
+      code: rawUser === 'juanjo' ? 'JUANJO10' : 'MATI10'
+    };
+  }
+
+  // 3. Verificar Emilia por defecto (emilia / 12345)
+  if ((rawUser === 'emilia' || rawUser === 'emilia10') && rawPass === '12345') {
+    return {
+      name: 'Emilia',
+      username: 'emilia',
+      role: 'encargada',
+      code: 'EMILIA10'
+    };
+  }
+
+  // 4. Verificar en CLOUD_STATE.ambassadors si tiene contraseña
+  const ambassadors = loadAmbassadors();
+  const matchedAmb = ambassadors.find(
+    (a) =>
+      (a.username || '').trim().toLowerCase() === rawUser ||
+      (a.code || '').trim().toLowerCase() === rawUser ||
+      (a.name || '').trim().toLowerCase() === rawUser
+  );
+  if (matchedAmb && String(matchedAmb.password || '').trim() === rawPass) {
+    return {
+      name: matchedAmb.name,
+      username: (matchedAmb.username || matchedAmb.code).toLowerCase(),
+      role: matchedAmb.role || 'embajador',
+      code: (matchedAmb.code || '').toUpperCase()
+    };
+  }
+
+  return null;
+}
+
 function openAdminLoginModal() {
-  if (currentAdminUser && ALLOWED_ADMINS[currentAdminUser.toLowerCase()]) {
-    showAdminDashboard(ALLOWED_ADMINS[currentAdminUser.toLowerCase()]);
-    return;
+  if (currentAdminUser) {
+    if (currentUserRole === 'socio' || currentUserRole === 'encargada') {
+      showAdminDashboard(currentAdminUser);
+      return;
+    }
+    if (currentUserRole === 'embajador') {
+      showAmbassadorPortal();
+      return;
+    }
   }
 
   const modal = document.getElementById('admin-login-modal');
@@ -2222,54 +2545,826 @@ function closeAdminLoginModal() {
 
 async function handleAdminLogin(event) {
   event.preventDefault();
-  const rawUser = (document.getElementById('admin-username').value || '').trim().toLowerCase();
+  const rawUser = (document.getElementById('admin-username').value || '').trim();
   const rawPass = (document.getElementById('admin-password').value || '').trim();
   const errEl = document.getElementById('admin-login-error');
 
-  const normalizedPass = rawPass.replace(/\s+/g, '');
-  const [hashA, hashB] = await Promise.all([computeSHA256(rawPass), computeSHA256(normalizedPass)]);
-
-  const isValidUser = Object.prototype.hasOwnProperty.call(ALLOWED_ADMINS, rawUser);
-  const isValidPass = AUTH_KEY_HASHES.includes(hashA) || AUTH_KEY_HASHES.includes(hashB);
-
-  if (isValidUser && isValidPass) {
-    const displayName = ALLOWED_ADMINS[rawUser];
-    currentAdminUser = displayName;
-    try {
-      window.localStorage.setItem(ADMIN_SESSION_KEY, displayName);
-    } catch (e) {
-      // ignore
-    }
+  const authUser = await authenticateCredentials(rawUser, rawPass);
+  if (authUser) {
+    saveActiveUserSession(authUser);
     closeAdminLoginModal();
     document.getElementById('admin-login-form').reset();
-    await showAdminDashboard(displayName);
-    showToast(`🔓 Bienvenido al Dashboard Cloud, ${displayName}`);
+
+    if (authUser.role === 'embajador') {
+      await showAmbassadorPortal();
+      showToast(`🥚 Bienvenido a tu Portal Personal de Embajador, ${authUser.name}`);
+    } else {
+      await showAdminDashboard(authUser.name);
+      const roleLabel =
+        authUser.role === 'encargada'
+          ? 'Encargada de Embajadores y Redes'
+          : 'Socio Fundador';
+      showToast(`🔓 Bienvenido al Panel (${roleLabel}), ${authUser.name}`);
+    }
   } else {
     if (errEl) errEl.classList.remove('hidden');
   }
 }
 
-async function showAdminDashboard(adminName) {
+/* ==========================================================================
+   MODAL PÚBLICO: "🥚 QUIERO SER EMBAJADOR" (REGISTRO E INICIO DE SESIÓN)
+   ========================================================================== */
+
+function populateRecruiterSelects() {
+  const ambassadors = loadAmbassadors();
+  const selectIds = [
+    'pub-amb-invited-by',
+    'ambassador-invited-by-select',
+    'edit-amb-invited-by',
+    'new-user-invited-by',
+    'edit-usr-invited-by'
+  ];
+
+  // Ordenar alfabéticamente poniendo a Emilia arriba para acceso rápido
+  const sortedAmbs = [...ambassadors].sort((a, b) => {
+    const aEm = (a.code || '').toUpperCase() === 'EMILIA10' ? -1 : 0;
+    const bEm = (b.code || '').toUpperCase() === 'EMILIA10' ? -1 : 0;
+    if (aEm !== bEm) return aEm - bEm;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  selectIds.forEach((id) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const prevValue = sel.value || 'Directo';
+    const firstOptionLabel =
+      id === 'pub-amb-invited-by'
+        ? 'Llegué directo / Nadie'
+        : 'Llegué directo / Nadie (Sin reclutador)';
+
+    let html = `<option value="Directo">${firstOptionLabel}</option>`;
+    sortedAmbs.forEach((amb) => {
+      const code = (amb.code || '').toUpperCase();
+      const name = amb.name || code;
+      const isFounder = isFounderRecruiter(code) || isFounderRecruiter(name);
+      const tag = isFounder ? 'Socio Fundador' : `Código: ${code}`;
+      html += `<option value="${name}">${name} (${tag})</option>`;
+    });
+
+    sel.innerHTML = html;
+
+    // Restaurar selección previa si existe
+    const hasOption = Array.from(sel.options).some((opt) => opt.value === prevValue);
+    if (hasOption) {
+      sel.value = prevValue;
+    }
+  });
+}
+
+function openAmbassadorAuthModal(initialTab = 'register') {
+  populateRecruiterSelects();
+  const modal = document.getElementById('ambassador-auth-modal');
+  const activeBanner = document.getElementById('amb-auth-active-session-banner');
+  const activeNameEl = document.getElementById('amb-auth-active-name');
+
+  if (currentAdminUser && activeBanner && activeNameEl) {
+    activeBanner.classList.remove('hidden');
+    activeNameEl.textContent = `${currentAdminUser} (${currentUserCode || currentUserRole})`;
+  } else if (activeBanner) {
+    activeBanner.classList.add('hidden');
+  }
+
+  switchAmbassadorAuthTab(initialTab);
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closeAmbassadorAuthModal() {
+  const modal = document.getElementById('ambassador-auth-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function switchAmbassadorAuthTab(tab) {
+  const tabReg = document.getElementById('amb-auth-tab-register');
+  const tabLog = document.getElementById('amb-auth-tab-login');
+  const formReg = document.getElementById('pub-ambassador-register-form');
+  const formLog = document.getElementById('pub-ambassador-login-form');
+  const errReg = document.getElementById('pub-amb-register-error');
+  const errLog = document.getElementById('pub-amb-login-error');
+
+  if (errReg) errReg.classList.add('hidden');
+  if (errLog) errLog.classList.add('hidden');
+
+  if (tab === 'login') {
+    if (tabLog) {
+      tabLog.className =
+        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
+    }
+    if (tabReg) {
+      tabReg.className =
+        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
+    }
+    if (formReg) formReg.classList.add('hidden');
+    if (formLog) formLog.classList.remove('hidden');
+  } else {
+    if (tabReg) {
+      tabReg.className =
+        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
+    }
+    if (tabLog) {
+      tabLog.className =
+        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
+    }
+    if (formLog) formLog.classList.add('hidden');
+    if (formReg) formReg.classList.remove('hidden');
+  }
+}
+
+function suggestPublicAmbassadorFields() {
+  const nameInp = document.getElementById('pub-amb-name');
+  const userInp = document.getElementById('pub-amb-username');
+  const codeInp = document.getElementById('pub-amb-code');
+  if (!nameInp) return;
+
+  const rawName = (nameInp.value || '').trim();
+  const cleanAlpha = rawName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
+
+  if (userInp && !userInp.dataset.touched) {
+    userInp.value = cleanAlpha.toLowerCase().slice(0, 12);
+  }
+  if (codeInp && !codeInp.dataset.touched) {
+    codeInp.value = cleanAlpha ? `${cleanAlpha.toUpperCase().slice(0, 8)}10` : '';
+  }
+}
+
+async function handlePublicAmbassadorRegister(event) {
+  event.preventDefault();
+  const name = (document.getElementById('pub-amb-name').value || '').trim();
+  const phone = (document.getElementById('pub-amb-phone').value || '').trim();
+  const username = (document.getElementById('pub-amb-username').value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  const password = (document.getElementById('pub-amb-password').value || '').trim();
+  const code = (document.getElementById('pub-amb-code').value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  const invitedBy = (document.getElementById('pub-amb-invited-by').value || 'Directo').trim();
+  const errEl = document.getElementById('pub-amb-register-error');
+
+  if (!name || !phone || !username || !password || !code) {
+    if (errEl) {
+      errEl.textContent = '⚠️ Por favor completa todos los campos obligatorios.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const ambassadors = loadAmbassadors();
+  const users = loadUsers();
+
+  const codeExists = ambassadors.some((a) => (a.code || '').toUpperCase() === code);
+  if (codeExists) {
+    if (errEl) {
+      errEl.textContent = `⚠️ El código "${code}" ya está registrado. Elige otro código (ej: ${code}2).`;
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const userExists = users.some((u) => (u.username || '').toLowerCase() === username);
+  if (userExists || username === 'juanjo' || username === 'morensex' || username === 'mati' || username === 'emilia') {
+    if (errEl) {
+      errEl.textContent = `⚠️ El nombre de usuario "${username}" ya está en uso. Elige otro usuario.`;
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const nowMs = Date.now();
+  const newAmb = {
+    id: 'AMB-' + code + '-' + String(nowMs).slice(-4),
+    name,
+    code,
+    phone,
+    username,
+    password,
+    invitedBy: invitedBy || 'Directo',
+    role: 'embajador',
+    createdAt: new Date().toLocaleDateString('es-CL'),
+    timestamp: nowMs,
+    updatedAt: nowMs
+  };
+  ambassadors.push(newAmb);
+
+  const newUser = {
+    id: 'USR-' + code + '-' + String(nowMs).slice(-4),
+    username,
+    password,
+    name,
+    role: 'embajador',
+    code,
+    phone,
+    invitedBy: invitedBy || 'Directo',
+    createdAt: new Date().toLocaleDateString('es-CL'),
+    timestamp: nowMs,
+    updatedAt: nowMs
+  };
+  users.push(newUser);
+
+  saveActiveUserSession({
+    name,
+    username,
+    role: 'embajador',
+    code
+  });
+
+  document.getElementById('pub-ambassador-register-form').reset();
+  closeAmbassadorAuthModal();
+
+  await persistCloudState(`Nuevo embajador registrado en web: ${name} (${code}) • Invitado por: ${invitedBy}`);
+  await showAmbassadorPortal();
+  showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido a tu Portal de Embajador, ${name}`);
+}
+
+async function handlePublicAmbassadorLogin(event) {
+  event.preventDefault();
+  const rawUser = (document.getElementById('pub-login-username').value || '').trim();
+  const rawPass = (document.getElementById('pub-login-password').value || '').trim();
+  const errEl = document.getElementById('pub-amb-login-error');
+
+  const authUser = await authenticateCredentials(rawUser, rawPass);
+  if (!authUser) {
+    if (errEl) errEl.classList.remove('hidden');
+    return;
+  }
+
+  saveActiveUserSession(authUser);
+  document.getElementById('pub-ambassador-login-form').reset();
+  closeAmbassadorAuthModal();
+
+  if (authUser.role === 'socio' || authUser.role === 'encargada') {
+    await showAdminDashboard(authUser.name);
+    showToast(`🔓 Sesión iniciada en Panel (${authUser.name})`);
+  } else {
+    await showAmbassadorPortal();
+    showToast(`🥚 Bienvenido a tu Portal Personal de Embajador, ${authUser.name}`);
+  }
+}
+
+function goToActiveUserPortal() {
+  closeAmbassadorAuthModal();
+  if (currentUserRole === 'socio' || currentUserRole === 'encargada') {
+    showAdminDashboard(currentAdminUser);
+  } else if (currentAdminUser) {
+    showAmbassadorPortal();
+  }
+}
+
+/* ==========================================================================
+   📱 PORTAL PERSONAL DEL EMBAJADOR (CARGA DIRECTA DE PEDIDOS Y DESPACHOS)
+   ========================================================================== */
+
+async function showAmbassadorPortal() {
   const storefront = document.getElementById('storefront-view');
   const dashboard = document.getElementById('admin-dashboard-view');
+  const portal = document.getElementById('ambassador-portal-view');
+  const navLabel = document.getElementById('navbar-admin-label');
+  const backAdminBtn = document.getElementById('portal-back-to-admin-btn');
+
+  if (storefront) storefront.classList.add('hidden');
+  if (dashboard) dashboard.classList.add('hidden');
+  if (portal) portal.classList.remove('hidden');
+
+  if (backAdminBtn) {
+    if (currentUserRole === 'socio' || currentUserRole === 'encargada') {
+      backAdminBtn.classList.remove('hidden');
+    } else {
+      backAdminBtn.classList.add('hidden');
+    }
+  }
+
+  try {
+    window.localStorage.setItem(PORTAL_VIEW_OPEN_KEY, '1');
+    window.localStorage.removeItem(ADMIN_VIEW_OPEN_KEY);
+  } catch (e) {
+    // ignore
+  }
+
+  if (navLabel && currentAdminUser) {
+    navLabel.textContent = `Mi Portal (${currentAdminUser})`;
+  }
+
+  renderAmbassadorPortal();
+  updatePortalOrderPreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  await pullCloudState(true);
+  renderAmbassadorPortal();
+}
+
+function closeAmbassadorPortal() {
+  const storefront = document.getElementById('storefront-view');
+  const dashboard = document.getElementById('admin-dashboard-view');
+  const portal = document.getElementById('ambassador-portal-view');
+
+  if (portal) portal.classList.add('hidden');
+  if (dashboard) dashboard.classList.add('hidden');
+  if (storefront) storefront.classList.remove('hidden');
+
+  try {
+    window.localStorage.removeItem(PORTAL_VIEW_OPEN_KEY);
+  } catch (e) {
+    // ignore
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openMyAmbassadorPortalFromAdmin() {
+  showAmbassadorPortal();
+}
+
+function returnFromPortalToAdmin() {
+  if (currentUserRole === 'socio' || currentUserRole === 'encargada') {
+    showAdminDashboard(currentAdminUser);
+  }
+}
+
+function copyCurrentAmbassadorPortalCode() {
+  const code = currentUserCode || 'EMBAJADOR';
+  copyAmbassadorCode(code);
+}
+
+function togglePortalWeeklyDay() {
+  const typeSel = document.getElementById('portal-order-type');
+  const wrap = document.getElementById('portal-weekly-day-wrapper');
+  if (!typeSel || !wrap) return;
+  if (typeSel.value === 'Pedido Fijo Semanal') {
+    wrap.classList.remove('hidden');
+  } else {
+    wrap.classList.add('hidden');
+  }
+}
+
+function adjustPortalTrayQty(type, delta) {
+  const inputId = type === 'campo' ? 'portal-qty-campo' : 'portal-qty-blanco';
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const current = parseInt(inp.value, 10) || 0;
+  inp.value = Math.max(0, current + delta);
+  updatePortalOrderPreview();
+}
+
+function updatePortalOrderPreview() {
+  const qtyCampo = Math.max(0, parseInt((document.getElementById('portal-qty-campo') || {}).value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt((document.getElementById('portal-qty-blanco') || {}).value, 10) || 0);
+  const totalTrays = qtyCampo + qtyBlanco;
+  const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
+  const commission = totalTrays * 2000;
+
+  const traysEl = document.getElementById('portal-preview-trays');
+  const subEl = document.getElementById('portal-preview-subtotal');
+  const commEl = document.getElementById('portal-preview-commission');
+
+  if (traysEl) traysEl.textContent = `${totalTrays} bandeja(s) (${totalTrays * 30} huevos)`;
+  if (subEl) subEl.textContent = formatCLP(subtotal);
+  if (commEl) commEl.textContent = `+${formatCLP(commission)}`;
+}
+
+async function handleAmbassadorPortalCreateOrder(event) {
+  event.preventDefault();
+  const clientName = (document.getElementById('portal-client-name').value || '').trim();
+  const clientAddress = (document.getElementById('portal-client-address').value || '').trim();
+  const clientPhone = (document.getElementById('portal-client-phone').value || '').trim();
+  const clientNotes = (document.getElementById('portal-client-notes').value || '').trim();
+  const orderType = (document.getElementById('portal-order-type').value || 'Pedido Único').trim();
+  const deliveryDay = (document.getElementById('portal-delivery-day').value || 'Jueves').trim();
+
+  const qtyCampo = Math.max(0, parseInt(document.getElementById('portal-qty-campo').value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt(document.getElementById('portal-qty-blanco').value, 10) || 0);
+  const errEl = document.getElementById('portal-order-error');
+
+  if (!clientName || !clientAddress || qtyCampo + qtyBlanco <= 0) {
+    if (errEl) {
+      errEl.textContent =
+        '⚠️ Debes ingresar Nombre del Cliente, Dirección de Entrega y al menos 1 bandeja.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+  if (errEl) errEl.classList.add('hidden');
+
+  const items = [];
+  if (qtyCampo > 0) {
+    items.push({
+      id: 'campo-30',
+      name: 'Bandeja Huevo de Campo (Color/Café)',
+      format: '30 unidades',
+      eggsCount: 30,
+      qty: qtyCampo,
+      price: 11500
+    });
+  }
+  if (qtyBlanco > 0) {
+    items.push({
+      id: 'blanco-30',
+      name: 'Bandeja Huevo Blanco Seleccionado',
+      format: '30 unidades',
+      eggsCount: 30,
+      qty: qtyBlanco,
+      price: 9000
+    });
+  }
+
+  const totalTrays = qtyCampo + qtyBlanco;
+  const totalEggs = totalTrays * 30;
+  const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
+  const commissionAmount = totalTrays * 2000;
+
+  // Código del embajador activo en sesión
+  const ambCode = (currentUserCode || currentAdminUser || 'EMBAJADOR').toUpperCase();
+  ensureAmbassadorExistsByCode(ambCode);
+
+  const orders = loadOrders();
+  const nowMs = Date.now();
+  const nextOrderNum = 1001 + orders.length;
+  const displayId = `QH-${nextOrderNum}`;
+  const formattedDate = new Date().toLocaleDateString('es-CL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const fullAddress = clientNotes ? `${clientAddress} (Nota: ${clientNotes})` : clientAddress;
+
+  orders.unshift({
+    id: `${displayId}-${String(nowMs).slice(-4)}`,
+    displayId,
+    date: formattedDate,
+    timestamp: nowMs,
+    updatedAt: nowMs,
+    clientName,
+    clientPhone,
+    clientAddress: fullAddress,
+    orderType,
+    deliveryDay: orderType === 'Pedido Fijo Semanal' ? deliveryDay : null,
+    items,
+    totalEggs,
+    subtotal,
+    ambassadorCode: ambCode,
+    createdByAmbassador: currentAdminUser || ambCode,
+    commissionAmount,
+    approved: false,
+    paid: false,
+    deliveryStatus: 'Falta Entregar',
+    status: 'Pendiente de Pago'
+  });
+
+  document.getElementById('portal-load-order-form').reset();
+  document.getElementById('portal-qty-campo').value = 1;
+  document.getElementById('portal-qty-blanco').value = 0;
+  togglePortalWeeklyDay();
+  updatePortalOrderPreview();
+
+  await persistCloudState(
+    `Pedido ${displayId} cargado en Portal por ${currentAdminUser} (${ambCode}) para despacho`
+  );
+  renderAmbassadorPortal();
+  showToast(
+    `🚀 Pedido ${displayId} enviado a Despacho de Juanjo y Mati • Comisión de ${formatCLP(
+      commissionAmount
+    )} asignada a tu código ${ambCode}`
+  );
+}
+
+function renderAmbassadorPortal() {
+  const portal = document.getElementById('ambassador-portal-view');
+  if (!portal || portal.classList.contains('hidden')) return;
+
+  const ambReport = calculateAmbassadorsAndBonusesState();
+  const ambassadors = loadAmbassadors();
+  const orders = loadOrders();
+
+  // Identificar el registro del embajador actual
+  const cleanCode = (currentUserCode || '').toUpperCase();
+  const cleanName = (currentAdminUser || '').toUpperCase();
+
+  let myStat = ambReport.statsMap[cleanCode];
+  if (!myStat) {
+    myStat = Object.values(ambReport.statsMap).find(
+      (s) =>
+        s.code === cleanCode ||
+        (s.name || '').toUpperCase() === cleanName ||
+        (s.username || '').toUpperCase() === (currentUserUsername || '').toUpperCase()
+    );
+  }
+
+  if (!myStat) {
+    myStat = {
+      name: currentAdminUser || 'Embajador',
+      code: cleanCode || 'QH10',
+      invitedBy: 'Directo',
+      isFounder: isFounderRecruiter(cleanCode) || isFounderRecruiter(cleanName),
+      ordersCount: 0,
+      pendingOrdersCount: 0,
+      ownCampoTrays: 0,
+      ownBlancoTrays: 0,
+      ownTotalTrays: 0,
+      ownPendingTrays: 0,
+      ownCommissionEarned: 0,
+      guests: [],
+      guestCampoTrays: 0,
+      guestBlancoTrays: 0,
+      guestTotalTrays: 0,
+      bonusCampoBlocks: 0,
+      bonusBlancoBlocks: 0,
+      bonusCampoAmount: 0,
+      bonusBlancoAmount: 0,
+      totalBonusEarned: 0,
+      totalEarnedAll: 0,
+      totalPaid: 0,
+      totalPendingToPay: 0
+    };
+  }
+
+  // Actualizar cabeceras del portal
+  const nameBadge = document.getElementById('portal-user-name-badge');
+  const codeBadge = document.getElementById('portal-user-code-badge');
+  const invBadge = document.getElementById('portal-invited-by-badge');
+  if (nameBadge) nameBadge.textContent = myStat.name;
+  if (codeBadge) codeBadge.textContent = myStat.code;
+  if (invBadge) invBadge.textContent = myStat.invitedBy || 'Directo';
+
+  // KPIs personales
+  const kpiTrays = document.getElementById('portal-kpi-own-trays');
+  const kpiBreak = document.getElementById('portal-kpi-own-breakdown');
+  const kpiOwnComm = document.getElementById('portal-kpi-own-commission');
+  const kpiOwnOrders = document.getElementById('portal-kpi-own-orders-count');
+  const kpiGuestBonuses = document.getElementById('portal-kpi-guest-bonuses');
+  const kpiGuestSummary = document.getElementById('portal-kpi-guests-summary');
+  const kpiTotalPending = document.getElementById('portal-kpi-total-pending');
+  const kpiTotalPaid = document.getElementById('portal-kpi-total-paid');
+
+  if (kpiTrays) kpiTrays.textContent = myStat.ownTotalTrays;
+  if (kpiBreak) {
+    const pendNote = myStat.ownPendingTrays > 0 ? ` (+${myStat.ownPendingTrays} en proceso)` : '';
+    kpiBreak.textContent = `${myStat.ownCampoTrays} Campo • ${myStat.ownBlancoTrays} Blanco${pendNote}`;
+  }
+  if (kpiOwnComm) kpiOwnComm.textContent = formatCLP(myStat.ownCommissionEarned);
+  if (kpiOwnOrders) {
+    kpiOwnOrders.textContent = `${myStat.ordersCount} pedido(s) aprobado(s) • ${myStat.pendingOrdersCount} pendiente(s)`;
+  }
+  if (kpiGuestBonuses) kpiGuestBonuses.textContent = formatCLP(myStat.totalBonusEarned);
+  if (kpiGuestSummary) {
+    kpiGuestSummary.textContent = `${myStat.guests.length} invitado(s) • ${myStat.guestTotalTrays} bandejas grupales`;
+  }
+  if (kpiTotalPending) kpiTotalPending.textContent = formatCLP(myStat.totalPendingToPay);
+  if (kpiTotalPaid) kpiTotalPaid.textContent = `Histórico ya pagado: ${formatCLP(myStat.totalPaid)}`;
+
+  // Barras de progreso de Producción de Invitados
+  const guestCountBadge = document.getElementById('portal-guests-count-badge');
+  if (guestCountBadge) guestCountBadge.textContent = `${myStat.guests.length} Invitado(s)`;
+
+  const campoProgressInBlock = myStat.guestCampoTrays % 10;
+  const campoPct =
+    myStat.guestCampoTrays > 0 && campoProgressInBlock === 0
+      ? 100
+      : Math.min(100, Math.round((campoProgressInBlock / 10) * 100));
+  const progCampoTxt = document.getElementById('portal-progress-campo-text');
+  const progCampoBar = document.getElementById('portal-progress-campo-bar');
+  const bonusCampoStat = document.getElementById('portal-bonus-campo-status');
+  const remCampoTxt = document.getElementById('portal-remaining-campo-text');
+
+  if (progCampoTxt) {
+    progCampoTxt.textContent = `${campoProgressInBlock}/10 Bandejas Café (Total acum: ${myStat.guestCampoTrays})`;
+  }
+  if (progCampoBar) progCampoBar.style.width = `${campoPct}%`;
+  if (bonusCampoStat) {
+    bonusCampoStat.textContent = myStat.isFounder
+      ? 'Socio Fundador (No aplica bono)'
+      : `${myStat.bonusCampoBlocks} Bono(s) Ganado(s) (${formatCLP(myStat.bonusCampoAmount)})`;
+  }
+  if (remCampoTxt) {
+    const missingCampo = 10 - campoProgressInBlock;
+    remCampoTxt.textContent = `Faltan ${missingCampo} bandeja(s) para +$10.000`;
+  }
+
+  const blancoProgressInBlock = myStat.guestBlancoTrays % 10;
+  const blancoPct =
+    myStat.guestBlancoTrays > 0 && blancoProgressInBlock === 0
+      ? 100
+      : Math.min(100, Math.round((blancoProgressInBlock / 10) * 100));
+  const progBlancoTxt = document.getElementById('portal-progress-blanco-text');
+  const progBlancoBar = document.getElementById('portal-progress-blanco-bar');
+  const bonusBlancoStat = document.getElementById('portal-bonus-blanco-status');
+  const remBlancoTxt = document.getElementById('portal-remaining-blanco-text');
+
+  if (progBlancoTxt) {
+    progBlancoTxt.textContent = `${blancoProgressInBlock}/10 Bandejas Blanco (Total acum: ${myStat.guestBlancoTrays})`;
+  }
+  if (progBlancoBar) progBlancoBar.style.width = `${blancoPct}%`;
+  if (bonusBlancoStat) {
+    bonusBlancoStat.textContent = myStat.isFounder
+      ? 'Socio Fundador (No aplica bono)'
+      : `${myStat.bonusBlancoBlocks} Bono(s) Ganado(s) (${formatCLP(myStat.bonusBlancoAmount)})`;
+  }
+  if (remBlancoTxt) {
+    const missingBlanco = 10 - blancoProgressInBlock;
+    remBlancoTxt.textContent = `Faltan ${missingBlanco} bandeja(s) para +$8.000`;
+  }
+
+  // Lista de invitados del embajador
+  const guestsListEl = document.getElementById('portal-guests-list-container');
+  if (guestsListEl) {
+    if (myStat.guests.length === 0) {
+      guestsListEl.innerHTML = `
+        <p class="text-xs text-slate-400 italic">
+          Aún no tienes embajadores registrados bajo tu invitación. Diles que al registrarse en <strong>"🥚 Quiero ser Embajador"</strong> seleccionen tu nombre en <em>"¿Quién te invitó?"</em>.
+        </p>
+      `;
+    } else {
+      guestsListEl.innerHTML = `
+        <div class="grid sm:grid-cols-2 gap-2.5">
+          ${myStat.guests
+            .map(
+              (g) => `
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-2">
+              <div>
+                <span class="font-display font-extrabold text-white text-xs block">${g.name}</span>
+                <span class="text-[11px] text-amber-300 font-bold">Código: ${g.code}</span>
+              </div>
+              <div class="text-right text-[11px]">
+                <span class="font-extrabold text-emerald-400 block">${g.totalTrays} bandejas aprob.</span>
+                <span class="text-slate-400">${g.campoTrays} Café • ${g.blancoTrays} Blanco</span>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+  }
+
+  // Tabla de Mis Pedidos y Ventas Cargadas (filtra únicamente los pedidos de este embajador)
+  const myOrders = orders.filter((o) => {
+    const c = (o.ambassadorCode || '').trim().toUpperCase();
+    return c === myStat.code || c === cleanName;
+  });
+
+  const countBadge = document.getElementById('portal-orders-count-badge');
+  if (countBadge) countBadge.textContent = `${myOrders.length} pedido(s)`;
+
+  const tbody = document.getElementById('portal-orders-tbody');
+  if (tbody) {
+    if (myOrders.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-8 text-center text-slate-400">
+            Aún no tienes pedidos registrados. Carga tu primer pedido en el formulario de la izquierda o comparte tu código <strong>${myStat.code}</strong>.
+          </td>
+        </tr>
+      `;
+    } else {
+      tbody.innerHTML = myOrders
+        .map((o) => {
+          const comm = calculateOrderCommission(o.items);
+          const isDelivered = o.deliveryStatus === 'Entregado';
+          const isPaid = Boolean(o.paid || o.approved);
+
+          let statusHtml = '';
+          if (isDelivered) {
+            statusHtml = `<span class="px-2.5 py-1 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-extrabold">🚚 Entregado</span>`;
+          } else if (isPaid) {
+            statusHtml = `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold">✅ Pagado / Aprobado</span>`;
+          } else {
+            statusHtml = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-extrabold">⏳ Pendiente de Pago</span>`;
+          }
+
+          const itemsSummary = (o.items || [])
+            .map((it) => `📦 <strong>${it.qty}x</strong> ${it.name}`)
+            .join('<br/>');
+
+          return `
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="font-display font-extrabold text-white text-xs block">${o.displayId || o.id}</span>
+                <span class="text-[11px] text-slate-400">${o.date || '-'}</span>
+              </td>
+              <td class="py-3 px-3">
+                <span class="font-bold text-white text-xs block">${o.clientName || 'Cliente'}</span>
+                <span class="text-[11px] text-slate-400 block">${o.orderType || 'Pedido Único'}${
+                  o.deliveryDay ? ` (${o.deliveryDay})` : ''
+                }</span>
+              </td>
+              <td class="py-3 px-3 text-xs text-slate-200">
+                ${itemsSummary}
+              </td>
+              <td class="py-3 px-3 font-display font-bold text-amber-300 whitespace-nowrap">
+                ${formatCLP(o.subtotal)}
+              </td>
+              <td class="py-3 px-3 font-display font-extrabold text-emerald-400 whitespace-nowrap">
+                +${formatCLP(comm)}
+              </td>
+              <td class="py-3 px-3 whitespace-nowrap">
+                ${statusHtml}
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+  }
+}
+
+/* ==========================================================================
+   CONTROL DE NAVEGACIÓN Y PERMISOS EN DASHBOARD ADMINISTRATIVO POR ROL
+   ========================================================================== */
+
+async function showAdminDashboard(adminName) {
+  // Si el usuario tiene rol exclusivamente de embajador, redirigir a su portal personal
+  if (currentUserRole === 'embajador') {
+    await showAmbassadorPortal();
+    return;
+  }
+
+  const storefront = document.getElementById('storefront-view');
+  const dashboard = document.getElementById('admin-dashboard-view');
+  const portal = document.getElementById('ambassador-portal-view');
   const badge = document.getElementById('admin-session-badge');
   const navLabel = document.getElementById('navbar-admin-label');
 
   if (storefront) storefront.classList.add('hidden');
+  if (portal) portal.classList.add('hidden');
   if (dashboard) dashboard.classList.remove('hidden');
+
   try {
     window.localStorage.setItem(ADMIN_VIEW_OPEN_KEY, '1');
+    window.localStorage.removeItem(PORTAL_VIEW_OPEN_KEY);
   } catch (e) {
     // ignore
   }
-  if (badge) badge.textContent = `Sesión activa: ${adminName}`;
+
+  const isEncargada = currentUserRole === 'encargada';
+  const roleTag = isEncargada ? 'Encargada de Embajadores y Redes' : 'Socio Fundador';
+
+  if (badge) badge.textContent = `Sesión activa: ${adminName} (${roleTag})`;
   if (navLabel) navLabel.textContent = `Panel (${adminName})`;
+
+  // Aplicar permisos visuales estrictos según rol (Socio vs Encargada Emilia)
+  const founderKpis = document.getElementById('admin-founder-kpis-grid');
+  const encargadaKpis = document.getElementById('admin-encargada-kpis-grid');
+  const supaBtn = document.getElementById('admin-supabase-config-btn');
+  const tabAll = document.getElementById('admin-tab-all');
+  const tabPedidos = document.getElementById('admin-tab-pedidos');
+  const tabFinanzas = document.getElementById('admin-tab-finanzas');
+  const tabAnalitica = document.getElementById('admin-tab-analitica');
+
+  if (isEncargada) {
+    // Emilia NO ve contabilidad de socios ni direcciones de despacho de clientes
+    if (founderKpis) founderKpis.classList.add('hidden');
+    if (encargadaKpis) encargadaKpis.classList.remove('hidden');
+    if (supaBtn) supaBtn.classList.add('hidden');
+    if (tabAll) tabAll.classList.add('hidden');
+    if (tabPedidos) tabPedidos.classList.add('hidden');
+    if (tabFinanzas) tabFinanzas.classList.add('hidden');
+    if (tabAnalitica) tabAnalitica.classList.add('hidden');
+
+    if (activeAdminTab !== 'embajadores' && activeAdminTab !== 'usuarios') {
+      activeAdminTab = 'embajadores';
+    }
+    switchAdminTab(activeAdminTab);
+  } else {
+    // Socios Fundadores (Juanjo y Mati) tienen acceso total
+    if (founderKpis) founderKpis.classList.remove('hidden');
+    if (encargadaKpis) encargadaKpis.classList.add('hidden');
+    if (supaBtn) supaBtn.classList.remove('hidden');
+    if (tabAll) tabAll.classList.remove('hidden');
+    if (tabPedidos) tabPedidos.classList.remove('hidden');
+    if (tabFinanzas) tabFinanzas.classList.remove('hidden');
+    if (tabAnalitica) tabAnalitica.classList.remove('hidden');
+
+    switchAdminTab(activeAdminTab || 'all');
+  }
 
   const movDate = document.getElementById('partner-mov-date');
   const supDate = document.getElementById('supplier-payment-date');
   if (movDate && !movDate.value) movDate.value = getTodayISODate();
   if (supDate && !supDate.value) supDate.value = getTodayISODate();
 
+  populateRecruiterSelects();
   renderAdminDashboard();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -2280,10 +3375,13 @@ async function showAdminDashboard(adminName) {
 function closeAdminDashboard() {
   const storefront = document.getElementById('storefront-view');
   const dashboard = document.getElementById('admin-dashboard-view');
+  const portal = document.getElementById('ambassador-portal-view');
   if (dashboard) dashboard.classList.add('hidden');
+  if (portal) portal.classList.add('hidden');
   if (storefront) storefront.classList.remove('hidden');
   try {
     window.localStorage.removeItem(ADMIN_VIEW_OPEN_KEY);
+    window.localStorage.removeItem(PORTAL_VIEW_OPEN_KEY);
   } catch (e) {
     // ignore
   }
@@ -2292,27 +3390,40 @@ function closeAdminDashboard() {
 
 function logoutAdmin() {
   currentAdminUser = null;
+  currentUserRole = null;
+  currentUserUsername = null;
+  currentUserCode = null;
   try {
     window.localStorage.removeItem(ADMIN_SESSION_KEY);
+    window.localStorage.removeItem(USER_SESSION_OBJECT_KEY);
+    window.localStorage.removeItem(ADMIN_VIEW_OPEN_KEY);
+    window.localStorage.removeItem(PORTAL_VIEW_OPEN_KEY);
   } catch (e) {
     // ignore
   }
   const navLabel = document.getElementById('navbar-admin-label');
   if (navLabel) navLabel.textContent = 'Entrar';
   closeAdminDashboard();
-  showToast('🔒 Sesión de administrador cerrada');
+  showToast('🔒 Sesión cerrada correctamente');
 }
 
 function switchAdminTab(tabName) {
+  const isEncargada = currentUserRole === 'encargada';
+  if (isEncargada && tabName !== 'embajadores' && tabName !== 'usuarios') {
+    tabName = 'embajadores';
+  }
+
   activeAdminTab = tabName;
-  const tabs = ['all', 'pedidos', 'finanzas', 'embajadores', 'analitica'];
+  const tabs = ['all', 'pedidos', 'finanzas', 'embajadores', 'usuarios', 'analitica'];
   tabs.forEach((t) => {
     const btn = document.getElementById(`admin-tab-${t}`);
     if (!btn) return;
     if (t === tabName) {
-      btn.className = 'admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-qh-brown text-white shadow transition';
+      btn.className =
+        'admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-qh-brown text-white shadow transition';
     } else {
-      btn.className = 'admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
+      btn.className =
+        'admin-tab-btn px-4 py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
     }
   });
 
@@ -2320,12 +3431,18 @@ function switchAdminTab(tabName) {
     pedidos: document.getElementById('admin-section-pedidos'),
     finanzas: document.getElementById('admin-section-finanzas'),
     embajadores: document.getElementById('admin-section-embajadores'),
+    usuarios: document.getElementById('admin-section-usuarios'),
     analitica: document.getElementById('admin-section-analitica')
   };
 
   Object.keys(sections).forEach((secKey) => {
     const el = sections[secKey];
     if (!el) return;
+    // Seguridad de rol: Encargada (Emilia) jamás ve pedidos (direcciones) ni finanzas (socios) ni analítica
+    if (isEncargada && (secKey === 'pedidos' || secKey === 'finanzas' || secKey === 'analitica')) {
+      el.classList.add('hidden');
+      return;
+    }
     if (tabName === 'all' || tabName === secKey) {
       el.classList.remove('hidden');
     } else {
@@ -2335,9 +3452,14 @@ function switchAdminTab(tabName) {
 }
 
 function refreshDashboardIfVisible() {
+  populateRecruiterSelects();
   const dashboard = document.getElementById('admin-dashboard-view');
   if (dashboard && !dashboard.classList.contains('hidden')) {
     renderAdminDashboard();
+  }
+  const portal = document.getElementById('ambassador-portal-view');
+  if (portal && !portal.classList.contains('hidden')) {
+    renderAmbassadorPortal();
   }
 }
 
@@ -3053,17 +4175,19 @@ function toggleOrderPaid(orderId) {
 }
 
 /**
- * Paga y salda la comisión acumulada de un embajador a $0 descontándola de la Caja de la Empresa.
- * Si su código se vuelve a usar en pedidos nuevos posteriores, la cuenta vuelve a sumar desde $0.
+ * Paga y salda el Total a Pagar (Comisión Propia + Bonos por Producción de Invitados) de un embajador
+ * dejándolo en $0 sin borrar su historial de producción, descontándolo de la Caja de la Empresa.
  */
 function payAmbassadorCommission(code, name, amount) {
   if (!amount || amount <= 0) {
-    showToast('⚠️ Este embajador no registra comisiones pendientes por pagar ($0).');
+    showToast('⚠️ Este embajador no registra saldo pendiente por pagar ($0).');
     return;
   }
   const cleanCode = (code || '').trim().toUpperCase();
   const confirmed = confirm(
-    `¿Confirmas registrar el pago de comisión de ${formatCLP(amount)} a ${name} (${cleanCode})?\n\n• Se descontará de la Caja de la Empresa.\n• Su saldo pendiente actual quedará saldado en $0.\n• Nuevos pedidos posteriores sumarán comisiones desde $0.`
+    `¿Confirmas registrar el pago total (Comisión Propia + Bonos de Invitados) de ${formatCLP(
+      amount
+    )} a ${name} (${cleanCode})?\n\n• Se descontará de la Caja de la Empresa.\n• Su deuda pendiente actual quedará saldada en $0 sin borrar su historial de producción.\n• Nuevas ventas o bonos posteriores sumarán desde $0.`
   );
   if (!confirmed) return;
 
@@ -3078,7 +4202,7 @@ function payAmbassadorCommission(code, name, amount) {
     code: cleanCode,
     name: name,
     amount: amount,
-    concept: `Pago Comisión Embajador: ${name} (${cleanCode})`,
+    concept: `Pago Comisión + Bonos Embajador: ${name} (${cleanCode})`,
     payer: 'Caja',
     timestamp: nowMs,
     updatedAt: nowMs
@@ -3089,14 +4213,14 @@ function payAmbassadorCommission(code, name, amount) {
     payoutId: payoutId,
     date: getTodayISODate(),
     amount: amount,
-    concept: `Pago Comisión Embajador: ${name} (${cleanCode})`,
+    concept: `Pago Comisión + Bonos Embajador: ${name} (${cleanCode})`,
     payer: 'Caja',
     timestamp: nowMs,
     updatedAt: nowMs
   });
 
-  persistCloudState(`Pago de comisión a ${cleanCode}: ${formatCLP(amount)} desde Caja`);
-  showToast(`💸 Comisión de ${formatCLP(amount)} pagada a ${name}. Saldo pendiente saldado a $0.`);
+  persistCloudState(`Pago de comisión/bonos a ${cleanCode}: ${formatCLP(amount)} desde Caja`);
+  showToast(`💸 Pago de ${formatCLP(amount)} registrado a ${name}. Deuda pendiente saldada a $0.`);
 }
 
 /**
@@ -3108,7 +4232,6 @@ function deleteAmbassadorPayout(payoutId) {
 
   const finances = loadFinances();
   const payout = (finances.ambassadorPayouts || []).find((p) => p.id === payoutId);
-  const amt = payout ? payout.amount : 0;
   const code = payout ? payout.code : '';
 
   CLOUD_STATE.deletedIds.push(payoutId);
@@ -3122,20 +4245,331 @@ function deleteAmbassadorPayout(payoutId) {
 }
 
 /* ==========================================================================
-   MÓDULO C: 🤝 SISTEMA DE EMBAJADORES Y COMISIONES EN LA NUBE
+   MÓDULO C: 🤝 SISTEMA DE EMBAJADORES, CARGAS/INVITADOS, BONOS Y USUARIOS
    ========================================================================== */
+
+/**
+ * Calcula integralmente:
+ * 1. Ventas propias de cada embajador (portal + web) y su comisión directa ($2.000/bandeja)
+ * 2. Red de Invitados ("Sus Cargas / Sus Invitados") reclutados por cada embajador
+ * 3. Bono por Producción de Invitados:
+ *    - Cada bloque de 10 bandejas de Huevo de Campo (Café) vendidas por sus invitados = +$10.000
+ *    - Cada bloque de 10 bandejas de Huevo Blanco vendidas por sus invitados = +$8.000
+ *    - Regla de negocio: Juanjo y Mati no generan bonos para sí mismos por meter gente porque son los socios dueños.
+ *      Cualquier otro embajador (incluida Emilia) sí genera bonos por la producción de sus invitados.
+ * 4. Saldos pagados y Total a Pagar (Comisión Propia + Bonos por Invitados pendientes).
+ */
+function calculateAmbassadorsAndBonusesState() {
+  const orders = loadOrders();
+  const finances = loadFinances();
+  const ambassadors = loadAmbassadors();
+
+  const statsMap = {};
+
+  ambassadors.forEach((amb) => {
+    const key = (amb.code || '').trim().toUpperCase();
+    if (!key) return;
+    const isFounder =
+      isFounderRecruiter(key) || isFounderRecruiter(amb.name) || amb.role === 'socio';
+    statsMap[key] = {
+      id: amb.id,
+      name: amb.name || key,
+      code: key,
+      phone: amb.phone || '',
+      username: amb.username || '',
+      password: amb.password || '',
+      invitedBy: amb.invitedBy || 'Directo',
+      role: amb.role || 'embajador',
+      isFounder,
+      ordersCount: 0,
+      pendingOrdersCount: 0,
+      ownCampoTrays: 0,
+      ownBlancoTrays: 0,
+      ownTotalTrays: 0,
+      ownPendingCampoTrays: 0,
+      ownPendingBlancoTrays: 0,
+      ownPendingTrays: 0,
+      ownCommissionEarned: 0,
+      ownCommissionHistoricalBeforeCutoff: 0,
+      guests: [],
+      guestCampoTrays: 0,
+      guestBlancoTrays: 0,
+      guestTotalTrays: 0,
+      guestPendingCampoTrays: 0,
+      guestPendingBlancoTrays: 0,
+      bonusCampoBlocks: 0,
+      bonusBlancoBlocks: 0,
+      bonusCampoAmount: 0,
+      bonusBlancoAmount: 0,
+      totalBonusEarned: 0,
+      totalEarnedAll: 0,
+      totalPaid: 0,
+      effectiveDeductiblePaid: 0,
+      ownCommissionPending: 0,
+      bonusPending: 0,
+      totalPendingToPay: 0
+    };
+  });
+
+  function resolveAmbassadorKey(rawIdentifier) {
+    const clean = (rawIdentifier || '').trim().toUpperCase();
+    if (!clean || clean === '-' || clean === 'DIRECTO' || clean.includes('NADIE')) return null;
+    if (statsMap[clean]) return clean;
+    const foundKey = Object.keys(statsMap).find((k) => {
+      const entry = statsMap[k];
+      return (
+        entry.code === clean ||
+        entry.code + '10' === clean ||
+        clean + '10' === entry.code ||
+        (entry.name || '').trim().toUpperCase() === clean ||
+        (entry.username || '').trim().toUpperCase() === clean
+      );
+    });
+    if (foundKey) return foundKey;
+    if (isFounderRecruiter(clean)) {
+      const fKey = clean.includes('JUANJO') ? 'JUANJO' : 'MATI10';
+      if (!statsMap[fKey]) {
+        statsMap[fKey] = {
+          id: null,
+          name: fKey === 'JUANJO' ? 'Juanjo' : 'Mati (Morensex)',
+          code: fKey,
+          phone: '',
+          username: fKey === 'JUANJO' ? 'juanjo' : 'morensex',
+          password: 'FOUNDER_HASH',
+          invitedBy: 'Directo',
+          role: 'socio',
+          isFounder: true,
+          ordersCount: 0,
+          pendingOrdersCount: 0,
+          ownCampoTrays: 0,
+          ownBlancoTrays: 0,
+          ownTotalTrays: 0,
+          ownPendingCampoTrays: 0,
+          ownPendingBlancoTrays: 0,
+          ownPendingTrays: 0,
+          ownCommissionEarned: 0,
+          ownCommissionHistoricalBeforeCutoff: 0,
+          guests: [],
+          guestCampoTrays: 0,
+          guestBlancoTrays: 0,
+          guestTotalTrays: 0,
+          guestPendingCampoTrays: 0,
+          guestPendingBlancoTrays: 0,
+          bonusCampoBlocks: 0,
+          bonusBlancoBlocks: 0,
+          bonusCampoAmount: 0,
+          bonusBlancoAmount: 0,
+          totalBonusEarned: 0,
+          totalEarnedAll: 0,
+          totalPaid: 0,
+          effectiveDeductiblePaid: 0,
+          ownCommissionPending: 0,
+          bonusPending: 0,
+          totalPendingToPay: 0
+        };
+      }
+      return fKey;
+    }
+    return null;
+  }
+
+  let totalAllOwnTrays = 0;
+  let totalAllOwnCommissionsEarned = 0;
+
+  // 1. Contabilizar pedidos por embajador
+  orders.forEach((o) => {
+    const rawCode = (o.ambassadorCode || '').trim().toUpperCase();
+    if (!rawCode || rawCode === '-') return;
+
+    let matchedKey = resolveAmbassadorKey(rawCode);
+    if (!matchedKey) {
+      matchedKey = rawCode;
+      statsMap[matchedKey] = {
+        id: null,
+        name: rawCode,
+        code: rawCode,
+        phone: '',
+        username: rawCode.toLowerCase(),
+        password: '',
+        invitedBy: 'Directo',
+        role: 'embajador',
+        isFounder: isFounderRecruiter(rawCode),
+        ordersCount: 0,
+        pendingOrdersCount: 0,
+        ownCampoTrays: 0,
+        ownBlancoTrays: 0,
+        ownTotalTrays: 0,
+        ownPendingCampoTrays: 0,
+        ownPendingBlancoTrays: 0,
+        ownPendingTrays: 0,
+        ownCommissionEarned: 0,
+        ownCommissionHistoricalBeforeCutoff: 0,
+        guests: [],
+        guestCampoTrays: 0,
+        guestBlancoTrays: 0,
+        guestTotalTrays: 0,
+        guestPendingCampoTrays: 0,
+        guestPendingBlancoTrays: 0,
+        bonusCampoBlocks: 0,
+        bonusBlancoBlocks: 0,
+        bonusCampoAmount: 0,
+        bonusBlancoAmount: 0,
+        totalBonusEarned: 0,
+        totalEarnedAll: 0,
+        totalPaid: 0,
+        effectiveDeductiblePaid: 0,
+        ownCommissionPending: 0,
+        bonusPending: 0,
+        totalPendingToPay: 0
+      };
+    }
+
+    const stat = statsMap[matchedKey];
+    let orderCampo = 0;
+    let orderBlanco = 0;
+
+    (o.items || []).forEach((it) => {
+      const qty = Number(it.qty) || 0;
+      const lowerName = (it.name || '').toLowerCase();
+      if (it.id === 'blanco-30' || lowerName.includes('blanco')) {
+        orderBlanco += qty;
+      } else {
+        orderCampo += qty;
+      }
+    });
+
+    const orderTrays = orderCampo + orderBlanco;
+    if (o.approved || o.paid) {
+      stat.ordersCount += 1;
+      stat.ownCampoTrays += orderCampo;
+      stat.ownBlancoTrays += orderBlanco;
+      stat.ownTotalTrays += orderTrays;
+      const comm = orderTrays * 2000;
+      stat.ownCommissionEarned += comm;
+      if ((o.timestamp || 0) <= 1729960000000) {
+        stat.ownCommissionHistoricalBeforeCutoff += comm;
+      }
+      totalAllOwnTrays += orderTrays;
+      totalAllOwnCommissionsEarned += comm;
+    } else {
+      stat.pendingOrdersCount += 1;
+      stat.ownPendingCampoTrays += orderCampo;
+      stat.ownPendingBlancoTrays += orderBlanco;
+      stat.ownPendingTrays += orderTrays;
+    }
+  });
+
+  // 2. Agrupar invitados ("Sus Cargas / Sus Invitados") por reclutador y sumar su producción
+  Object.values(statsMap).forEach((guestStat) => {
+    const invRaw = (guestStat.invitedBy || '').trim();
+    const recruiterKey = resolveAmbassadorKey(invRaw);
+    if (!recruiterKey || recruiterKey === guestStat.code) return;
+
+    const recruiter = statsMap[recruiterKey];
+    if (!recruiter) return;
+
+    recruiter.guests.push({
+      id: guestStat.id,
+      name: guestStat.name,
+      code: guestStat.code,
+      campoTrays: guestStat.ownCampoTrays,
+      blancoTrays: guestStat.ownBlancoTrays,
+      totalTrays: guestStat.ownTotalTrays,
+      pendingCampoTrays: guestStat.ownPendingCampoTrays,
+      pendingBlancoTrays: guestStat.ownPendingBlancoTrays,
+      pendingTrays: guestStat.ownPendingTrays
+    });
+
+    recruiter.guestCampoTrays += guestStat.ownCampoTrays;
+    recruiter.guestBlancoTrays += guestStat.ownBlancoTrays;
+    recruiter.guestTotalTrays += guestStat.ownTotalTrays;
+    recruiter.guestPendingCampoTrays += guestStat.ownPendingCampoTrays;
+    recruiter.guestPendingBlancoTrays += guestStat.ownPendingBlancoTrays;
+  });
+
+  // 3. Calcular Bonos por Producción de Invitados (10 Bandejas Café = $10.000, 10 Bandejas Blanco = $8.000)
+  let totalAllGuestBonusesEarned = 0;
+  let totalAllGuestTrays = 0;
+
+  Object.values(statsMap).forEach((stat) => {
+    totalAllGuestTrays += stat.guestTotalTrays;
+    if (stat.isFounder) {
+      // Regla de negocio: Juanjo y Mati no generan bonos para sí mismos por meter gente
+      stat.bonusCampoBlocks = 0;
+      stat.bonusBlancoBlocks = 0;
+      stat.bonusCampoAmount = 0;
+      stat.bonusBlancoAmount = 0;
+      stat.totalBonusEarned = 0;
+    } else {
+      stat.bonusCampoBlocks = Math.floor(stat.guestCampoTrays / 10);
+      stat.bonusBlancoBlocks = Math.floor(stat.guestBlancoTrays / 10);
+      stat.bonusCampoAmount = stat.bonusCampoBlocks * 10000;
+      stat.bonusBlancoAmount = stat.bonusBlancoBlocks * 8000;
+      stat.totalBonusEarned = stat.bonusCampoAmount + stat.bonusBlancoAmount;
+      totalAllGuestBonusesEarned += stat.totalBonusEarned;
+    }
+    stat.totalEarnedAll = stat.ownCommissionEarned + stat.totalBonusEarned;
+  });
+
+  // 4. Descontar Pagos Realizados (ambassadorPayouts)
+  const ambassadorPayouts = finances.ambassadorPayouts || [];
+  let totalAllPaidCommissions = 0;
+
+  ambassadorPayouts.forEach((pay) => {
+    const payAmt = Number(pay.amount) || 0;
+    totalAllPaidCommissions += payAmt;
+    const matchedKey = resolveAmbassadorKey(pay.code);
+    if (matchedKey && statsMap[matchedKey]) {
+      const st = statsMap[matchedKey];
+      st.totalPaid += payAmt;
+      if (pay.id === 'PAY-AMB-EMILIA-6000' || pay.isHistoricalSeed) {
+        st.effectiveDeductiblePaid += Math.min(payAmt, st.ownCommissionHistoricalBeforeCutoff);
+      } else {
+        st.effectiveDeductiblePaid += payAmt;
+      }
+    }
+  });
+
+  let totalAllPendingToPay = 0;
+  Object.values(statsMap).forEach((stat) => {
+    stat.totalPendingToPay = Math.max(0, stat.totalEarnedAll - stat.effectiveDeductiblePaid);
+    stat.ownCommissionPending = Math.max(
+      0,
+      stat.ownCommissionEarned - stat.effectiveDeductiblePaid
+    );
+    stat.bonusPending = Math.max(0, stat.totalPendingToPay - stat.ownCommissionPending);
+    totalAllPendingToPay += stat.totalPendingToPay;
+  });
+
+  return {
+    statsMap,
+    ambassadorList: Object.values(statsMap),
+    totalAllOwnTrays,
+    totalAllOwnCommissionsEarned,
+    totalAllGuestTrays,
+    totalAllGuestBonusesEarned,
+    totalAllPaidCommissions,
+    totalAllPendingToPay
+  };
+}
 
 function suggestAmbassadorCode() {
   const nameInp = document.getElementById('ambassador-name-input');
   const codeInp = document.getElementById('ambassador-code-create');
+  const userInp = document.getElementById('ambassador-username-input');
   if (!nameInp || !codeInp) return;
   const cleanName = (nameInp.value || '')
     .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, 8);
   if (cleanName) {
     codeInp.value = `${cleanName}10`;
+    if (userInp && !userInp.dataset.touched) {
+      userInp.value = cleanName.toLowerCase();
+    }
   }
 }
 
@@ -3146,6 +4580,8 @@ function generateRandomAmbassadorCode() {
   const prefix =
     ((nameInp && nameInp.value) || 'QH')
       .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '')
       .slice(0, 6) || 'HUEVOS';
@@ -3157,13 +4593,27 @@ function handleCreateAmbassador(event) {
   event.preventDefault();
   const nameInp = document.getElementById('ambassador-name-input');
   const codeInp = document.getElementById('ambassador-code-create');
+  const invInp = document.getElementById('ambassador-invited-by-select');
+  const phoneInp = document.getElementById('ambassador-phone-input');
+  const userInp = document.getElementById('ambassador-username-input');
+  const passInp = document.getElementById('ambassador-password-input');
+
   const name = (nameInp.value || '').trim();
   const code = (codeInp.value || '').trim().toUpperCase().replace(/\s+/g, '');
+  const invitedBy = ((invInp && invInp.value) || 'Directo').trim();
+  const phone = ((phoneInp && phoneInp.value) || '').trim();
+  const username =
+    ((userInp && userInp.value) || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '') || code.toLowerCase();
+  const password = ((passInp && passInp.value) || '').trim() || '12345';
 
   if (!name || !code) return;
 
   const ambassadors = loadAmbassadors();
-  const exists = ambassadors.some((a) => a.code.toUpperCase() === code);
+  const users = loadUsers();
+  const exists = ambassadors.some((a) => (a.code || '').toUpperCase() === code);
   if (exists) {
     showToast(`⚠️ El código ${code} ya está asignado a un embajador`);
     return;
@@ -3174,15 +4624,44 @@ function handleCreateAmbassador(event) {
     id: 'AMB-' + code + '-' + String(nowMs).slice(-4),
     name,
     code,
+    phone,
+    username,
+    password,
+    invitedBy,
+    role: 'embajador',
     createdAt: new Date().toLocaleDateString('es-CL'),
     timestamp: nowMs,
     updatedAt: nowMs
   });
 
-  nameInp.value = '';
-  codeInp.value = '';
-  persistCloudState(`Nuevo embajador registrado: ${name} (${code})`);
-  showToast(`☁️ Embajador ${name} guardado en la nube con código: ${code}`);
+  // Sincronizar también en CLOUD_STATE.users para que pueda entrar a su Portal Personal
+  const existingUser = users.find(
+    (u) => (u.username || '').toLowerCase() === username || (u.code || '').toUpperCase() === code
+  );
+  if (!existingUser) {
+    users.push({
+      id: 'USR-' + code + '-' + String(nowMs).slice(-4),
+      username,
+      password,
+      name,
+      role: 'embajador',
+      code,
+      phone,
+      invitedBy,
+      createdAt: new Date().toLocaleDateString('es-CL'),
+      timestamp: nowMs,
+      updatedAt: nowMs
+    });
+  }
+
+  if (nameInp) nameInp.value = '';
+  if (codeInp) codeInp.value = '';
+  if (phoneInp) phoneInp.value = '';
+  if (userInp) userInp.value = '';
+  if (passInp) passInp.value = '';
+
+  persistCloudState(`Nuevo embajador registrado: ${name} (${code}) • Reclutado por: ${invitedBy}`);
+  showToast(`☁️ Embajador ${name} (${code}) creado con acceso a Portal (Usuario: ${username})`);
 }
 
 function copyAmbassadorCode(code) {
@@ -3192,11 +4671,372 @@ function copyAmbassadorCode(code) {
   showToast(`📋 Código de embajador copiado: ${code}`);
 }
 
+function openEditAmbassadorModal(ambId) {
+  populateRecruiterSelects();
+  const ambassadors = loadAmbassadors();
+  const amb = ambassadors.find((a) => a.id === ambId || a.code === ambId);
+  if (!amb) return;
+
+  const modal = document.getElementById('edit-ambassador-modal');
+  if (!modal) return;
+
+  document.getElementById('edit-amb-id').value = amb.id;
+  document.getElementById('edit-amb-name').value = amb.name || '';
+  document.getElementById('edit-amb-code').value = amb.code || '';
+  document.getElementById('edit-amb-phone').value = amb.phone || '';
+  document.getElementById('edit-amb-username').value = amb.username || (amb.code || '').toLowerCase();
+  document.getElementById('edit-amb-password').value =
+    amb.password === 'FOUNDER_HASH' ? '' : amb.password || '12345';
+
+  const invSel = document.getElementById('edit-amb-invited-by');
+  if (invSel) {
+    const invVal = amb.invitedBy || 'Directo';
+    const hasOpt = Array.from(invSel.options).some((o) => o.value === invVal);
+    if (!hasOpt && invVal !== 'Directo') {
+      const opt = document.createElement('option');
+      opt.value = invVal;
+      opt.textContent = invVal;
+      invSel.appendChild(opt);
+    }
+    invSel.value = invVal;
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeEditAmbassadorModal() {
+  const modal = document.getElementById('edit-ambassador-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function handleSaveEditAmbassador(event) {
+  event.preventDefault();
+  const ambId = document.getElementById('edit-amb-id').value;
+  const name = (document.getElementById('edit-amb-name').value || '').trim();
+  const newCode = (document.getElementById('edit-amb-code').value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  const phone = (document.getElementById('edit-amb-phone').value || '').trim();
+  const invitedBy = (document.getElementById('edit-amb-invited-by').value || 'Directo').trim();
+  const username = (document.getElementById('edit-amb-username').value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  const password = (document.getElementById('edit-amb-password').value || '').trim();
+
+  if (!name || !newCode) return;
+
+  const ambassadors = loadAmbassadors();
+  const users = loadUsers();
+  const amb = ambassadors.find((a) => a.id === ambId);
+  if (!amb) return;
+
+  const oldCode = (amb.code || '').toUpperCase();
+  const oldUsername = (amb.username || '').toLowerCase();
+  const nowMs = Date.now();
+
+  amb.name = name;
+  amb.code = newCode;
+  amb.phone = phone;
+  amb.invitedBy = invitedBy;
+  if (username) amb.username = username;
+  if (password && amb.password !== 'FOUNDER_HASH') amb.password = password;
+  amb.updatedAt = nowMs;
+
+  // Sincronizar en CLOUD_STATE.users
+  const linkedUser = users.find(
+    (u) =>
+      (u.code || '').toUpperCase() === oldCode ||
+      (u.username || '').toLowerCase() === oldUsername
+  );
+  if (linkedUser) {
+    linkedUser.name = name;
+    linkedUser.code = newCode;
+    linkedUser.phone = phone;
+    linkedUser.invitedBy = invitedBy;
+    if (username) linkedUser.username = username;
+    if (password && linkedUser.password !== 'FOUNDER_HASH') linkedUser.password = password;
+    linkedUser.updatedAt = nowMs;
+  }
+
+  // Si cambió el código, actualizar los pedidos que tenían el código anterior
+  if (oldCode && oldCode !== newCode) {
+    loadOrders().forEach((o) => {
+      if ((o.ambassadorCode || '').toUpperCase() === oldCode) {
+        o.ambassadorCode = newCode;
+        o.updatedAt = nowMs;
+      }
+    });
+  }
+
+  closeEditAmbassadorModal();
+  persistCloudState(`Embajador actualizado: ${name} (${newCode}) • Invitado por: ${invitedBy}`);
+  showToast(`✏️ Embajador ${name} actualizado en la nube`);
+}
+
 function deleteAmbassador(ambId) {
+  const ambassadors = loadAmbassadors();
+  const target = ambassadors.find((a) => a.id === ambId);
+  if (target && isFounderRecruiter(target.code)) {
+    showToast('⚠️ No se puede eliminar el registro de un Socio Fundador.');
+    return;
+  }
+  const confirmed = confirm(
+    `¿Confirmas eliminar al embajador ${target ? target.name : ambId} de la base de datos?`
+  );
+  if (!confirmed) return;
+
   CLOUD_STATE.deletedIds.push(ambId);
   CLOUD_STATE.ambassadors = CLOUD_STATE.ambassadors.filter((a) => a.id !== ambId);
+  if (target) {
+    const linkedUser = loadUsers().find(
+      (u) =>
+        u.role === 'embajador' &&
+        ((u.code || '').toUpperCase() === (target.code || '').toUpperCase() ||
+          (u.username || '').toLowerCase() === (target.username || '').toLowerCase())
+    );
+    if (linkedUser) {
+      CLOUD_STATE.deletedIds.push(linkedUser.id);
+      CLOUD_STATE.users = CLOUD_STATE.users.filter((u) => u.id !== linkedUser.id);
+    }
+  }
   persistCloudState('Embajador eliminado');
   showToast('🗑️ Embajador eliminado de la Base de Datos Cloud');
+}
+
+/* ==========================================================================
+   👥 MÓDULO DE GESTIÓN DINÁMICA DE USUARIOS Y PERMISOS (ROLES INTERNOS)
+   ========================================================================== */
+
+function suggestNewUserFields() {
+  const nameInp = document.getElementById('new-user-fullname');
+  const userInp = document.getElementById('new-user-username');
+  const codeInp = document.getElementById('new-user-code');
+  if (!nameInp) return;
+
+  const clean = (nameInp.value || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
+
+  if (userInp && !userInp.dataset.touched) {
+    userInp.value = clean.toLowerCase().slice(0, 12);
+  }
+  if (codeInp && !codeInp.dataset.touched) {
+    codeInp.value = clean ? `${clean.toUpperCase().slice(0, 8)}10` : '';
+  }
+}
+
+function handleAdminCreateUser(event) {
+  event.preventDefault();
+  const name = (document.getElementById('new-user-fullname').value || '').trim();
+  const username = (document.getElementById('new-user-username').value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  const password = (document.getElementById('new-user-password').value || '').trim();
+  let role = (document.getElementById('new-user-role').value || 'embajador').trim();
+  const rawCode = (document.getElementById('new-user-code').value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  const invitedBy = (document.getElementById('new-user-invited-by').value || 'Directo').trim();
+
+  if (!name || !username || !password) return;
+
+  // Si quien crea el usuario es Encargada (Emilia), no puede crear Socios Fundadores
+  if (currentUserRole === 'encargada' && role === 'socio') {
+    role = 'embajador';
+  }
+
+  const code =
+    rawCode ||
+    `${name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 8)}10`;
+
+  const users = loadUsers();
+  const ambassadors = loadAmbassadors();
+
+  const existsUser = users.some((u) => (u.username || '').toLowerCase() === username);
+  if (existsUser) {
+    showToast(`⚠️ El usuario "${username}" ya existe en el sistema.`);
+    return;
+  }
+
+  const nowMs = Date.now();
+  const newUserId = 'USR-' + code + '-' + String(nowMs).slice(-4);
+  users.push({
+    id: newUserId,
+    username,
+    password,
+    name,
+    role,
+    code,
+    phone: '',
+    invitedBy,
+    createdAt: new Date().toLocaleDateString('es-CL'),
+    timestamp: nowMs,
+    updatedAt: nowMs
+  });
+
+  const existsAmb = ambassadors.some((a) => (a.code || '').toUpperCase() === code);
+  if (!existsAmb) {
+    ambassadors.push({
+      id: 'AMB-' + code + '-' + String(nowMs).slice(-4),
+      name,
+      code,
+      phone: '',
+      username,
+      password,
+      invitedBy,
+      role,
+      createdAt: new Date().toLocaleDateString('es-CL'),
+      timestamp: nowMs,
+      updatedAt: nowMs
+    });
+  }
+
+  document.getElementById('admin-create-user-form').reset();
+  persistCloudState(`Usuario creado: ${name} (@${username}) • Rol: ${role}`);
+  showToast(`👥 Usuario ${name} (@${username}) creado con éxito en la nube`);
+}
+
+function openEditUserModal(userId) {
+  populateRecruiterSelects();
+  const users = loadUsers();
+  const usr = users.find((u) => u.id === userId);
+  if (!usr) return;
+
+  if (currentUserRole === 'encargada' && usr.role === 'socio') {
+    showToast('⚠️ Solo los Socios Fundadores pueden editar cuentas de Socio.');
+    return;
+  }
+
+  const modal = document.getElementById('edit-user-modal');
+  if (!modal) return;
+
+  document.getElementById('edit-usr-id').value = usr.id;
+  document.getElementById('edit-usr-name').value = usr.name || '';
+  document.getElementById('edit-usr-username').value = usr.username || '';
+  document.getElementById('edit-usr-password').value =
+    usr.password === 'FOUNDER_HASH' ? '' : usr.password || '';
+  document.getElementById('edit-usr-role').value = usr.role || 'embajador';
+  document.getElementById('edit-usr-code').value = usr.code || '';
+
+  const invSel = document.getElementById('edit-usr-invited-by');
+  if (invSel) {
+    const invVal = usr.invitedBy || 'Directo';
+    const hasOpt = Array.from(invSel.options).some((o) => o.value === invVal);
+    if (!hasOpt && invVal !== 'Directo') {
+      const opt = document.createElement('option');
+      opt.value = invVal;
+      opt.textContent = invVal;
+      invSel.appendChild(opt);
+    }
+    invSel.value = invVal;
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeEditUserModal() {
+  const modal = document.getElementById('edit-user-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function handleSaveEditUser(event) {
+  event.preventDefault();
+  const userId = document.getElementById('edit-usr-id').value;
+  const name = (document.getElementById('edit-usr-name').value || '').trim();
+  const username = (document.getElementById('edit-usr-username').value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  const password = (document.getElementById('edit-usr-password').value || '').trim();
+  let role = (document.getElementById('edit-usr-role').value || 'embajador').trim();
+  const code = (document.getElementById('edit-usr-code').value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+  const invitedBy = (document.getElementById('edit-usr-invited-by').value || 'Directo').trim();
+
+  const users = loadUsers();
+  const ambassadors = loadAmbassadors();
+  const usr = users.find((u) => u.id === userId);
+  if (!usr) return;
+
+  if (currentUserRole === 'encargada' && role === 'socio') {
+    role = usr.role === 'socio' ? 'socio' : 'encargada';
+  }
+
+  const oldCode = (usr.code || '').toUpperCase();
+  const oldUsername = (usr.username || '').toLowerCase();
+  const nowMs = Date.now();
+
+  usr.name = name;
+  usr.username = username;
+  if (password) usr.password = password;
+  usr.role = role;
+  if (code) usr.code = code;
+  usr.invitedBy = invitedBy;
+  usr.updatedAt = nowMs;
+
+  const linkedAmb = ambassadors.find(
+    (a) =>
+      (a.code || '').toUpperCase() === oldCode ||
+      (a.username || '').toLowerCase() === oldUsername
+  );
+  if (linkedAmb) {
+    linkedAmb.name = name;
+    linkedAmb.username = username;
+    if (password) linkedAmb.password = password;
+    linkedAmb.role = role;
+    if (code) linkedAmb.code = code;
+    linkedAmb.invitedBy = invitedBy;
+    linkedAmb.updatedAt = nowMs;
+  }
+
+  closeEditUserModal();
+  persistCloudState(`Usuario actualizado: ${name} (@${username}) • Rol: ${role}`);
+  showToast(`✏️ Usuario ${name} actualizado en la nube`);
+}
+
+function deleteUserRecord(userId) {
+  const users = loadUsers();
+  const usr = users.find((u) => u.id === userId);
+  if (!usr) return;
+
+  if (
+    usr.id === 'USR-FOUNDER-JUANJO' ||
+    usr.id === 'USR-FOUNDER-MATI' ||
+    isFounderRecruiter(usr.username)
+  ) {
+    showToast('⚠️ Las cuentas de los Socios Fundadores (Juanjo y Mati) están protegidas.');
+    return;
+  }
+
+  const confirmed = confirm(`¿Confirmas eliminar la cuenta de usuario de ${usr.name} (@${usr.username})?`);
+  if (!confirmed) return;
+
+  CLOUD_STATE.deletedIds.push(userId);
+  CLOUD_STATE.users = CLOUD_STATE.users.filter((u) => u.id !== userId);
+
+  persistCloudState(`Usuario eliminado: ${usr.name}`);
+  showToast(`🗑️ Usuario ${usr.name} eliminado`);
 }
 
 /* ==========================================================================
@@ -3207,7 +5047,10 @@ function renderAdminDashboard() {
   const orders = loadOrders();
   const analytics = loadAnalytics();
   const finances = loadFinances();
-  const ambassadors = loadAmbassadors();
+  const users = loadUsers();
+
+  // Asegurar que las listas de reclutadores estén siempre al día
+  populateRecruiterSelects();
 
   // 1. Calcular Ventas y Pedidos (Aprobados vs Pendientes)
   let approvedRevenue = 0;
@@ -3326,95 +5169,12 @@ function renderAdminDashboard() {
   const supTotalBadge = document.getElementById('supplier-payments-total-badge');
   if (supTotalBadge) supTotalBadge.textContent = `Total: ${formatCLP(fin.totalSuppliersExpenses)}`;
 
-  // 3. Calcular Comisiones de Embajadores y Saldos Pendientes
-  const ambassadorStatsMap = {};
-  ambassadors.forEach((amb) => {
-    const key = (amb.code || '').toUpperCase();
-    ambassadorStatsMap[key] = {
-      id: amb.id,
-      name: amb.name,
-      code: key,
-      ordersCount: 0,
-      count30: 0,
-      totalCommission: 0,
-      totalPaid: 0,
-      pendingCommission: 0
-    };
-  });
-
-  let totalAllCommissionsEarned = 0;
-  let approvedOrdersWithCode = 0;
-
-  orders.forEach((o) => {
-    if (!o.approved && !o.paid) return;
-    const rawCode = (o.ambassadorCode || '').trim().toUpperCase();
-    if (!rawCode || rawCode === '-') return;
-
-    let matchedKey = rawCode;
-    Object.keys(ambassadorStatsMap).forEach((k) => {
-      const entry = ambassadorStatsMap[k];
-      if (entry.code === rawCode || entry.name.toUpperCase() === rawCode) {
-        matchedKey = k;
-      }
-    });
-
-    if (!ambassadorStatsMap[matchedKey]) {
-      ambassadorStatsMap[matchedKey] = {
-        id: null,
-        name: rawCode,
-        code: rawCode,
-        ordersCount: 0,
-        count30: 0,
-        totalCommission: 0,
-        totalPaid: 0,
-        pendingCommission: 0
-      };
-    }
-
-    const stat = ambassadorStatsMap[matchedKey];
-    stat.ordersCount += 1;
-    approvedOrdersWithCode += 1;
-
-    (o.items || []).forEach((it) => {
-      const qty = Number(it.qty) || 0;
-      stat.count30 += qty;
-      const commItem = qty * 2000;
-      stat.totalCommission += commItem;
-      totalAllCommissionsEarned += commItem;
-    });
-  });
-
-  // Facturar pagos ya realizados desde finances.ambassadorPayouts
+  // 3. Calcular Embajadores, Invitados (Cargas), Bonos por Producción y Saldos Pendientes
+  const ambReport = calculateAmbassadorsAndBonusesState();
+  const ambassadorRows = ambReport.ambassadorList;
   const ambassadorPayouts = finances.ambassadorPayouts || [];
-  let totalAllPaidCommissions = 0;
 
-  ambassadorPayouts.forEach((pay) => {
-    const payAmt = Number(pay.amount) || 0;
-    totalAllPaidCommissions += payAmt;
-    const rawCode = (pay.code || '').trim().toUpperCase();
-    if (!rawCode) return;
-
-    let matchedKey = rawCode;
-    Object.keys(ambassadorStatsMap).forEach((k) => {
-      const entry = ambassadorStatsMap[k];
-      if (entry.code === rawCode || entry.name.toUpperCase() === rawCode) {
-        matchedKey = k;
-      }
-    });
-
-    if (ambassadorStatsMap[matchedKey]) {
-      ambassadorStatsMap[matchedKey].totalPaid = (ambassadorStatsMap[matchedKey].totalPaid || 0) + payAmt;
-    }
-  });
-
-  let totalAllPendingCommissions = 0;
-  Object.values(ambassadorStatsMap).forEach((stat) => {
-    stat.totalPaid = stat.totalPaid || 0;
-    stat.pendingCommission = Math.max(0, stat.totalCommission - stat.totalPaid);
-    totalAllPendingCommissions += stat.pendingCommission;
-  });
-
-  // 4. Actualizar KPIs Superiores
+  // 4. Actualizar KPIs Superiores (Socios Fundadores + Encargada Emilia)
   const kpiRevEl = document.getElementById('kpi-total-revenue');
   const kpiProjEl = document.getElementById('kpi-monthly-projection');
   const kpiOrdEl = document.getElementById('kpi-total-orders');
@@ -3436,16 +5196,36 @@ function renderAdminDashboard() {
   if (kpiSuppliersEl) {
     kpiSuppliersEl.textContent = `Pagado a proveedores: ${formatCLP(fin.totalSuppliersExpenses)}`;
   }
-  if (kpiAmbCommEl) kpiAmbCommEl.textContent = formatCLP(totalAllPendingCommissions);
+  if (kpiAmbCommEl) kpiAmbCommEl.textContent = formatCLP(ambReport.totalAllPendingToPay);
   if (kpiAmbCountEl) {
-    kpiAmbCountEl.textContent = `${Object.keys(ambassadorStatsMap).length} embajadores • Pagado: ${formatCLP(totalAllPaidCommissions)}`;
+    kpiAmbCountEl.textContent = `${ambassadorRows.length} embajadores • Pagado: ${formatCLP(
+      ambReport.totalAllPaidCommissions
+    )}`;
   }
 
-  // 5. Renderizar Listas de Trabajo (Worklists) y Tabla de Pedidos
+  // KPIs exclusivos para la vista de Encargada (Emilia)
+  const encAmbCount = document.getElementById('enc-kpi-ambassadors-count');
+  const encOwnTrays = document.getElementById('enc-kpi-own-trays');
+  const encGuestBonuses = document.getElementById('enc-kpi-guest-bonuses');
+  const encGuestTrays = document.getElementById('enc-kpi-guest-trays');
+  const encTotalPending = document.getElementById('enc-kpi-total-pending');
+  const encTotalPaid = document.getElementById('enc-kpi-total-paid');
+
+  if (encAmbCount) encAmbCount.textContent = ambassadorRows.length;
+  if (encOwnTrays) encOwnTrays.textContent = ambReport.totalAllOwnTrays;
+  if (encGuestBonuses) encGuestBonuses.textContent = formatCLP(ambReport.totalAllGuestBonusesEarned);
+  if (encGuestTrays) {
+    encGuestTrays.textContent = `${ambReport.totalAllGuestTrays} bandejas vendidas por invitados`;
+  }
+  if (encTotalPending) encTotalPending.textContent = formatCLP(ambReport.totalAllPendingToPay);
+  if (encTotalPaid) {
+    encTotalPaid.textContent = `Histórico saldado: ${formatCLP(ambReport.totalAllPaidCommissions)}`;
+  }
+
+  // 5. Renderizar Listas de Trabajo (Worklists) y Tabla de Pedidos (Solo Socios Fundadores)
   const filterType = (document.getElementById('admin-filter-order-type') || {}).value || 'all';
   const sortMode = (document.getElementById('admin-sort-orders') || {}).value || 'newest';
 
-  // Conteos para las pestañas de listas automáticas de trabajo
   const countAll = orders.length;
   const countPending = orders.filter((o) => !o.paid).length;
   const countDispatch = orders.filter((o) => o.paid && o.deliveryStatus !== 'Entregado').length;
@@ -3461,7 +5241,6 @@ function renderAdminDashboard() {
   if (countDispatchEl) countDispatchEl.textContent = countDispatch;
   if (countDeliveredEl) countDeliveredEl.textContent = countDelivered;
 
-  // Filtrar según la Lista de Trabajo activa y modalidad
   const filteredOrders = orders.filter((o) => {
     if (currentOrderWorklistFilter === 'pending_payment' && o.paid) return false;
     if (currentOrderWorklistFilter === 'to_dispatch' && (!o.paid || o.deliveryStatus === 'Entregado')) return false;
@@ -3479,7 +5258,7 @@ function renderAdminDashboard() {
   });
 
   const ordersTbody = document.getElementById('admin-orders-tbody');
-  if (ordersTbody) {
+  if (ordersTbody && currentUserRole !== 'encargada') {
     if (filteredOrders.length === 0) {
       let emptyMsg = '0 pedidos en esta vista.';
       if (currentOrderWorklistFilter === 'pending_payment') {
@@ -3504,10 +5283,6 @@ function renderAdminDashboard() {
           const isDelivered = order.deliveryStatus === 'Entregado';
           const commission = calculateOrderCommission(order.items);
 
-          // Estilo de la fila:
-          // Estado 2: Pagado — Falta Entregar (Fila verde destacada para despacho)
-          // Estado 3: Entregado (Fila completada)
-          // Estado 1: Pendiente de pago (Fila en amarillo)
           let rowClass = 'hover:bg-white/5 transition';
           let statusBadge = '';
           let actionButtons = '';
@@ -3561,7 +5336,6 @@ function renderAdminDashboard() {
             `;
           }
 
-          // Botones estándar: Editar y Eliminar
           actionButtons += `
             <button type="button" onclick="openEditOrderModal('${order.id}')"
                     class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs transition"
@@ -3575,7 +5349,6 @@ function renderAdminDashboard() {
             </button>
           `;
 
-          // Cliente y ruta de reparto
           const clientDisplay = `
             <div class="space-y-1">
               <span class="font-display font-extrabold text-white text-sm block">${order.clientName || 'Cliente'}</span>
@@ -3595,12 +5368,10 @@ function renderAdminDashboard() {
             </div>
           `;
 
-          // Detalle de bandejas
           const itemsSummary = (order.items || [])
             .map((it) => `<span class="inline-block mr-1">📦 <strong>${it.qty}x</strong> ${it.name} (${it.format || '30 un.'})</span>`)
             .join('<br/>');
 
-          // Código de embajador
           const ambCode = (order.ambassadorCode || '').trim().toUpperCase();
           const hasAmb = ambCode && ambCode !== '-';
           const ambDisplay = hasAmb
@@ -3611,6 +5382,11 @@ function renderAdminDashboard() {
                  <span class="text-[10px] text-emerald-400 font-bold block mt-0.5">
                    Comisión: ${formatCLP(commission)}
                  </span>
+                 ${
+                   order.createdByAmbassador
+                     ? `<span class="text-[10px] text-sky-300 block">📱 Cargado en Portal</span>`
+                     : ''
+                 }
                </div>`
             : `<span class="text-slate-500 text-xs italic">- (Sin código)</span>`;
 
@@ -3655,9 +5431,9 @@ function renderAdminDashboard() {
     }
   }
 
-  // 6. Renderizar Historial de Pagos a Proveedores (División 50%)
+  // 6. Renderizar Historial de Pagos a Proveedores (Solo Socios Fundadores)
   const supplierTbody = document.getElementById('admin-supplier-payments-tbody');
-  if (supplierTbody) {
+  if (supplierTbody && currentUserRole !== 'encargada') {
     if (!finances.supplierPayments || finances.supplierPayments.length === 0) {
       supplierTbody.innerHTML = `
         <tr>
@@ -3721,15 +5497,130 @@ function renderAdminDashboard() {
     }
   }
 
-  // 7. Renderizar Tabla de Embajadores y Saldos de Comisiones
+  // 7. Renderizar "📈 Producción de Invitados y Bonos (10 Bandejas)"
+  const guestProdGrid = document.getElementById('admin-guest-production-grid');
+  const guestBonusesBadge = document.getElementById('guest-bonuses-total-summary-badge');
+  if (guestBonusesBadge) {
+    guestBonusesBadge.textContent = `Total Bonos Generados: ${formatCLP(
+      ambReport.totalAllGuestBonusesEarned
+    )}`;
+  }
+
+  if (guestProdGrid) {
+    // Mostrar a Emilia y a todos los embajadores no-fundadores que tienen invitados (o al menos a Emilia como destacada)
+    const eligibleRecruiters = ambassadorRows.filter(
+      (amb) =>
+        !amb.isFounder &&
+        (amb.guests.length > 0 || amb.code === 'EMILIA' || amb.code === 'EMILIA10' || (amb.name || '').toUpperCase() === 'EMILIA')
+    );
+
+    if (eligibleRecruiters.length === 0) {
+      guestProdGrid.innerHTML = `
+        <div class="col-span-2 p-6 rounded-2xl bg-qh-navyDark/70 border border-white/10 text-center text-slate-400 text-xs">
+          Aún no hay embajadores con invitados asignados. Asígnalos en el selector <strong>"¿Quién lo invitó?"</strong> al crear o editar un embajador.
+        </div>
+      `;
+    } else {
+      guestProdGrid.innerHTML = eligibleRecruiters
+        .map((rec) => {
+          const campoInBlock = rec.guestCampoTrays % 10;
+          const campoPct =
+            rec.guestCampoTrays > 0 && campoInBlock === 0
+              ? 100
+              : Math.min(100, Math.round((campoInBlock / 10) * 100));
+
+          const blancoInBlock = rec.guestBlancoTrays % 10;
+          const blancoPct =
+            rec.guestBlancoTrays > 0 && blancoInBlock === 0
+              ? 100
+              : Math.min(100, Math.round((blancoInBlock / 10) * 100));
+
+          const guestsPills =
+            rec.guests.length === 0
+              ? `<span class="text-[11px] text-slate-400 italic">Sin invitados registrados aún bajo ${rec.name}</span>`
+              : rec.guests
+                  .map(
+                    (g) =>
+                      `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-slate-200">
+                        👤 <strong>${g.name}</strong> (${g.code}): <span class="text-amber-300 font-bold">${g.campoTrays} Café</span> / <span class="text-sky-300 font-bold">${g.blancoTrays} Blanco</span>
+                      </span>`
+                  )
+                  .join(' ');
+
+          return `
+            <div class="p-5 rounded-2xl bg-qh-navyDark/90 border border-amber-400/25 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-display font-extrabold text-base text-white">${rec.name}</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-amber-400/20 text-amber-300 font-display font-extrabold text-[11px]">${rec.code}</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">
+                    Red de Invitados: <strong class="text-white">${rec.guests.length} persona(s)</strong> • Total grupal aprobado: <strong class="text-emerald-400">${rec.guestTotalTrays} bandejas</strong>
+                  </p>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] uppercase tracking-wider text-amber-300 font-extrabold block">Bonos Ganados</span>
+                  <span class="font-display font-black text-xl text-amber-400">${formatCLP(rec.totalBonusEarned)}</span>
+                </div>
+              </div>
+
+              <!-- Barra Progreso Huevo de Campo ($10.000 cada 10 bandejas) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-amber-200">🥚 Invitados de ${rec.name}: <strong>${campoInBlock}/10 Bandejas Café</strong> para el bono de $10.000</span>
+                  <span class="font-display font-extrabold text-amber-300">${rec.bonusCampoBlocks} bono(s) (${formatCLP(rec.bonusCampoAmount)})</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-r from-qh-brown to-amber-400 transition-all duration-500" style="width: ${campoPct}%"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-slate-400">
+                  <span>Total acumulado Café de invitados: <strong>${rec.guestCampoTrays} bandejas</strong>${
+                    rec.guestPendingCampoTrays > 0 ? ` (+${rec.guestPendingCampoTrays} en proceso)` : ''
+                  }</span>
+                  <span>Faltan ${10 - campoInBlock} para +$10.000</span>
+                </div>
+              </div>
+
+              <!-- Barra Progreso Huevo Blanco ($8.000 cada 10 bandejas) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-sky-200">⚪ Invitados de ${rec.name}: <strong>${blancoInBlock}/10 Bandejas Blanco</strong> para el bono de $8.000</span>
+                  <span class="font-display font-extrabold text-sky-300">${rec.bonusBlancoBlocks} bono(s) (${formatCLP(rec.bonusBlancoAmount)})</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                  <div class="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-all duration-500" style="width: ${blancoPct}%"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-slate-400">
+                  <span>Total acumulado Blanco de invitados: <strong>${rec.guestBlancoTrays} bandejas</strong>${
+                    rec.guestPendingBlancoTrays > 0 ? ` (+${rec.guestPendingBlancoTrays} en proceso)` : ''
+                  }</span>
+                  <span>Faltan ${10 - blancoInBlock} para +$8.000</span>
+                </div>
+              </div>
+
+              <!-- Detalle de cargas / invitados -->
+              <div class="pt-2 border-t border-white/10">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1.5">Sus Cargas / Sus Invitados:</span>
+                <div class="flex flex-wrap gap-1.5">
+                  ${guestsPills}
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  // 8. Renderizar Tabla General de Embajadores (Comisión Propia + Producción de Invitados y Bonos + Total a Pagar)
   const ambassadorsTbody = document.getElementById('admin-ambassadors-tbody');
   if (ambassadorsTbody) {
-    const ambassadorRows = Object.values(ambassadorStatsMap);
     if (ambassadorRows.length === 0) {
       ambassadorsTbody.innerHTML = `
         <tr>
-          <td colspan="8" class="py-8 text-center text-slate-400">
-            0 embajadores registrados en la nube. Crea un código arriba para comenzar.
+          <td colspan="7" class="py-8 text-center text-slate-400">
+            0 embajadores registrados en la nube. Crea un embajador arriba para comenzar.
           </td>
         </tr>
       `;
@@ -3737,65 +5628,139 @@ function renderAdminDashboard() {
       ambassadorsTbody.innerHTML = ambassadorRows
         .map((amb) => {
           const safeName = (amb.name || '').replace(/'/g, "\\'");
+          const invLabel = amb.invitedBy || 'Directo';
+          const isDirect =
+            invLabel.toLowerCase() === 'directo' || invLabel.toLowerCase().includes('nadie');
+
+          const invitedByHtml = isDirect
+            ? `<span class="px-2.5 py-1 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold">Directo / Nadie</span>`
+            : `<span class="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-extrabold">🤝 Invitado de ${invLabel}</span>`;
+
+          let guestBonusCell = '';
+          if (amb.isFounder) {
+            guestBonusCell = `
+              <div class="text-xs text-slate-400">
+                <span class="font-bold text-slate-300 block">👑 Socio Dueño (${amb.guests.length} inv.)</span>
+                <span class="text-[11px] italic">Sin bono reclutamiento ($0)</span>
+              </div>
+            `;
+          } else {
+            guestBonusCell = `
+              <div class="space-y-0.5 text-xs">
+                <span class="font-bold text-white block">
+                  👥 ${amb.guests.length} inv. • 📦 ${amb.guestTotalTrays} bandejas
+                </span>
+                <span class="text-[11px] text-slate-300 block">
+                  Café: <strong>${amb.guestCampoTrays}</strong> (${amb.bonusCampoBlocks}x $10k) • Blanco: <strong>${amb.guestBlancoTrays}</strong> (${amb.bonusBlancoBlocks}x $8k)
+                </span>
+                <span class="font-display font-extrabold text-amber-300 block">
+                  Bonos: +${formatCLP(amb.totalBonusEarned)}
+                </span>
+              </div>
+            `;
+          }
+
           return `
             <tr class="hover:bg-white/5 transition">
-              <td class="py-3.5 px-4 font-display font-extrabold text-white">
-                ${amb.name}
+              <td class="py-3.5 px-4">
+                <div class="space-y-1">
+                  <span class="font-display font-extrabold text-white text-sm block">${amb.name}</span>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display font-extrabold text-xs tracking-wider">
+                      ${amb.code}
+                    </span>
+                    ${
+                      amb.username
+                        ? `<span class="text-[11px] text-slate-400 font-semibold">@${amb.username}</span>`
+                        : ''
+                    }
+                  </div>
+                  ${
+                    amb.phone
+                      ? `<span class="text-[11px] text-emerald-400 block">📞 ${amb.phone}</span>`
+                      : ''
+                  }
+                </div>
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <span class="px-3 py-1 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display font-extrabold text-xs tracking-wider">
-                  ${amb.code}
-                </span>
+                ${invitedByHtml}
               </td>
-              <td class="py-3.5 px-4 font-bold text-slate-200">
-                ${amb.ordersCount} pedido(s)
+              <td class="py-3.5 px-4 text-xs">
+                <div class="space-y-0.5">
+                  <span class="font-bold text-white block">
+                    📦 <strong>${amb.ownTotalTrays}</strong> bandejas (${amb.ordersCount} ped.)
+                  </span>
+                  <span class="text-[11px] text-slate-400 block">
+                    ${amb.ownCampoTrays} Café • ${amb.ownBlancoTrays} Blanco${
+                      amb.ownPendingTrays > 0 ? ` (+${amb.ownPendingTrays} pend.)` : ''
+                    }
+                  </span>
+                  <span class="font-display font-extrabold text-emerald-400 block">
+                    Comisión directa: ${formatCLP(amb.ownCommissionEarned)}
+                  </span>
+                </div>
               </td>
-              <td class="py-3.5 px-4 text-xs text-slate-300">
-                <span>📦 <strong>${amb.count30}</strong> bandejas</span>
-              </td>
-              <td class="py-3.5 px-4 whitespace-nowrap font-display font-bold text-slate-300">
-                ${formatCLP(amb.totalCommission)}
+              <td class="py-3.5 px-4">
+                ${guestBonusCell}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap font-display font-bold text-emerald-400">
                 ${formatCLP(amb.totalPaid || 0)}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <span class="font-display font-extrabold text-lg ${
-                  amb.pendingCommission > 0 ? 'text-amber-400' : 'text-slate-400'
-                }">
-                  ${formatCLP(amb.pendingCommission)}
-                </span>
+                <div>
+                  <span class="font-display font-extrabold text-lg block ${
+                    amb.totalPendingToPay > 0 ? 'text-amber-400' : 'text-slate-400'
+                  }">
+                    ${formatCLP(amb.totalPendingToPay)}
+                  </span>
+                  ${
+                    amb.totalPendingToPay > 0
+                      ? `<span class="text-[10px] text-slate-300 block">
+                           Propia: ${formatCLP(amb.ownCommissionPending)} + Bonos: ${formatCLP(amb.bonusPending)}
+                         </span>`
+                      : `<span class="text-[10px] text-slate-500 block">Saldado ($0)</span>`
+                  }
+                </div>
               </td>
               <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                <button type="button" onclick="copyAmbassadorCode('${amb.code}')"
-                        class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white mr-1 transition"
-                        title="Copiar código al portapapeles">
-                  📋 Copiar
-                </button>
-                ${
-                  amb.pendingCommission > 0
-                    ? `
-                      <button type="button" onclick="payAmbassadorCommission('${amb.code}', '${safeName}', ${amb.pendingCommission})"
-                              class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow mr-1 transition"
-                              title="Pagar comisión y saldar deuda a $0 desde Caja">
-                        💸 Pagar / Saldar (${formatCLP(amb.pendingCommission)})
-                      </button>
-                    `
-                    : `
-                      <span class="px-2 py-1 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold mr-1">
-                        ✅ Al Día
-                      </span>
-                    `
-                }
-                ${
-                  amb.id
-                    ? `<button type="button" onclick="deleteAmbassador('${amb.id}')"
-                               class="px-2.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-xs font-bold text-red-300 transition"
-                               title="Eliminar embajador y código de la base de datos">
-                         🗑️
-                       </button>`
-                    : ''
-                }
+                <div class="flex flex-wrap items-center justify-end gap-1.5">
+                  <button type="button" onclick="copyAmbassadorCode('${amb.code}')"
+                          class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition"
+                          title="Copiar código al portapapeles">
+                    📋
+                  </button>
+                  ${
+                    amb.totalPendingToPay > 0
+                      ? `
+                        <button type="button" onclick="payAmbassadorCommission('${amb.code}', '${safeName}', ${amb.totalPendingToPay})"
+                                class="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs shadow transition"
+                                title="Pagar Comisión Propia + Bonos de Invitados y dejar deuda en $0">
+                          💸 Pagar / Saldar (${formatCLP(amb.totalPendingToPay)})
+                        </button>
+                      `
+                      : `
+                        <span class="px-2 py-1 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold">
+                          ✅ Al Día
+                        </span>
+                      `
+                  }
+                  ${
+                    amb.id
+                      ? `
+                        <button type="button" onclick="openEditAmbassadorModal('${amb.id}')"
+                                class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-300 transition"
+                                title="Editar embajador / Cambiar quién lo invitó">
+                          ✏️
+                        </button>
+                        <button type="button" onclick="deleteAmbassador('${amb.id}')"
+                                class="px-2.5 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-xs font-bold text-red-300 transition"
+                                title="Eliminar embajador">
+                          🗑️
+                        </button>
+                      `
+                      : ''
+                  }
+                </div>
               </td>
             </tr>
           `;
@@ -3804,10 +5769,12 @@ function renderAdminDashboard() {
     }
   }
 
-  // 8. Renderizar Historial de Transacciones a Embajadores
+  // 9. Renderizar Historial de Transacciones a Embajadores
   const payoutsTbody = document.getElementById('admin-ambassador-payouts-tbody');
   const payoutsBadge = document.getElementById('ambassador-payouts-total-badge');
-  if (payoutsBadge) payoutsBadge.textContent = `Total Saldado: ${formatCLP(totalAllPaidCommissions)}`;
+  if (payoutsBadge) {
+    payoutsBadge.textContent = `Total Saldado: ${formatCLP(ambReport.totalAllPaidCommissions)}`;
+  }
 
   if (payoutsTbody) {
     if (ambassadorPayouts.length === 0) {
@@ -3852,7 +5819,83 @@ function renderAdminDashboard() {
     }
   }
 
-  // 9. Renderizar Exclusivamente "Productos Más Pinchados" (Analítica Optimizada)
+  // 10. Renderizar Tabla de Gestión de Usuarios y Roles (#admin-users-tbody)
+  const usersTbody = document.getElementById('admin-users-tbody');
+  if (usersTbody) {
+    if (users.length === 0) {
+      usersTbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-6 text-center text-slate-500">
+            No hay usuarios registrados.
+          </td>
+        </tr>
+      `;
+    } else {
+      usersTbody.innerHTML = users
+        .map((u) => {
+          let roleBadge = '';
+          if (u.role === 'socio') {
+            roleBadge = `<span class="px-2.5 py-1 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-extrabold">👑 Socio Fundador (Acceso Total)</span>`;
+          } else if (u.role === 'encargada') {
+            roleBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold">🌟 Encargada de Embajadores y Redes</span>`;
+          } else {
+            roleBadge = `<span class="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-300 text-xs font-extrabold">🥚 Embajador / Vendedor (Portal Personal)</span>`;
+          }
+
+          const passDisplay =
+            u.password === 'FOUNDER_HASH'
+              ? '<span class="text-slate-400 italic text-xs">Clave Maestra Socio</span>'
+              : `<code class="px-2 py-0.5 rounded bg-white/10 text-amber-200 text-xs font-mono">${u.password || '12345'}</code>`;
+
+          const isProtectedFounder =
+            u.id === 'USR-FOUNDER-JUANJO' ||
+            u.id === 'USR-FOUNDER-MATI' ||
+            u.role === 'socio';
+
+          return `
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-3 px-4">
+                <span class="font-display font-extrabold text-white text-sm block">${u.name}</span>
+                <span class="text-xs text-amber-300 font-semibold">@${u.username}</span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                ${passDisplay}
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                ${roleBadge}
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-lg bg-white/10 text-white font-display font-bold text-xs">
+                  ${u.code || '-'}
+                </span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap text-xs text-slate-300 font-semibold">
+                ${u.invitedBy || 'Directo'}
+              </td>
+              <td class="py-3 px-4 text-right whitespace-nowrap">
+                <button type="button" onclick="openEditUserModal('${u.id}')"
+                        class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs mr-1 transition"
+                        title="Editar usuario / rol / clave">
+                  ✏️ Editar
+                </button>
+                ${
+                  !isProtectedFounder
+                    ? `<button type="button" onclick="deleteUserRecord('${u.id}')"
+                               class="px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-300 font-bold text-xs transition"
+                               title="Eliminar usuario">
+                         🗑️
+                       </button>`
+                    : ''
+                }
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  // 11. Renderizar Exclusivamente "Productos Más Pinchados" (Solo Socios Fundadores)
   const productSort = (document.getElementById('admin-sort-products') || {}).value || 'clicks-desc';
   const productList = PRODUCTS.map((p) => {
     const st = analytics.productStats[p.id] || { clicks: 0, addedToCart: 0, checkouts: 0 };
@@ -3873,7 +5916,7 @@ function renderAdminDashboard() {
   const maxProductClicks = Math.max(1, ...productList.map((p) => p.clicks));
   const productsAnalyticsEl = document.getElementById('admin-products-analytics');
 
-  if (productsAnalyticsEl) {
+  if (productsAnalyticsEl && currentUserRole !== 'encargada') {
     productsAnalyticsEl.innerHTML = productList
       .map((p) => {
         const pct = p.clicks === 0 ? 0 : Math.round((p.clicks / maxProductClicks) * 100);
@@ -4004,7 +6047,7 @@ function showToast(message) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Cargar al instante el último estado guardado (0ms tras F5) y la sesión de admin
+  // 1. Cargar al instante el último estado guardado (0ms tras F5) y la sesión activa
   loadLocalCloudMirror();
   CLOUD_STATE.analytics.pageViews = (CLOUD_STATE.analytics.pageViews || 0) + 1;
   saveLocalCloudMirror();
@@ -4012,17 +6055,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Renderizar tienda inmediatamente con carrito en 0
   renderCatalog();
   syncOrderUI();
+  populateRecruiterSelects();
 
-  if (currentAdminUser && ALLOWED_ADMINS[currentAdminUser.toLowerCase()]) {
+  if (currentAdminUser) {
     const navLabel = document.getElementById('navbar-admin-label');
-    if (navLabel) navLabel.textContent = `Panel (${currentAdminUser})`;
+    if (navLabel) {
+      navLabel.textContent =
+        currentUserRole === 'embajador'
+          ? `Mi Portal (${currentAdminUser})`
+          : `Panel (${currentAdminUser})`;
+    }
     let wasDashboardOpen = false;
+    let wasPortalOpen = false;
     try {
       wasDashboardOpen = window.localStorage.getItem(ADMIN_VIEW_OPEN_KEY) === '1';
+      wasPortalOpen = window.localStorage.getItem(PORTAL_VIEW_OPEN_KEY) === '1';
     } catch (e) {
       wasDashboardOpen = false;
+      wasPortalOpen = false;
     }
-    if (wasDashboardOpen) {
+    if (wasPortalOpen || (wasDashboardOpen && currentUserRole === 'embajador')) {
+      showAmbassadorPortal();
+    } else if (wasDashboardOpen) {
       showAdminDashboard(currentAdminUser);
     }
   }
@@ -4065,6 +6119,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const ambAuthModal = document.getElementById('ambassador-auth-modal');
+  if (ambAuthModal) {
+    ambAuthModal.addEventListener('click', (e) => {
+      if (e.target === ambAuthModal) closeAmbassadorAuthModal();
+    });
+  }
+
   const supaModal = document.getElementById('supabase-config-modal');
   if (supaModal) {
     supaModal.addEventListener('click', (e) => {
@@ -4076,6 +6137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Escape') {
       closeCartDrawer();
       closeAdminLoginModal();
+      closeAmbassadorAuthModal();
+      closeEditAmbassadorModal();
+      closeEditUserModal();
       closeSupabaseConfigModal();
     }
   });
