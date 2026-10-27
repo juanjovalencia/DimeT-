@@ -333,7 +333,7 @@ function loadLocalCloudMirror() {
           currentAdminUser = sess.name || null;
           currentUserRole = sess.role || null;
           currentUserUsername = sess.username || null;
-          currentUserCode = sess.ambassadorCode || null;
+          currentUserCode = sess.code || sess.ambassadorCode || null;
         } catch (err) {
           // ignore
         }
@@ -342,6 +342,8 @@ function loadLocalCloudMirror() {
         if (savedAdmin) {
           currentAdminUser = savedAdmin;
           currentUserRole = 'socio';
+          currentUserUsername = savedAdmin.toLowerCase();
+          currentUserCode = savedAdmin.toLowerCase().includes('juanjo') ? 'JUANJO' : 'MATI10';
         }
       }
       const savedName = window.localStorage.getItem('qh_customer_name');
@@ -2414,7 +2416,7 @@ function saveActiveUserSession(userObj) {
   currentAdminUser = userObj.name || userObj.username;
   currentUserRole = userObj.role || 'embajador';
   currentUserUsername = (userObj.username || '').toLowerCase();
-  currentUserCode = (userObj.code || '').toUpperCase();
+  currentUserCode = (userObj.code || userObj.ambassadorCode || '').toUpperCase();
   try {
     window.localStorage.setItem(ADMIN_SESSION_KEY, currentAdminUser);
     window.localStorage.setItem(
@@ -2423,7 +2425,8 @@ function saveActiveUserSession(userObj) {
         name: currentAdminUser,
         role: currentUserRole,
         username: currentUserUsername,
-        code: currentUserCode
+        code: currentUserCode,
+        ambassadorCode: currentUserCode
       })
     );
   } catch (e) {
@@ -2624,14 +2627,16 @@ function populateRecruiterSelects() {
 function openAmbassadorAuthModal(initialTab = 'register') {
   populateRecruiterSelects();
   const modal = document.getElementById('ambassador-auth-modal');
-  const activeBanner = document.getElementById('amb-auth-active-session-banner');
-  const activeNameEl = document.getElementById('amb-auth-active-name');
+  const activeBanner = document.getElementById('amb-modal-active-session-banner');
+  const activeNameEl = document.getElementById('amb-modal-active-name');
 
   if (currentAdminUser && activeBanner && activeNameEl) {
     activeBanner.classList.remove('hidden');
+    activeBanner.classList.add('flex');
     activeNameEl.textContent = `${currentAdminUser} (${currentUserCode || currentUserRole})`;
   } else if (activeBanner) {
     activeBanner.classList.add('hidden');
+    activeBanner.classList.remove('flex');
   }
 
   switchAmbassadorAuthTab(initialTab);
@@ -2653,8 +2658,8 @@ function closeAmbassadorAuthModal() {
 function switchAmbassadorAuthTab(tab) {
   const tabReg = document.getElementById('amb-auth-tab-register');
   const tabLog = document.getElementById('amb-auth-tab-login');
-  const formReg = document.getElementById('pub-ambassador-register-form');
-  const formLog = document.getElementById('pub-ambassador-login-form');
+  const formReg = document.getElementById('public-ambassador-register-form');
+  const formLog = document.getElementById('public-ambassador-login-form');
   const errReg = document.getElementById('pub-amb-register-error');
   const errLog = document.getElementById('pub-amb-login-error');
 
@@ -2664,22 +2669,22 @@ function switchAmbassadorAuthTab(tab) {
   if (tab === 'login') {
     if (tabLog) {
       tabLog.className =
-        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
+        'py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
     }
     if (tabReg) {
       tabReg.className =
-        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
+        'py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:text-white transition';
     }
     if (formReg) formReg.classList.add('hidden');
     if (formLog) formLog.classList.remove('hidden');
   } else {
     if (tabReg) {
       tabReg.className =
-        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
+        'py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm bg-amber-400 text-qh-navyDark shadow transition';
     }
     if (tabLog) {
       tabLog.className =
-        'py-2.5 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:bg-white/10 transition';
+        'py-2.5 px-3 rounded-xl font-display font-extrabold text-xs sm:text-sm text-slate-300 hover:text-white transition';
     }
     if (formLog) formLog.classList.add('hidden');
     if (formReg) formReg.classList.remove('hidden');
@@ -2774,6 +2779,7 @@ async function handlePublicAmbassadorRegister(event) {
     name,
     role: 'embajador',
     code,
+    ambassadorCode: code,
     phone,
     invitedBy: invitedBy || 'Directo',
     createdAt: new Date().toLocaleDateString('es-CL'),
@@ -2789,7 +2795,8 @@ async function handlePublicAmbassadorRegister(event) {
     code
   });
 
-  document.getElementById('pub-ambassador-register-form').reset();
+  const regForm = document.getElementById('public-ambassador-register-form');
+  if (regForm) regForm.reset();
   closeAmbassadorAuthModal();
 
   await persistCloudState(`Nuevo embajador registrado en web: ${name} (${code}) • Invitado por: ${invitedBy}`);
@@ -2810,7 +2817,8 @@ async function handlePublicAmbassadorLogin(event) {
   }
 
   saveActiveUserSession(authUser);
-  document.getElementById('pub-ambassador-login-form').reset();
+  const logForm = document.getElementById('public-ambassador-login-form');
+  if (logForm) logForm.reset();
   closeAmbassadorAuthModal();
 
   if (authUser.role === 'socio' || authUser.role === 'encargada') {
@@ -2906,8 +2914,8 @@ function copyCurrentAmbassadorPortalCode() {
 }
 
 function togglePortalWeeklyDay() {
-  const typeSel = document.getElementById('portal-order-type');
-  const wrap = document.getElementById('portal-weekly-day-wrapper');
+  const typeSel = document.getElementById('portal-order-modality');
+  const wrap = document.getElementById('portal-order-day-wrapper');
   if (!typeSel || !wrap) return;
   if (typeSel.value === 'Pedido Fijo Semanal') {
     wrap.classList.remove('hidden');
@@ -2917,7 +2925,7 @@ function togglePortalWeeklyDay() {
 }
 
 function adjustPortalTrayQty(type, delta) {
-  const inputId = type === 'campo' ? 'portal-qty-campo' : 'portal-qty-blanco';
+  const inputId = type === 'campo' ? 'portal-order-qty-campo' : 'portal-order-qty-blanco';
   const inp = document.getElementById(inputId);
   if (!inp) return;
   const current = parseInt(inp.value, 10) || 0;
@@ -2926,43 +2934,37 @@ function adjustPortalTrayQty(type, delta) {
 }
 
 function updatePortalOrderPreview() {
-  const qtyCampo = Math.max(0, parseInt((document.getElementById('portal-qty-campo') || {}).value, 10) || 0);
-  const qtyBlanco = Math.max(0, parseInt((document.getElementById('portal-qty-blanco') || {}).value, 10) || 0);
+  const qtyCampo = Math.max(0, parseInt((document.getElementById('portal-order-qty-campo') || {}).value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt((document.getElementById('portal-order-qty-blanco') || {}).value, 10) || 0);
   const totalTrays = qtyCampo + qtyBlanco;
   const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
   const commission = totalTrays * 2000;
 
-  const traysEl = document.getElementById('portal-preview-trays');
-  const subEl = document.getElementById('portal-preview-subtotal');
-  const commEl = document.getElementById('portal-preview-commission');
+  const traysEl = document.getElementById('portal-order-preview-trays');
+  const totalEl = document.getElementById('portal-order-preview-total');
 
-  if (traysEl) traysEl.textContent = `${totalTrays} bandeja(s) (${totalTrays * 30} huevos)`;
-  if (subEl) subEl.textContent = formatCLP(subtotal);
-  if (commEl) commEl.textContent = `+${formatCLP(commission)}`;
+  if (traysEl) {
+    traysEl.textContent = `${totalTrays} bandeja(s) (${totalTrays * 30} huevos) • Tu comisión: +${formatCLP(commission)}`;
+  }
+  if (totalEl) totalEl.textContent = formatCLP(subtotal);
 }
 
 async function handleAmbassadorPortalCreateOrder(event) {
   event.preventDefault();
-  const clientName = (document.getElementById('portal-client-name').value || '').trim();
-  const clientAddress = (document.getElementById('portal-client-address').value || '').trim();
-  const clientPhone = (document.getElementById('portal-client-phone').value || '').trim();
-  const clientNotes = (document.getElementById('portal-client-notes').value || '').trim();
-  const orderType = (document.getElementById('portal-order-type').value || 'Pedido Único').trim();
-  const deliveryDay = (document.getElementById('portal-delivery-day').value || 'Jueves').trim();
+  const clientName = ((document.getElementById('portal-order-client-name') || {}).value || '').trim();
+  const clientAddress = ((document.getElementById('portal-order-client-address') || {}).value || '').trim();
+  const clientPhone = ((document.getElementById('portal-order-client-phone') || {}).value || '').trim();
+  const clientNotes = ((document.getElementById('portal-order-notes') || {}).value || '').trim();
+  const orderType = ((document.getElementById('portal-order-modality') || {}).value || 'Pedido Único').trim();
+  const deliveryDay = ((document.getElementById('portal-order-delivery-day') || {}).value || 'Jueves').trim();
 
-  const qtyCampo = Math.max(0, parseInt(document.getElementById('portal-qty-campo').value, 10) || 0);
-  const qtyBlanco = Math.max(0, parseInt(document.getElementById('portal-qty-blanco').value, 10) || 0);
-  const errEl = document.getElementById('portal-order-error');
+  const qtyCampo = Math.max(0, parseInt((document.getElementById('portal-order-qty-campo') || {}).value, 10) || 0);
+  const qtyBlanco = Math.max(0, parseInt((document.getElementById('portal-order-qty-blanco') || {}).value, 10) || 0);
 
   if (!clientName || !clientAddress || qtyCampo + qtyBlanco <= 0) {
-    if (errEl) {
-      errEl.textContent =
-        '⚠️ Debes ingresar Nombre del Cliente, Dirección de Entrega y al menos 1 bandeja.';
-      errEl.classList.remove('hidden');
-    }
+    showToast('⚠️ Debes ingresar Nombre del Cliente, Dirección de Entrega y al menos 1 bandeja.');
     return;
   }
-  if (errEl) errEl.classList.add('hidden');
 
   const items = [];
   if (qtyCampo > 0) {
@@ -3032,9 +3034,12 @@ async function handleAmbassadorPortalCreateOrder(event) {
     status: 'Pendiente de Pago'
   });
 
-  document.getElementById('portal-load-order-form').reset();
-  document.getElementById('portal-qty-campo').value = 1;
-  document.getElementById('portal-qty-blanco').value = 0;
+  const portalForm = document.getElementById('portal-load-order-form');
+  if (portalForm) portalForm.reset();
+  const campoInp = document.getElementById('portal-order-qty-campo');
+  const blancoInp = document.getElementById('portal-order-qty-blanco');
+  if (campoInp) campoInp.value = 1;
+  if (blancoInp) blancoInp.value = 0;
   togglePortalWeeklyDay();
   updatePortalOrderPreview();
 
@@ -3054,7 +3059,6 @@ function renderAmbassadorPortal() {
   if (!portal || portal.classList.contains('hidden')) return;
 
   const ambReport = calculateAmbassadorsAndBonusesState();
-  const ambassadors = loadAmbassadors();
   const orders = loadOrders();
 
   // Identificar el registro del embajador actual
@@ -3066,6 +3070,8 @@ function renderAmbassadorPortal() {
     myStat = Object.values(ambReport.statsMap).find(
       (s) =>
         s.code === cleanCode ||
+        s.code + '10' === cleanCode ||
+        cleanCode + '10' === s.code ||
         (s.name || '').toUpperCase() === cleanName ||
         (s.username || '').toUpperCase() === (currentUserUsername || '').toUpperCase()
     );
@@ -3100,65 +3106,55 @@ function renderAmbassadorPortal() {
   }
 
   // Actualizar cabeceras del portal
-  const nameBadge = document.getElementById('portal-user-name-badge');
-  const codeBadge = document.getElementById('portal-user-code-badge');
-  const invBadge = document.getElementById('portal-invited-by-badge');
+  const nameBadge = document.getElementById('portal-amb-name');
+  const codeBadge = document.getElementById('portal-amb-code');
+  const invBadge = document.getElementById('portal-amb-invited-badge');
   if (nameBadge) nameBadge.textContent = myStat.name;
   if (codeBadge) codeBadge.textContent = myStat.code;
-  if (invBadge) invBadge.textContent = myStat.invitedBy || 'Directo';
+  if (invBadge) invBadge.textContent = `Invitado por: ${myStat.invitedBy || 'Directo'}`;
 
   // KPIs personales
   const kpiTrays = document.getElementById('portal-kpi-own-trays');
   const kpiBreak = document.getElementById('portal-kpi-own-breakdown');
   const kpiOwnComm = document.getElementById('portal-kpi-own-commission');
-  const kpiOwnOrders = document.getElementById('portal-kpi-own-orders-count');
   const kpiGuestBonuses = document.getElementById('portal-kpi-guest-bonuses');
   const kpiGuestSummary = document.getElementById('portal-kpi-guests-summary');
   const kpiTotalPending = document.getElementById('portal-kpi-total-pending');
-  const kpiTotalPaid = document.getElementById('portal-kpi-total-paid');
+  const kpiTotalPaid = document.getElementById('portal-kpi-paid-history');
 
   if (kpiTrays) kpiTrays.textContent = myStat.ownTotalTrays;
   if (kpiBreak) {
-    const pendNote = myStat.ownPendingTrays > 0 ? ` (+${myStat.ownPendingTrays} en proceso)` : '';
-    kpiBreak.textContent = `${myStat.ownCampoTrays} Campo • ${myStat.ownBlancoTrays} Blanco${pendNote}`;
+    const pendNote = myStat.ownPendingTrays > 0 ? ` (${myStat.ownPendingTrays} en revisión)` : '';
+    kpiBreak.textContent = `${myStat.ownCampoTrays} Café • ${myStat.ownBlancoTrays} Blanco${pendNote}`;
   }
   if (kpiOwnComm) kpiOwnComm.textContent = formatCLP(myStat.ownCommissionEarned);
-  if (kpiOwnOrders) {
-    kpiOwnOrders.textContent = `${myStat.ordersCount} pedido(s) aprobado(s) • ${myStat.pendingOrdersCount} pendiente(s)`;
-  }
   if (kpiGuestBonuses) kpiGuestBonuses.textContent = formatCLP(myStat.totalBonusEarned);
   if (kpiGuestSummary) {
-    kpiGuestSummary.textContent = `${myStat.guests.length} invitado(s) • ${myStat.guestTotalTrays} bandejas grupales`;
+    kpiGuestSummary.textContent = `${myStat.guests.length} invitado(s) • ${myStat.guestTotalTrays} bandejas de red`;
   }
   if (kpiTotalPending) kpiTotalPending.textContent = formatCLP(myStat.totalPendingToPay);
-  if (kpiTotalPaid) kpiTotalPaid.textContent = `Histórico ya pagado: ${formatCLP(myStat.totalPaid)}`;
+  if (kpiTotalPaid) kpiTotalPaid.textContent = `Ya pagado histórico: ${formatCLP(myStat.totalPaid)}`;
 
   // Barras de progreso de Producción de Invitados
-  const guestCountBadge = document.getElementById('portal-guests-count-badge');
-  if (guestCountBadge) guestCountBadge.textContent = `${myStat.guests.length} Invitado(s)`;
-
   const campoProgressInBlock = myStat.guestCampoTrays % 10;
   const campoPct =
     myStat.guestCampoTrays > 0 && campoProgressInBlock === 0
       ? 100
       : Math.min(100, Math.round((campoProgressInBlock / 10) * 100));
-  const progCampoTxt = document.getElementById('portal-progress-campo-text');
+  const progCampoTitle = document.getElementById('portal-progress-campo-title');
+  const progCampoPct = document.getElementById('portal-progress-campo-pct');
   const progCampoBar = document.getElementById('portal-progress-campo-bar');
-  const bonusCampoStat = document.getElementById('portal-bonus-campo-status');
-  const remCampoTxt = document.getElementById('portal-remaining-campo-text');
+  const progCampoNote = document.getElementById('portal-progress-campo-note');
 
-  if (progCampoTxt) {
-    progCampoTxt.textContent = `${campoProgressInBlock}/10 Bandejas Café (Total acum: ${myStat.guestCampoTrays})`;
+  if (progCampoTitle) {
+    progCampoTitle.textContent = `Bandejas Café de tus invitados: ${campoProgressInBlock}/10 para bono de $10.000`;
   }
+  if (progCampoPct) progCampoPct.textContent = `${campoProgressInBlock}/10`;
   if (progCampoBar) progCampoBar.style.width = `${campoPct}%`;
-  if (bonusCampoStat) {
-    bonusCampoStat.textContent = myStat.isFounder
-      ? 'Socio Fundador (No aplica bono)'
-      : `${myStat.bonusCampoBlocks} Bono(s) Ganado(s) (${formatCLP(myStat.bonusCampoAmount)})`;
-  }
-  if (remCampoTxt) {
-    const missingCampo = 10 - campoProgressInBlock;
-    remCampoTxt.textContent = `Faltan ${missingCampo} bandeja(s) para +$10.000`;
+  if (progCampoNote) {
+    progCampoNote.textContent = myStat.isFounder
+      ? `Total invitados: ${myStat.guestCampoTrays} bandejas Café • Socio Fundador (Sin bono reclutamiento)`
+      : `Total acumulado invitados: ${myStat.guestCampoTrays} bandejas Café • ${myStat.bonusCampoBlocks} bono(s) ganado(s) (${formatCLP(myStat.bonusCampoAmount)})`;
   }
 
   const blancoProgressInBlock = myStat.guestBlancoTrays % 10;
@@ -3166,23 +3162,20 @@ function renderAmbassadorPortal() {
     myStat.guestBlancoTrays > 0 && blancoProgressInBlock === 0
       ? 100
       : Math.min(100, Math.round((blancoProgressInBlock / 10) * 100));
-  const progBlancoTxt = document.getElementById('portal-progress-blanco-text');
+  const progBlancoTitle = document.getElementById('portal-progress-blanco-title');
+  const progBlancoPct = document.getElementById('portal-progress-blanco-pct');
   const progBlancoBar = document.getElementById('portal-progress-blanco-bar');
-  const bonusBlancoStat = document.getElementById('portal-bonus-blanco-status');
-  const remBlancoTxt = document.getElementById('portal-remaining-blanco-text');
+  const progBlancoNote = document.getElementById('portal-progress-blanco-note');
 
-  if (progBlancoTxt) {
-    progBlancoTxt.textContent = `${blancoProgressInBlock}/10 Bandejas Blanco (Total acum: ${myStat.guestBlancoTrays})`;
+  if (progBlancoTitle) {
+    progBlancoTitle.textContent = `Bandejas Blanco de tus invitados: ${blancoProgressInBlock}/10 para bono de $8.000`;
   }
+  if (progBlancoPct) progBlancoPct.textContent = `${blancoProgressInBlock}/10`;
   if (progBlancoBar) progBlancoBar.style.width = `${blancoPct}%`;
-  if (bonusBlancoStat) {
-    bonusBlancoStat.textContent = myStat.isFounder
-      ? 'Socio Fundador (No aplica bono)'
-      : `${myStat.bonusBlancoBlocks} Bono(s) Ganado(s) (${formatCLP(myStat.bonusBlancoAmount)})`;
-  }
-  if (remBlancoTxt) {
-    const missingBlanco = 10 - blancoProgressInBlock;
-    remBlancoTxt.textContent = `Faltan ${missingBlanco} bandeja(s) para +$8.000`;
+  if (progBlancoNote) {
+    progBlancoNote.textContent = myStat.isFounder
+      ? `Total invitados: ${myStat.guestBlancoTrays} bandejas Blanco • Socio Fundador (Sin bono reclutamiento)`
+      : `Total acumulado invitados: ${myStat.guestBlancoTrays} bandejas Blanco • ${myStat.bonusBlancoBlocks} bono(s) ganado(s) (${formatCLP(myStat.bonusBlancoAmount)})`;
   }
 
   // Lista de invitados del embajador
@@ -3221,19 +3214,19 @@ function renderAmbassadorPortal() {
   // Tabla de Mis Pedidos y Ventas Cargadas (filtra únicamente los pedidos de este embajador)
   const myOrders = orders.filter((o) => {
     const c = (o.ambassadorCode || '').trim().toUpperCase();
-    return c === myStat.code || c === cleanName;
+    return c === myStat.code || c === cleanCode || c === cleanName;
   });
 
   const countBadge = document.getElementById('portal-orders-count-badge');
-  if (countBadge) countBadge.textContent = `${myOrders.length} pedido(s)`;
+  if (countBadge) countBadge.textContent = `${myOrders.length} pedido(s) registrado(s)`;
 
   const tbody = document.getElementById('portal-orders-tbody');
   if (tbody) {
     if (myOrders.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="py-8 text-center text-slate-400">
-            Aún no tienes pedidos registrados. Carga tu primer pedido en el formulario de la izquierda o comparte tu código <strong>${myStat.code}</strong>.
+          <td colspan="7" class="py-8 text-center text-slate-400">
+            Aún no tienes pedidos registrados. Carga tu primer pedido en el formulario de arriba o comparte tu código <strong>${myStat.code}</strong>.
           </td>
         </tr>
       `;
@@ -3253,32 +3246,39 @@ function renderAmbassadorPortal() {
             statusHtml = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-extrabold">⏳ Pendiente de Pago</span>`;
           }
 
+          const originHtml = o.createdByAmbassador
+            ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">📱 Mi Portal</span>`
+            : `<span class="px-2 py-0.5 rounded-lg bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[11px] font-bold">🌐 Web (${myStat.code})</span>`;
+
           const itemsSummary = (o.items || [])
             .map((it) => `📦 <strong>${it.qty}x</strong> ${it.name}`)
             .join('<br/>');
 
           return `
             <tr class="hover:bg-white/5 transition">
-              <td class="py-3 px-3 whitespace-nowrap">
+              <td class="py-3 px-4 whitespace-nowrap">
                 <span class="font-display font-extrabold text-white text-xs block">${o.displayId || o.id}</span>
                 <span class="text-[11px] text-slate-400">${o.date || '-'}</span>
               </td>
-              <td class="py-3 px-3">
+              <td class="py-3 px-4">
                 <span class="font-bold text-white text-xs block">${o.clientName || 'Cliente'}</span>
                 <span class="text-[11px] text-slate-400 block">${o.orderType || 'Pedido Único'}${
                   o.deliveryDay ? ` (${o.deliveryDay})` : ''
                 }</span>
               </td>
-              <td class="py-3 px-3 text-xs text-slate-200">
+              <td class="py-3 px-4 whitespace-nowrap">
+                ${originHtml}
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-200">
                 ${itemsSummary}
               </td>
-              <td class="py-3 px-3 font-display font-bold text-amber-300 whitespace-nowrap">
+              <td class="py-3 px-4 font-display font-bold text-amber-300 whitespace-nowrap">
                 ${formatCLP(o.subtotal)}
               </td>
-              <td class="py-3 px-3 font-display font-extrabold text-emerald-400 whitespace-nowrap">
+              <td class="py-3 px-4 font-display font-extrabold text-emerald-400 whitespace-nowrap">
                 +${formatCLP(comm)}
               </td>
-              <td class="py-3 px-3 whitespace-nowrap">
+              <td class="py-3 px-4 whitespace-nowrap">
                 ${statusHtml}
               </td>
             </tr>
@@ -3305,10 +3305,12 @@ async function showAdminDashboard(adminName) {
   const portal = document.getElementById('ambassador-portal-view');
   const badge = document.getElementById('admin-session-badge');
   const navLabel = document.getElementById('navbar-admin-label');
+  const myPortalBtn = document.getElementById('admin-open-my-portal-btn');
 
   if (storefront) storefront.classList.add('hidden');
   if (portal) portal.classList.add('hidden');
   if (dashboard) dashboard.classList.remove('hidden');
+  if (myPortalBtn) myPortalBtn.classList.remove('hidden');
 
   try {
     window.localStorage.setItem(ADMIN_VIEW_OPEN_KEY, '1');
@@ -3335,7 +3337,10 @@ async function showAdminDashboard(adminName) {
   if (isEncargada) {
     // Emilia NO ve contabilidad de socios ni direcciones de despacho de clientes
     if (founderKpis) founderKpis.classList.add('hidden');
-    if (encargadaKpis) encargadaKpis.classList.remove('hidden');
+    if (encargadaKpis) {
+      encargadaKpis.classList.remove('hidden');
+      encargadaKpis.classList.add('grid');
+    }
     if (supaBtn) supaBtn.classList.add('hidden');
     if (tabAll) tabAll.classList.add('hidden');
     if (tabPedidos) tabPedidos.classList.add('hidden');
@@ -3349,7 +3354,10 @@ async function showAdminDashboard(adminName) {
   } else {
     // Socios Fundadores (Juanjo y Mati) tienen acceso total
     if (founderKpis) founderKpis.classList.remove('hidden');
-    if (encargadaKpis) encargadaKpis.classList.add('hidden');
+    if (encargadaKpis) {
+      encargadaKpis.classList.add('hidden');
+      encargadaKpis.classList.remove('grid');
+    }
     if (supaBtn) supaBtn.classList.remove('hidden');
     if (tabAll) tabAll.classList.remove('hidden');
     if (tabPedidos) tabPedidos.classList.remove('hidden');
@@ -4814,7 +4822,7 @@ function deleteAmbassador(ambId) {
    ========================================================================== */
 
 function suggestNewUserFields() {
-  const nameInp = document.getElementById('new-user-fullname');
+  const nameInp = document.getElementById('new-user-name');
   const userInp = document.getElementById('new-user-username');
   const codeInp = document.getElementById('new-user-code');
   if (!nameInp) return;
@@ -4835,18 +4843,27 @@ function suggestNewUserFields() {
 
 function handleAdminCreateUser(event) {
   event.preventDefault();
-  const name = (document.getElementById('new-user-fullname').value || '').trim();
-  const username = (document.getElementById('new-user-username').value || '')
+  const nameEl = document.getElementById('new-user-name');
+  const phoneEl = document.getElementById('new-user-phone');
+  const userEl = document.getElementById('new-user-username');
+  const passEl = document.getElementById('new-user-password');
+  const roleEl = document.getElementById('new-user-role');
+  const codeEl = document.getElementById('new-user-code');
+  const invEl = document.getElementById('new-user-invited-by');
+
+  const name = (nameEl ? nameEl.value : '').trim();
+  const phone = (phoneEl ? phoneEl.value : '').trim();
+  const username = (userEl ? userEl.value : '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '');
-  const password = (document.getElementById('new-user-password').value || '').trim();
-  let role = (document.getElementById('new-user-role').value || 'embajador').trim();
-  const rawCode = (document.getElementById('new-user-code').value || '')
+  const password = (passEl ? passEl.value : '').trim();
+  let role = (roleEl ? roleEl.value : 'embajador').trim();
+  const rawCode = (codeEl ? codeEl.value : '')
     .trim()
     .toUpperCase()
     .replace(/\s+/g, '');
-  const invitedBy = (document.getElementById('new-user-invited-by').value || 'Directo').trim();
+  const invitedBy = (invEl ? invEl.value : 'Directo').trim();
 
   if (!name || !username || !password) return;
 
@@ -4882,7 +4899,8 @@ function handleAdminCreateUser(event) {
     name,
     role,
     code,
-    phone: '',
+    ambassadorCode: code,
+    phone,
     invitedBy,
     createdAt: new Date().toLocaleDateString('es-CL'),
     timestamp: nowMs,
@@ -4895,7 +4913,7 @@ function handleAdminCreateUser(event) {
       id: 'AMB-' + code + '-' + String(nowMs).slice(-4),
       name,
       code,
-      phone: '',
+      phone,
       username,
       password,
       invitedBy,
@@ -4906,7 +4924,11 @@ function handleAdminCreateUser(event) {
     });
   }
 
-  document.getElementById('admin-create-user-form').reset();
+  const formEl = document.getElementById('admin-create-user-form');
+  if (formEl) formEl.reset();
+  if (userEl) delete userEl.dataset.touched;
+  if (codeEl) delete codeEl.dataset.touched;
+
   persistCloudState(`Usuario creado: ${name} (@${username}) • Rol: ${role}`);
   showToast(`👥 Usuario ${name} (@${username}) creado con éxito en la nube`);
 }
@@ -4927,11 +4949,13 @@ function openEditUserModal(userId) {
 
   document.getElementById('edit-usr-id').value = usr.id;
   document.getElementById('edit-usr-name').value = usr.name || '';
+  const phoneInp = document.getElementById('edit-usr-phone');
+  if (phoneInp) phoneInp.value = usr.phone || '';
   document.getElementById('edit-usr-username').value = usr.username || '';
   document.getElementById('edit-usr-password').value =
     usr.password === 'FOUNDER_HASH' ? '' : usr.password || '';
   document.getElementById('edit-usr-role').value = usr.role || 'embajador';
-  document.getElementById('edit-usr-code').value = usr.code || '';
+  document.getElementById('edit-usr-code').value = usr.code || usr.ambassadorCode || '';
 
   const invSel = document.getElementById('edit-usr-invited-by');
   if (invSel) {
@@ -4962,6 +4986,8 @@ function handleSaveEditUser(event) {
   event.preventDefault();
   const userId = document.getElementById('edit-usr-id').value;
   const name = (document.getElementById('edit-usr-name').value || '').trim();
+  const phoneInp = document.getElementById('edit-usr-phone');
+  const phone = (phoneInp ? phoneInp.value : '').trim();
   const username = (document.getElementById('edit-usr-username').value || '')
     .trim()
     .toLowerCase()
@@ -4983,15 +5009,19 @@ function handleSaveEditUser(event) {
     role = usr.role === 'socio' ? 'socio' : 'encargada';
   }
 
-  const oldCode = (usr.code || '').toUpperCase();
+  const oldCode = (usr.code || usr.ambassadorCode || '').toUpperCase();
   const oldUsername = (usr.username || '').toLowerCase();
   const nowMs = Date.now();
 
   usr.name = name;
+  usr.phone = phone;
   usr.username = username;
   if (password) usr.password = password;
   usr.role = role;
-  if (code) usr.code = code;
+  if (code) {
+    usr.code = code;
+    usr.ambassadorCode = code;
+  }
   usr.invitedBy = invitedBy;
   usr.updatedAt = nowMs;
 
@@ -5002,6 +5032,7 @@ function handleSaveEditUser(event) {
   );
   if (linkedAmb) {
     linkedAmb.name = name;
+    linkedAmb.phone = phone;
     linkedAmb.username = username;
     if (password) linkedAmb.password = password;
     linkedAmb.role = role;
@@ -5204,22 +5235,27 @@ function renderAdminDashboard() {
   }
 
   // KPIs exclusivos para la vista de Encargada (Emilia)
-  const encAmbCount = document.getElementById('enc-kpi-ambassadors-count');
-  const encOwnTrays = document.getElementById('enc-kpi-own-trays');
-  const encGuestBonuses = document.getElementById('enc-kpi-guest-bonuses');
-  const encGuestTrays = document.getElementById('enc-kpi-guest-trays');
-  const encTotalPending = document.getElementById('enc-kpi-total-pending');
-  const encTotalPaid = document.getElementById('enc-kpi-total-paid');
+  const encAmbTotal = document.getElementById('enc-kpi-ambassadors-total');
+  const encAmbSub = document.getElementById('enc-kpi-ambassadors-sub');
+  const encTotalTrays = document.getElementById('enc-kpi-total-trays');
+  const encTraysBreak = document.getElementById('enc-kpi-trays-breakdown');
+  const encTotalBonuses = document.getElementById('enc-kpi-total-bonuses');
+  const encBonusesSub = document.getElementById('enc-kpi-bonuses-sub');
+  const encPendingPayouts = document.getElementById('enc-kpi-pending-payouts');
+  const encPaidSub = document.getElementById('enc-kpi-paid-sub');
 
-  if (encAmbCount) encAmbCount.textContent = ambassadorRows.length;
-  if (encOwnTrays) encOwnTrays.textContent = ambReport.totalAllOwnTrays;
-  if (encGuestBonuses) encGuestBonuses.textContent = formatCLP(ambReport.totalAllGuestBonusesEarned);
-  if (encGuestTrays) {
-    encGuestTrays.textContent = `${ambReport.totalAllGuestTrays} bandejas vendidas por invitados`;
-  }
-  if (encTotalPending) encTotalPending.textContent = formatCLP(ambReport.totalAllPendingToPay);
-  if (encTotalPaid) {
-    encTotalPaid.textContent = `Histórico saldado: ${formatCLP(ambReport.totalAllPaidCommissions)}`;
+  const totalCampoNetwork = ambassadorRows.reduce((acc, r) => acc + (r.ownCampoTrays || 0), 0);
+  const totalBlancoNetwork = ambassadorRows.reduce((acc, r) => acc + (r.ownBlancoTrays || 0), 0);
+
+  if (encAmbTotal) encAmbTotal.textContent = ambassadorRows.length;
+  if (encAmbSub) encAmbSub.textContent = `Activos en la red (${users.length} usuarios)`;
+  if (encTotalTrays) encTotalTrays.textContent = ambReport.totalAllOwnTrays;
+  if (encTraysBreak) encTraysBreak.textContent = `${totalCampoNetwork} Café • ${totalBlancoNetwork} Blanco`;
+  if (encTotalBonuses) encTotalBonuses.textContent = formatCLP(ambReport.totalAllGuestBonusesEarned);
+  if (encBonusesSub) encBonusesSub.textContent = `${ambReport.totalAllGuestTrays} bandejas vendidas por invitados`;
+  if (encPendingPayouts) encPendingPayouts.textContent = formatCLP(ambReport.totalAllPendingToPay);
+  if (encPaidSub) {
+    encPaidSub.textContent = `Pagado histórico: ${formatCLP(ambReport.totalAllPaidCommissions)}`;
   }
 
   // 5. Renderizar Listas de Trabajo (Worklists) y Tabla de Pedidos (Solo Socios Fundadores)
@@ -5820,6 +5856,11 @@ function renderAdminDashboard() {
   }
 
   // 10. Renderizar Tabla de Gestión de Usuarios y Roles (#admin-users-tbody)
+  const usersCountBadge = document.getElementById('admin-users-count-badge');
+  if (usersCountBadge) {
+    usersCountBadge.textContent = `${users.length} Usuario(s)`;
+  }
+
   const usersTbody = document.getElementById('admin-users-tbody');
   if (usersTbody) {
     if (users.length === 0) {
@@ -5852,11 +5893,21 @@ function renderAdminDashboard() {
             u.id === 'USR-FOUNDER-MATI' ||
             u.role === 'socio';
 
+          const usrCode = u.code || u.ambassadorCode || '-';
+          const usrInvited = u.invitedBy || 'Directo';
+
           return `
             <tr class="hover:bg-white/5 transition">
               <td class="py-3 px-4">
                 <span class="font-display font-extrabold text-white text-sm block">${u.name}</span>
-                <span class="text-xs text-amber-300 font-semibold">@${u.username}</span>
+                ${
+                  u.phone
+                    ? `<span class="text-[11px] text-emerald-400 font-semibold block">📞 ${u.phone}</span>`
+                    : `<span class="text-[11px] text-slate-500 block">Sin teléfono</span>`
+                }
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-amber-300 font-bold text-xs">@${u.username}</span>
               </td>
               <td class="py-3 px-4 whitespace-nowrap">
                 ${passDisplay}
@@ -5865,12 +5916,14 @@ function renderAdminDashboard() {
                 ${roleBadge}
               </td>
               <td class="py-3 px-4 whitespace-nowrap">
-                <span class="px-2.5 py-1 rounded-lg bg-white/10 text-white font-display font-bold text-xs">
-                  ${u.code || '-'}
-                </span>
-              </td>
-              <td class="py-3 px-4 whitespace-nowrap text-xs text-slate-300 font-semibold">
-                ${u.invitedBy || 'Directo'}
+                <div class="space-y-1">
+                  <span class="px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/30 text-amber-300 font-display font-bold text-xs inline-block">
+                    ${usrCode}
+                  </span>
+                  <span class="text-[11px] text-slate-300 font-semibold block">
+                    Invitó: <strong class="text-sky-300">${usrInvited}</strong>
+                  </span>
+                </div>
               </td>
               <td class="py-3 px-4 text-right whitespace-nowrap">
                 <button type="button" onclick="openEditUserModal('${u.id}')"
