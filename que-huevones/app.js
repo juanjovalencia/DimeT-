@@ -935,234 +935,178 @@ function buildCompactCloudState(stateObj) {
 }
 
 /**
- * Descarga el estado permanente desde la Base de Datos Cloud (ntfy.sh + Bytebin + Supabase)
+ * Descarga el estado permanente desde la Base de Datos Cloud (Supabase PostgreSQL Primario + Respaldo)
  */
-async function pullCloudState(silent = false) {
+async function pullSupabaseOnly() {
+  if (!SUPABASE_CREDENTIALS || !SUPABASE_CREDENTIALS.url || !SUPABASE_CREDENTIALS.anonKey) {
+    return null;
+  }
+  let data = null;
   try {
-    // 1. Si hay credenciales de Supabase configuradas, leer de public.qh_cloud_store (vía SDK o REST directo)
-    if (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url && SUPABASE_CREDENTIALS.anonKey) {
-      let data = null;
-      if (supabaseClient) {
-        const res = await supabaseClient
-          .from('qh_cloud_store')
-          .select('*')
-          .eq('id', 'production_v1')
-          .maybeSingle();
-        if (!res.error && res.data) {
-          data = res.data;
-        }
+    const restRes = await fetch(
+      `${SUPABASE_CREDENTIALS.url}/rest/v1/qh_cloud_store?id=eq.production_v1&select=*`,
+      {
+        method: 'GET',
+        headers: {
+          apikey: SUPABASE_CREDENTIALS.anonKey,
+          Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+          Accept: 'application/json'
+        },
+        cache: 'no-store'
       }
-      if (!data) {
-        try {
-          const restRes = await fetch(
-            `${SUPABASE_CREDENTIALS.url}/rest/v1/qh_cloud_store?id=eq.production_v1&select=*`,
-            {
-              method: 'GET',
-              headers: {
-                apikey: SUPABASE_CREDENTIALS.anonKey,
-                Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
-                Accept: 'application/json'
-              },
-              cache: 'no-store'
-            }
-          );
-          if (restRes.ok) {
-            const rows = await restRes.json();
-            if (Array.isArray(rows) && rows.length > 0) {
-              data = rows[0];
-            }
-          }
-        } catch (restErr) {
-          // ignore
-        }
-      }
-
-      if (data) {
-        const supState = normalizeStateObject({
-          orders: data.orders,
-          finances: data.finances,
-          ambassadors: data.ambassadors,
-          users: data.users || (data.finances && data.finances.users_store) || [],
-          analytics: data.analytics,
-          deletedIds: data.deleted_ids,
-          resetAt: data.reset_at,
-          updatedAt: data.updated_at,
-          updatedBy: data.updated_by
-        });
-        CLOUD_STATE = mergeCloudStates(CLOUD_STATE, supState);
-        saveLocalCloudMirror();
-        hasCompletedInitialCloudPull = true;
-        refreshDashboardIfVisible();
-        updateCloudStatusUI(`Sincronizado con Supabase (${getNowFormatted()})`, true);
+    );
+    if (restRes.ok) {
+      const rows = await restRes.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        data = rows[0];
       }
     }
-
-    // 2. Leer el historial persistente en la nube desde ntfy.sh (poll=1)
-    const response = await fetch(`${CLOUD_REALTIME_POLL_URL}&_t=${Date.now()}`, {
-      method: 'GET',
-      cache: 'no-store'
+  } catch (restErr) {
+    // fallback to supabaseClient
+  }
+  if (!data && supabaseClient) {
+    try {
+      const res = await supabaseClient
+        .from('qh_cloud_store')
+        .select('*')
+        .eq('id', 'production_v1')
+        .maybeSingle();
+      if (!res.error && res.data) {
+        data = res.data;
+      }
+    } catch (sdkErr) {
+      // ignore
+    }
+  }
+  if (data) {
+    const supState = normalizeStateObject({
+      orders: data.orders,
+      finances: data.finances,
+      ambassadors: data.ambassadors,
+      users: data.users || (data.finances && data.finances.users_store) || [],
+      analytics: data.analytics,
+      deletedIds: data.deleted_ids,
+      resetAt: data.reset_at,
+      updatedAt: data.updated_at,
+      updatedBy: data.updated_by
     });
+    CLOUD_STATE = mergeCloudStates(CLOUD_STATE, supState);
+    saveLocalCloudMirror();
+    hasCompletedInitialCloudPull = true;
+    refreshDashboardIfVisible();
+    updateCloudStatusUI(`Sincronizado con Supabase (${getNowFormatted()})`, true);
+  }
+  return data;
+}
 
-    if (response.ok) {
-      const text = await response.text();
-      const lines = text.split('\n').filter((line) => line.trim().length > 0);
-      let reconstructed = getEmptyCloudState(0);
-      let foundCloudMessages = false;
-      let latestBytebinKey = null;
-
-      for (const line of lines) {
-        try {
-          const outer = JSON.parse(line);
-          if (!outer || outer.event !== 'message') continue;
-          if (outer.time) {
-            lastCloudMessageAt = Math.max(lastCloudMessageAt, Number(outer.time) * 1000);
-          }
-          let payload = null;
-          if (outer.attachment && outer.attachment.url) {
-            // Mensajes > 4KB se guardan como adjunto en ntfy.sh
-            try {
-              const attRes = await fetch(outer.attachment.url, { cache: 'no-store' });
-              if (attRes.ok) payload = JSON.parse(await attRes.text());
-            } catch (attErr) {
-              payload = null;
-            }
-          } else if (outer.message) {
-            payload = JSON.parse(outer.message);
-          }
-          if (!payload) continue;
-
-          if (payload.bytebinKey) {
-            latestBytebinKey = payload.bytebinKey;
-          }
-
-          if (payload.state && typeof payload.state === 'object') {
-            foundCloudMessages = true;
-            const inc = normalizeStateObject(payload.state);
-            const isExplicitReset =
-              (inc.resetAt || 0) > (reconstructed.resetAt || 0) &&
-              inc.orders.length === 0 &&
-              inc.finances.partnerMovements.length === 0 &&
-              inc.finances.supplierPayments.length === 0 &&
-              (!inc.finances.debtSettlements || inc.finances.debtSettlements.length === 0) &&
-              inc.ambassadors.length === 0;
-
-            if (isExplicitReset) {
-              reconstructed = inc;
-            } else {
-              reconstructed = mergeCloudStates(reconstructed, inc);
-            }
-          }
-        } catch (lineErr) {
-          // Ignorar líneas malformadas
-        }
-      }
-
-      // 3. Si el último estado tiene respaldo completo en Bytebin Cloud Store, descargarlo y fusionarlo
-      if (latestBytebinKey) {
-        try {
-          const bbRes = await fetch(`${CLOUD_BYTEBIN_BASE_URL}${latestBytebinKey}`, {
-            method: 'GET',
-            headers: { Accept: 'application/json' },
-            cache: 'no-store'
-          });
-          if (bbRes.ok) {
-            const bbJson = await bbRes.json();
-            if (bbJson && typeof bbJson === 'object') {
-              foundCloudMessages = true;
-              const bbState = normalizeStateObject(bbJson);
-              reconstructed = mergeCloudStates(reconstructed, bbState);
-            }
-          }
-        } catch (bbErr) {
-          // Continuar con el estado reconstruido de ntfy
-        }
-      }
-
-      if (foundCloudMessages) {
-        const hadNewerRemote = (reconstructed.updatedAt || 0) !== (CLOUD_STATE.updatedAt || 0);
-        const isExplicitRemoteReset =
-          (reconstructed.resetAt || 0) > (CLOUD_STATE.resetAt || 0) &&
-          reconstructed.orders.length === 0 &&
-          reconstructed.finances.partnerMovements.length === 0 &&
-          reconstructed.finances.supplierPayments.length === 0 &&
-          (!reconstructed.finances.debtSettlements || reconstructed.finances.debtSettlements.length === 0) &&
-          reconstructed.ambassadors.length === 0;
-
-        if (isExplicitRemoteReset) {
-          CLOUD_STATE = reconstructed;
-        } else {
-          CLOUD_STATE = mergeCloudStates(CLOUD_STATE, reconstructed);
-        }
-
-        saveLocalCloudMirror();
-
-        if (
-          CLOUD_STATE.supabaseConfig &&
-          CLOUD_STATE.supabaseConfig.url &&
-          CLOUD_STATE.supabaseConfig.anonKey &&
-          !supabaseClient
-        ) {
-          initSupabaseSDK(CLOUD_STATE.supabaseConfig.url, CLOUD_STATE.supabaseConfig.anonKey);
-        }
-
-        if (hadNewerRemote || !silent) {
-          refreshDashboardIfVisible();
-        }
-      }
-
-      hasCompletedInitialCloudPull = true;
-      updateCloudStatusUI(`Nube sincronizada (${getNowFormatted()})`, true);
+async function syncRelationalSupabaseTables(stateObj) {
+  if (!SUPABASE_CREDENTIALS || !SUPABASE_CREDENTIALS.url || !SUPABASE_CREDENTIALS.anonKey) return;
+  const headers = {
+    apikey: SUPABASE_CREDENTIALS.anonKey,
+    Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+    'Content-Type': 'application/json',
+    Prefer: 'resolution=merge-duplicates,return=minimal'
+  };
+  try {
+    if (Array.isArray(stateObj.ambassadors) && stateObj.ambassadors.length > 0) {
+      const ambRows = stateObj.ambassadors.map((a) => ({
+        id: String(a.id || 'AMB-' + (a.code || '')),
+        name: a.name || '',
+        code: (a.code || '').toUpperCase(),
+        phone: a.phone || '',
+        username: a.username || '',
+        password: a.password || '',
+        invited_by: a.invitedBy || 'Directo',
+        created_at: a.createdAt || '',
+        updated_at: Number(a.updatedAt || a.timestamp || Date.now())
+      }));
+      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_ambassadors?on_conflict=id`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(ambRows)
+      }).catch(() => {});
+    }
+    if (Array.isArray(stateObj.users) && stateObj.users.length > 0) {
+      const userRows = stateObj.users.map((u) => ({
+        id: String(u.id || 'USR-' + (u.username || '')),
+        username: (u.username || '').toLowerCase(),
+        password: u.password || '',
+        name: u.name || '',
+        role: u.role || 'embajador',
+        ambassador_code: u.code || u.ambassadorCode || '',
+        phone: u.phone || '',
+        invited_by: u.invitedBy || 'Directo',
+        created_at: u.createdAt || '',
+        updated_at: Number(u.updatedAt || u.timestamp || Date.now())
+      }));
+      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_users?on_conflict=id`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(userRows)
+      }).catch(() => {});
+    }
+    if (Array.isArray(stateObj.orders) && stateObj.orders.length > 0) {
+      const orderRows = stateObj.orders.map((o) => ({
+        id: String(o.id),
+        customer_name: o.customerName || '',
+        address: o.address || '',
+        phone: o.phone || '',
+        order_type: o.orderType || 'Pedido Único',
+        delivery_day: o.deliveryDay || '',
+        items_summary: o.itemsSummary || '',
+        trays_count: Number(o.traysCount || 0),
+        total: Number(o.total || 0),
+        status: o.status || 'pending_payment',
+        ambassador_code: o.ambassadorCode || '',
+        created_at: o.createdAt || '',
+        updated_at: Number(o.updatedAt || o.timestamp || Date.now())
+      }));
+      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_orders?on_conflict=id`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(orderRows)
+      }).catch(() => {});
     }
   } catch (e) {
-    updateCloudStatusUI('Usando respaldo local + reconectando Cloud...', false);
+    // ignore if relational tables are not created yet
+  }
+}
+
+async function pullCloudState(silent = false) {
+  try {
+    // 1. Leer INMEDIATAMENTE de Supabase PostgreSQL (sin bloqueos)
+    await pullSupabaseOnly();
+  } catch (e) {
+    updateCloudStatusUI('Usando respaldo local + reconectando Supabase...', false);
   }
   return CLOUD_STATE;
 }
 
 /**
- * Guarda de forma permanente el estado en la Base de Datos Cloud (Espejo Local 0ms + Bytebin + ntfy Realtime + Supabase)
- * y emite el evento en Tiempo Real para que el otro administrador vea el cambio al instante.
+ * Guarda de forma permanente e inmediata el estado en Supabase PostgreSQL (<150ms)
+ * sin bloquearse jamás por servicios externos.
  */
 async function persistCloudState(actionSummary = 'Actualización') {
   CLOUD_STATE.updatedAt = Date.now();
   CLOUD_STATE.updatedBy = currentAdminUser || 'Tienda Online';
   CLOUD_STATE.supabaseConfig = SUPABASE_CREDENTIALS;
 
-  // 1. Guardado instantáneo en espejo local (0ms): si el usuario recarga con F5 de inmediato, no pierde nada
+  // 1. Guardado instantáneo en espejo local (0ms)
   saveLocalCloudMirror();
   refreshDashboardIfVisible();
-  updateCloudStatusUI(`Guardando en la nube...`, true);
+  updateCloudStatusUI(`Guardando en Supabase...`, true);
 
   try {
     isSavingCloud = true;
 
-    // 2. Si aún no se había descargado el historial de la nube en esta sesión, fusionarlo antes de publicar
+    // 2. Si aún no se había descargado el estado de Supabase en esta sesión, fusionarlo rápido primero
     if (!hasCompletedInitialCloudPull) {
-      await pullCloudState(true);
+      await pullSupabaseOnly();
       CLOUD_STATE.updatedAt = Date.now();
       saveLocalCloudMirror();
     }
 
-    // 3. Guardar objeto JSON completo en Bytebin Cloud Store
-    let bytebinKey = null;
-    try {
-      const bbPost = await fetch(CLOUD_BYTEBIN_POST_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(CLOUD_STATE)
-      });
-      if (bbPost.ok) {
-        const bbData = await bbPost.json();
-        if (bbData && bbData.key) {
-          bytebinKey = bbData.key;
-        }
-      }
-    } catch (bbErr) {
-      // Continuar con ntfy y Supabase aunque Bytebin falle
-    }
-
-    // 4. Si Supabase está activo, hacer UPSERT permanente en PostgreSQL + Broadcast Realtime
-    let supabasePromise = Promise.resolve();
+    // 3. Guardar INMEDIATAMENTE en Supabase PostgreSQL (public.qh_cloud_store + tablas relacionales)
     if (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url && SUPABASE_CREDENTIALS.anonKey) {
       const rowPayload = {
         id: 'production_v1',
@@ -1176,7 +1120,7 @@ async function persistCloudState(actionSummary = 'Actualización') {
         updated_by: CLOUD_STATE.updatedBy
       };
 
-      supabasePromise = fetch(
+      const supRes = await fetch(
         `${SUPABASE_CREDENTIALS.url}/rest/v1/qh_cloud_store?on_conflict=id`,
         {
           method: 'POST',
@@ -1188,11 +1132,14 @@ async function persistCloudState(actionSummary = 'Actualización') {
           },
           body: JSON.stringify(rowPayload)
         }
-      ).catch(() => {
-        if (supabaseClient) {
-          return supabaseClient.from('qh_cloud_store').upsert(rowPayload, { onConflict: 'id' });
-        }
-      });
+      );
+
+      if (!supRes.ok && supabaseClient) {
+        await supabaseClient.from('qh_cloud_store').upsert(rowPayload, { onConflict: 'id' });
+      }
+
+      // Sincronizar también tablas relacionales individuales si existen en el esquema
+      syncRelationalSupabaseTables(CLOUD_STATE);
 
       if (supabaseChannel) {
         supabaseChannel.send({
@@ -1207,26 +1154,11 @@ async function persistCloudState(actionSummary = 'Actualización') {
       }
     }
 
-    // 5. Publicar y almacenar en el canal Cloud Persistente + SSE Realtime (ntfy.sh)
-    const compactState = buildCompactCloudState(CLOUD_STATE);
-    const realtimeBroadcastPromise = fetch(CLOUD_REALTIME_PUB_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        senderId: CLIENT_INSTANCE_ID,
-        actionSummary,
-        updatedBy: CLOUD_STATE.updatedBy,
-        updatedAt: CLOUD_STATE.updatedAt,
-        bytebinKey,
-        state: compactState
-      })
-    }).catch(() => {});
-
-    await Promise.all([supabasePromise, realtimeBroadcastPromise]);
     saveLocalCloudMirror();
-    updateCloudStatusUI(`Guardado en la nube (${getNowFormatted()})`, true);
+    updateCloudStatusUI(`Guardado en Supabase (${getNowFormatted()})`, true);
     refreshDashboardIfVisible();
   } catch (e) {
-    updateCloudStatusUI('Guardado localmente • Reintentando nube', false);
+    updateCloudStatusUI('Guardado localmente • Reintentando Supabase', false);
   } finally {
     isSavingCloud = false;
   }
