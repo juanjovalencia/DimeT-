@@ -979,11 +979,81 @@ async function pullSupabaseOnly() {
     }
   }
   if (data) {
+    // Leer también filas directas de qh_ambassadors y qh_users por si se agregaron/editaron en el Table Editor de Supabase
+    let relAmbassadors = [];
+    let relUsers = [];
+    try {
+      const [ambRes, usrRes] = await Promise.all([
+        fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_ambassadors?select=*`, {
+          method: 'GET',
+          headers: {
+            apikey: SUPABASE_CREDENTIALS.anonKey,
+            Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+            Accept: 'application/json'
+          },
+          cache: 'no-store'
+        }),
+        fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_users?select=*`, {
+          method: 'GET',
+          headers: {
+            apikey: SUPABASE_CREDENTIALS.anonKey,
+            Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+            Accept: 'application/json'
+          },
+          cache: 'no-store'
+        })
+      ]);
+      if (ambRes.ok) {
+        const rows = await ambRes.json();
+        if (Array.isArray(rows)) {
+          relAmbassadors = rows.map((r) => ({
+            id: r.id,
+            name: r.name,
+            code: r.code,
+            phone: r.phone || '',
+            username: r.username || '',
+            password: r.password || '',
+            invitedBy: r.invited_by || 'Directo',
+            createdAt: r.created_at || '',
+            updatedAt: Number(r.updated_at || 0),
+            timestamp: Number(r.updated_at || 0)
+          }));
+        }
+      }
+      if (usrRes.ok) {
+        const rows = await usrRes.json();
+        if (Array.isArray(rows)) {
+          relUsers = rows.map((r) => ({
+            id: r.id,
+            username: r.username,
+            password: r.password,
+            name: r.name,
+            role: r.role || 'embajador',
+            code: r.ambassador_code || '',
+            ambassadorCode: r.ambassador_code || '',
+            phone: r.phone || '',
+            invitedBy: r.invited_by || 'Directo',
+            createdAt: r.created_at || '',
+            updatedAt: Number(r.updated_at || 0),
+            timestamp: Number(r.updated_at || 0)
+          }));
+        }
+      }
+    } catch (relErr) {
+      // ignore
+    }
+
+    const baseAmbassadors = Array.isArray(data.ambassadors) ? data.ambassadors : [];
+    const baseUsers =
+      Array.isArray(data.users) && data.users.length > 0
+        ? data.users
+        : (data.finances && data.finances.users_store) || [];
+
     const supState = normalizeStateObject({
       orders: data.orders,
       finances: data.finances,
-      ambassadors: data.ambassadors,
-      users: data.users || (data.finances && data.finances.users_store) || [],
+      ambassadors: [...baseAmbassadors, ...relAmbassadors],
+      users: [...baseUsers, ...relUsers],
       analytics: data.analytics,
       deletedIds: data.deleted_ids,
       resetAt: data.reset_at,
@@ -1020,7 +1090,7 @@ async function syncRelationalSupabaseTables(stateObj) {
         created_at: a.createdAt || '',
         updated_at: Number(a.updatedAt || a.timestamp || Date.now())
       }));
-      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_ambassadors?on_conflict=id`, {
+      await fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_ambassadors?on_conflict=id`, {
         method: 'POST',
         headers,
         body: JSON.stringify(ambRows)
@@ -1039,7 +1109,7 @@ async function syncRelationalSupabaseTables(stateObj) {
         created_at: u.createdAt || '',
         updated_at: Number(u.updatedAt || u.timestamp || Date.now())
       }));
-      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_users?on_conflict=id`, {
+      await fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_users?on_conflict=id`, {
         method: 'POST',
         headers,
         body: JSON.stringify(userRows)
@@ -1061,11 +1131,45 @@ async function syncRelationalSupabaseTables(stateObj) {
         created_at: o.createdAt || '',
         updated_at: Number(o.updatedAt || o.timestamp || Date.now())
       }));
-      fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_orders?on_conflict=id`, {
+      await fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_orders?on_conflict=id`, {
         method: 'POST',
         headers,
         body: JSON.stringify(orderRows)
       }).catch(() => {});
+    }
+    if (stateObj.finances) {
+      const finRows = [];
+      (stateObj.finances.supplierPayments || []).forEach((sp) => {
+        finRows.push({
+          id: String(sp.id),
+          movement_type: 'supplier_payment',
+          description: sp.supplier || sp.concept || 'Pago a Proveedor',
+          amount: Number(sp.amount || 0),
+          paid_by: sp.paidBy || 'Caja de la Empresa',
+          date: sp.date || '',
+          created_by: sp.createdBy || '',
+          updated_at: Number(sp.updatedAt || sp.timestamp || Date.now())
+        });
+      });
+      (stateObj.finances.ambassadorPayouts || []).forEach((ap) => {
+        finRows.push({
+          id: String(ap.id),
+          movement_type: 'ambassador_payout',
+          description: `Pago comisión a ${ap.ambassadorName || ap.ambassadorCode || 'Embajador'} (${ap.note || ''})`,
+          amount: Number(ap.amount || 0),
+          paid_by: ap.paidFrom || 'Caja de la Empresa',
+          date: ap.date || '',
+          created_by: ap.createdBy || '',
+          updated_at: Number(ap.updatedAt || ap.timestamp || Date.now())
+        });
+      });
+      if (finRows.length > 0) {
+        await fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_finances?on_conflict=id`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(finRows)
+        }).catch(() => {});
+      }
     }
   } catch (e) {
     // ignore if relational tables are not created yet
@@ -1113,6 +1217,7 @@ async function persistCloudState(actionSummary = 'Actualización') {
         orders: CLOUD_STATE.orders,
         finances: Object.assign({}, CLOUD_STATE.finances, { users_store: CLOUD_STATE.users || [] }),
         ambassadors: CLOUD_STATE.ambassadors,
+        users: CLOUD_STATE.users || [],
         analytics: CLOUD_STATE.analytics,
         deleted_ids: CLOUD_STATE.deletedIds,
         reset_at: CLOUD_STATE.resetAt,
@@ -1139,7 +1244,7 @@ async function persistCloudState(actionSummary = 'Actualización') {
       }
 
       // Sincronizar también tablas relacionales individuales si existen en el esquema
-      syncRelationalSupabaseTables(CLOUD_STATE);
+      await syncRelationalSupabaseTables(CLOUD_STATE);
 
       if (supabaseChannel) {
         supabaseChannel.send({
@@ -6128,12 +6233,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshDashboardIfVisible();
   startRealtimeCloudSubscriptions();
 
-  // 3. Si la copia en la nube está vieja o vacía pero este dispositivo tiene datos, re-publicar respaldo
-  if (
-    cloudStateHasBusinessData(CLOUD_STATE) &&
-    Date.now() - lastCloudMessageAt > CLOUD_REFRESH_MAX_AGE_MS
-  ) {
-    persistCloudState('Respaldo automático de datos');
+  // 3. Sincronizar hacia Supabase cualquier dato local existente (ej. embajadores o pedidos creados en este navegador)
+  if (cloudStateHasBusinessData(CLOUD_STATE)) {
+    persistCloudState('Sincronización automática con Supabase');
   }
 
   // Listener global delegado para rastrear clics reales en elementos con [data-track-btn]
