@@ -1116,21 +1116,31 @@ async function syncRelationalSupabaseTables(stateObj) {
       }).catch(() => {});
     }
     if (Array.isArray(stateObj.orders) && stateObj.orders.length > 0) {
-      const orderRows = stateObj.orders.map((o) => ({
-        id: String(o.id),
-        customer_name: o.customerName || '',
-        address: o.address || '',
-        phone: o.phone || '',
-        order_type: o.orderType || 'Pedido Único',
-        delivery_day: o.deliveryDay || '',
-        items_summary: o.itemsSummary || '',
-        trays_count: Number(o.traysCount || 0),
-        total: Number(o.total || 0),
-        status: o.status || 'pending_payment',
-        ambassador_code: o.ambassadorCode || '',
-        created_at: o.createdAt || '',
-        updated_at: Number(o.updatedAt || o.timestamp || Date.now())
-      }));
+      const orderRows = stateObj.orders.map((o) => {
+        const itemsArr = Array.isArray(o.items) ? o.items : [];
+        const computedSummary =
+          o.itemsSummary ||
+          itemsArr.map((it) => `${it.qty || 1}x ${it.name || it.id}`).join(', ');
+        const computedTrays =
+          Number(o.traysCount) ||
+          (o.totalEggs ? Math.round(Number(o.totalEggs) / 30) : 0) ||
+          itemsArr.reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
+        return {
+          id: String(o.id),
+          customer_name: o.clientName || o.customerName || '',
+          address: o.clientAddress || o.address || '',
+          phone: o.clientPhone || o.phone || '',
+          order_type: o.orderType || 'Pedido Único',
+          delivery_day: o.deliveryDay || '',
+          items_summary: computedSummary,
+          trays_count: computedTrays,
+          total: Number(o.subtotal !== undefined ? o.subtotal : o.total || 0),
+          status: o.status || 'Pendiente de Pago',
+          ambassador_code: o.ambassadorCode || '',
+          created_at: o.date || o.createdAt || '',
+          updated_at: Number(o.updatedAt || o.timestamp || Date.now())
+        };
+      });
       await fetch(`${SUPABASE_CREDENTIALS.url}/rest/v1/qh_orders?on_conflict=id`, {
         method: 'POST',
         headers,
