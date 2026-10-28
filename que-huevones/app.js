@@ -54,10 +54,14 @@ const ADMIN_SESSION_KEY = 'qh_admin_session_v4';
 const ADMIN_VIEW_OPEN_KEY = 'qh_admin_view_open_v4';
 const CART_MIRROR_KEY = 'qh_cart_mirror_v4';
 
-// Configuración opcional de proyecto propio de Supabase
+// Configuración oficial de proyecto propio de Supabase (Producción)
+const DEFAULT_SUPABASE_CREDENTIALS = {
+  url: 'https://zjvlpzywqwvghpuzlvbt.supabase.co',
+  anonKey: 'sb_publishable_78JknTIH_i-ZtHH8S4NG7w_P5Hs7i-N'
+};
 let SUPABASE_CREDENTIALS = {
-  url: '',
-  anonKey: ''
+  url: DEFAULT_SUPABASE_CREDENTIALS.url,
+  anonKey: DEFAULT_SUPABASE_CREDENTIALS.anonKey
 };
 let supabaseClient = null;
 let supabaseChannel = null;
@@ -691,7 +695,10 @@ function normalizeStateObject(raw) {
     resetAt: Number(raw.resetAt) || 0,
     updatedAt: Number(raw.updatedAt) || 0,
     updatedBy: raw.updatedBy || 'system',
-    supabaseConfig: raw.supabaseConfig || SUPABASE_CREDENTIALS
+    supabaseConfig:
+      raw.supabaseConfig && raw.supabaseConfig.url && raw.supabaseConfig.anonKey
+        ? raw.supabaseConfig
+        : SUPABASE_CREDENTIALS
   };
 
   reconcileBusinessDataDefaults(normState);
@@ -830,7 +837,7 @@ function updateCloudStatusUI(statusText, isOnline = true) {
       badge.className =
         'px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5';
       badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${
-        supabaseClient
+        supabaseClient || (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url)
           ? '☁️ Supabase PostgreSQL + Realtime Online'
           : '☁️ Base de Datos Cloud • Realtime Online'
       }</span>`;
@@ -932,15 +939,45 @@ function buildCompactCloudState(stateObj) {
  */
 async function pullCloudState(silent = false) {
   try {
-    // 1. Si hay cliente Supabase configurado, leer de public.qh_cloud_store
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
-        .from('qh_cloud_store')
-        .select('*')
-        .eq('id', 'production_v1')
-        .maybeSingle();
+    // 1. Si hay credenciales de Supabase configuradas, leer de public.qh_cloud_store (vía SDK o REST directo)
+    if (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url && SUPABASE_CREDENTIALS.anonKey) {
+      let data = null;
+      if (supabaseClient) {
+        const res = await supabaseClient
+          .from('qh_cloud_store')
+          .select('*')
+          .eq('id', 'production_v1')
+          .maybeSingle();
+        if (!res.error && res.data) {
+          data = res.data;
+        }
+      }
+      if (!data) {
+        try {
+          const restRes = await fetch(
+            `${SUPABASE_CREDENTIALS.url}/rest/v1/qh_cloud_store?id=eq.production_v1&select=*`,
+            {
+              method: 'GET',
+              headers: {
+                apikey: SUPABASE_CREDENTIALS.anonKey,
+                Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+                Accept: 'application/json'
+              },
+              cache: 'no-store'
+            }
+          );
+          if (restRes.ok) {
+            const rows = await restRes.json();
+            if (Array.isArray(rows) && rows.length > 0) {
+              data = rows[0];
+            }
+          }
+        } catch (restErr) {
+          // ignore
+        }
+      }
 
-      if (!error && data) {
+      if (data) {
         const supState = normalizeStateObject({
           orders: data.orders,
           finances: data.finances,
@@ -1126,21 +1163,36 @@ async function persistCloudState(actionSummary = 'Actualización') {
 
     // 4. Si Supabase está activo, hacer UPSERT permanente en PostgreSQL + Broadcast Realtime
     let supabasePromise = Promise.resolve();
-    if (supabaseClient) {
-      supabasePromise = supabaseClient.from('qh_cloud_store').upsert(
+    if (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url && SUPABASE_CREDENTIALS.anonKey) {
+      const rowPayload = {
+        id: 'production_v1',
+        orders: CLOUD_STATE.orders,
+        finances: Object.assign({}, CLOUD_STATE.finances, { users_store: CLOUD_STATE.users || [] }),
+        ambassadors: CLOUD_STATE.ambassadors,
+        analytics: CLOUD_STATE.analytics,
+        deleted_ids: CLOUD_STATE.deletedIds,
+        reset_at: CLOUD_STATE.resetAt,
+        updated_at: CLOUD_STATE.updatedAt,
+        updated_by: CLOUD_STATE.updatedBy
+      };
+
+      supabasePromise = fetch(
+        `${SUPABASE_CREDENTIALS.url}/rest/v1/qh_cloud_store?on_conflict=id`,
         {
-          id: 'production_v1',
-          orders: CLOUD_STATE.orders,
-          finances: Object.assign({}, CLOUD_STATE.finances, { users_store: CLOUD_STATE.users || [] }),
-          ambassadors: CLOUD_STATE.ambassadors,
-          analytics: CLOUD_STATE.analytics,
-          deleted_ids: CLOUD_STATE.deletedIds,
-          reset_at: CLOUD_STATE.resetAt,
-          updated_at: CLOUD_STATE.updatedAt,
-          updated_by: CLOUD_STATE.updatedBy
-        },
-        { onConflict: 'id' }
-      );
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_CREDENTIALS.anonKey,
+            Authorization: `Bearer ${SUPABASE_CREDENTIALS.anonKey}`,
+            'Content-Type': 'application/json',
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify(rowPayload)
+        }
+      ).catch(() => {
+        if (supabaseClient) {
+          return supabaseClient.from('qh_cloud_store').upsert(rowPayload, { onConflict: 'id' });
+        }
+      });
 
       if (supabaseChannel) {
         supabaseChannel.send({
@@ -6136,7 +6188,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 2. Conectar a la Base de Datos en la Nube, fusionar y activar suscripción Realtime
+  // 2. Inicializar cliente Supabase oficial y conectar a la Base de Datos en la Nube
+  if (SUPABASE_CREDENTIALS && SUPABASE_CREDENTIALS.url && SUPABASE_CREDENTIALS.anonKey) {
+    initSupabaseSDK(SUPABASE_CREDENTIALS.url, SUPABASE_CREDENTIALS.anonKey);
+  }
   await pullCloudState(true);
   refreshDashboardIfVisible();
   startRealtimeCloudSubscriptions();
