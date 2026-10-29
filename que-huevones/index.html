@@ -952,7 +952,7 @@
               Hola, <span id="portal-amb-name" class="text-amber-400">Embajador</span>
             </h1>
             <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
-              Carga tus pedidos directos para despacho, revisa tus comisiones ($2.000 por bandeja) y sigue el progreso de bonos de tus invitados.
+              Carga tus pedidos directos para despacho, revisa tus comisiones ($2.000 Café / $1.000 Blanco por bandeja) y sigue el progreso de bonos de tus invitados.
             </p>
           </div>
         </div>
@@ -1009,7 +1009,7 @@
           </div>
           <p id="portal-kpi-own-commission" class="font-display font-extrabold text-3xl sm:text-4xl text-emerald-400 mt-2">$0</p>
           <p class="text-xs text-slate-300 font-semibold mt-1">
-            $2.000 por cada bandeja aprobada
+            $2.000 Café • $1.000 Blanco por bandeja
           </p>
         </div>
 
@@ -1121,7 +1121,7 @@
                 <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">
                   🥚 Selecciona Tipo y Cantidad de Bandejas (30 unidades):
                 </span>
-                <span class="text-[11px] font-bold text-emerald-400">+$2.000 comisión c/bandeja</span>
+                <span class="text-[11px] font-bold text-emerald-400">+$2.000 Café / +$1.000 Blanco c/bandeja</span>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1524,7 +1524,7 @@
             <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
               ➕ Registrar Pedido Recibido por WhatsApp Manualmente
             </span>
-            <span class="text-[11px] text-slate-400">Comisión automática: Bandeja 30 un. $2.000</span>
+            <span class="text-[11px] text-slate-400">Comisión automática: Café $2.000 / Blanco $1.000</span>
           </div>
           <form id="admin-manual-order-form" onsubmit="handleCreateManualOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
             <div>
@@ -1565,24 +1565,108 @@
         </div>
 
         <!-- Listas automáticas de trabajo (Filtros / Vistas rápidas de ruta y cobro) -->
-        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">Vistas Rápidas:</span>
-          <button type="button" id="order-worklist-all" onclick="setOrderWorklistFilter('all')"
-                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-qh-brown text-white shadow transition">
-            📦 Todas (<span id="count-worklist-all">0</span>)
-          </button>
-          <button type="button" id="order-worklist-pending" onclick="setOrderWorklistFilter('pending_payment')"
-                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-amber-300 hover:bg-white/20 transition">
-            ⏳ 1. Pendientes de Pago (<span id="count-worklist-pending">0</span>)
-          </button>
-          <button type="button" id="order-worklist-dispatch" onclick="setOrderWorklistFilter('to_dispatch')"
-                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-emerald-300 hover:bg-white/20 transition">
-            🚚 2. Para Despachar (Pagados - Falta Entregar) (<span id="count-worklist-dispatch">0</span>)
-          </button>
-          <button type="button" id="order-worklist-delivered" onclick="setOrderWorklistFilter('delivered')"
-                  class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-sky-300 hover:bg-white/20 transition">
-            ✅ 3. Historial Entregados (<span id="count-worklist-delivered">0</span>)
-          </button>
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">Vistas Rápidas:</span>
+            <button type="button" id="order-worklist-all" onclick="setOrderWorklistFilter('all')"
+                    class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-qh-brown text-white shadow transition">
+              📦 Todas (<span id="count-worklist-all">0</span>)
+            </button>
+            <button type="button" id="order-worklist-pending" onclick="setOrderWorklistFilter('pending_payment')"
+                    class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-amber-300 hover:bg-white/20 transition">
+              ⏳ 1. Pendientes de Pago (<span id="count-worklist-pending">0</span>)
+            </button>
+            <button type="button" id="order-worklist-dispatch" onclick="setOrderWorklistFilter('to_dispatch')"
+                    class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-emerald-300 hover:bg-white/20 transition">
+              🚚 2. Para Despachar (Pagados - Falta Entregar) (<span id="count-worklist-dispatch">0</span>)
+            </button>
+            <button type="button" id="order-worklist-delivered" onclick="setOrderWorklistFilter('delivered')"
+                    class="order-worklist-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-white/10 text-sky-300 hover:bg-white/20 transition">
+              ✅ 3. Historial Entregados (<span id="count-worklist-delivered">0</span>)
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="openSmartDispatchModal()"
+                    class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-qh-navyDark font-display font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition">
+              <span>🚀 Iniciar Modo Reparto (Partir a Repartir)</span>
+            </button>
+            <button type="button" onclick="openMultiStopGoogleMapsRoute()"
+                    class="px-3.5 py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 font-display font-extrabold text-xs flex items-center gap-1.5 transition"
+                    title="Abrir todas las paradas pendientes de entrega en Google Maps de una vez">
+              <span>🗺️ Ruta Múltiple Maps</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tarjeta Resumen Financiero y Contabilidad de Despachos entre Socios (Juanjo y Mati) -->
+        <div id="admin-dispatch-accounting-card" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-qh-navyDark via-slate-900 to-qh-navyDark border border-amber-400/30 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">🚚 Contabilidad de Repartos y Bencina entre Socios</span>
+              <h3 class="font-display font-extrabold text-lg sm:text-xl text-white">
+                Resumen de Despachos: Juanjo vs Mati (Moreno)
+              </h3>
+              <p class="text-xs text-slate-400">
+                Se actualiza automáticamente al entregar pedidos en el <strong>Modo Reparto</strong> o al cambiar el selector <strong>"¿Quién despachó?"</strong> en la tabla.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 bg-white/5 p-2.5 rounded-xl border border-white/10">
+              <label for="dispatch-fee-per-order-input" class="text-[11px] font-extrabold uppercase text-amber-300">
+                ⛽ Valor por Despacho ($ CLP):
+              </label>
+              <input id="dispatch-fee-per-order-input" type="number" min="0" step="500" value="2000"
+                     onchange="handleSaveDispatchFee(this.value)"
+                     class="w-24 px-2.5 py-1.5 rounded-lg bg-qh-navy border border-amber-400/40 text-xs font-extrabold text-amber-300 text-right focus:outline-none focus:border-amber-400" />
+              <button type="button" onclick="handleSaveDispatchFee(document.getElementById('dispatch-fee-per-order-input').value)"
+                      class="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-qh-navyDark font-display font-extrabold text-xs transition">
+                Guardar
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+            <!-- Despachos Juanjo -->
+            <div class="p-3.5 rounded-xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-between gap-3">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-300 block">🥚 Despachó Juanjo</span>
+                <p id="dispatch-stats-juanjo-orders" class="font-display font-black text-xl text-white mt-0.5">0 pedidos</p>
+                <span id="dispatch-stats-juanjo-trays" class="text-[11px] text-slate-300 block">0 bandejas entregadas</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] font-bold uppercase text-slate-400 block">A cobrar por reparto:</span>
+                <strong id="dispatch-stats-juanjo-amount" class="font-display font-extrabold text-lg text-emerald-400">$0</strong>
+              </div>
+            </div>
+
+            <!-- Despachos Mati (Moreno) -->
+            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-between gap-3">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 block">🥊 Despachó Mati (Moreno)</span>
+                <p id="dispatch-stats-mati-orders" class="font-display font-black text-xl text-white mt-0.5">0 pedidos</p>
+                <span id="dispatch-stats-mati-trays" class="text-[11px] text-slate-300 block">0 bandejas entregadas</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] font-bold uppercase text-slate-400 block">A cobrar por reparto:</span>
+                <strong id="dispatch-stats-mati-amount" class="font-display font-extrabold text-lg text-emerald-400">$0</strong>
+              </div>
+            </div>
+
+            <!-- Balance / Sin Asignar -->
+            <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-between gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">⚖️ Balance de Repartos</span>
+                <span id="dispatch-stats-unassigned" class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-amber-300">0 sin asignar</span>
+              </div>
+              <p id="dispatch-stats-balance-summary" class="font-display font-extrabold text-sm text-white">
+                Ambos socios parejos en despachos ($0)
+              </p>
+              <button type="button" onclick="switchAdminTab('finanzas'); document.getElementById('supplier-payment-concept').value='Gasto Bencina / Reparto Ruta'; document.getElementById('supplier-payment-concept').focus();"
+                      class="w-full py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-[11px] transition text-center">
+                ⛽ Registrar Gasto de Bencina en Contabilidad →
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -1851,7 +1935,7 @@
           <!-- Reglas Oficiales de Comisiones y Bonos -->
           <div class="flex flex-wrap items-center gap-2 bg-qh-navyDark p-3 rounded-2xl border border-white/10 text-xs">
             <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs">
-              📦 Venta Propia: <strong class="text-white">$2.000</strong> / bandeja
+              📦 Venta Propia: <strong class="text-white">$2.000 Café</strong> / <strong class="text-white">$1.000 Blanco</strong>
             </span>
             <span class="px-3 py-1.5 rounded-xl bg-qh-brown/25 border border-qh-brown/50 text-qh-brownLight font-extrabold text-xs">
               🏆 Bono Invitados Café (10u): <strong class="text-amber-300">+$10.000</strong>
@@ -1966,7 +2050,7 @@
                 Control de Pagos de Comisiones y Bonos por Embajador
               </h3>
               <p class="text-xs text-slate-400">
-                Detalle de quién invitó a cada embajador, sus ventas propias ($2.000/bandeja), ventas de sus invitados, bonos ganados ($10.000 Café / $8.000 Blanco) y saldo total a pagar.
+                Haz clic sobre el nombre de cualquier embajador para abrir su ficha detallada: ventas propias ($2.000 Café / $1.000 Blanco), pedidos asociados, bonos de invitados, pagos anteriores y deuda pendiente.
               </p>
             </div>
           </div>
@@ -2522,7 +2606,7 @@
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">Programa Oficial de Embajadores • QUÉ HUEVONES</span>
           <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-white">Quiero ser Embajador</h3>
           <p class="text-xs text-slate-300 mt-0.5">
-            Gana <strong>$2.000 por cada bandeja</strong> vendida y <strong>bonos de $10.000 / $8.000</strong> por las ventas de tus invitados.
+            Gana <strong>$2.000 por bandeja Café</strong> y <strong>$1.000 por bandeja Blanca</strong> vendida + <strong>bonos de $10.000 / $8.000</strong> por las ventas de tus invitados.
           </p>
         </div>
       </div>
@@ -2932,17 +3016,30 @@
           </p>
         </div>
 
-        <!-- Estado de Pago y Despacho -->
-        <div>
-          <label for="edit-order-state" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
-            Flujo de Estado (Pago y Despacho)
-          </label>
-          <select id="edit-order-state" required
-                  class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
-            <option value="Pendiente">⏳ Estado 1: Pendiente de Pago (Aún no transfiere)</option>
-            <option value="Pagado">✅ Estado 2: Pagado / Aprobado — Falta Entregar (Suma a Caja)</option>
-            <option value="Entregado">🚚 Estado 3: Entregado / Completado (Despacho finalizado)</option>
-          </select>
+        <!-- Estado de Pago y Despacho + ¿Quién despachó? -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-order-state" class="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1">
+              Flujo de Estado (Pago y Despacho)
+            </label>
+            <select id="edit-order-state" required
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+              <option value="Pendiente">⏳ Estado 1: Pendiente de Pago (Aún no transfiere)</option>
+              <option value="Pagado">✅ Estado 2: Pagado / Aprobado — Falta Entregar (Suma a Caja)</option>
+              <option value="Entregado">🚚 Estado 3: Entregado / Completado (Despacho finalizado)</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-order-dispatched-by" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-300 mb-1">
+              🚗 ¿Quién despachó?
+            </label>
+            <select id="edit-order-dispatched-by"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-qh-navyDark border border-emerald-400/40 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400">
+              <option value="">⏳ Pendiente de asignar</option>
+              <option value="Juanjo">🚗 Despachó Juanjo</option>
+              <option value="Mati">🚙 Despachó Mati (Moreno)</option>
+            </select>
+          </div>
         </div>
 
         <!-- Botones de Acción -->
@@ -3148,6 +3245,209 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL MODO "PARTIR A REPARTIR" Y OPTIMIZACIÓN DE RUTA (WAZE / GOOGLE MAPS)
+       ======================================================================== -->
+  <div id="smart-dispatch-modal" class="fixed inset-0 z-50 hidden items-start sm:items-center justify-center bg-qh-navyDark/90 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border-2 border-emerald-400/60 relative space-y-4 my-2 sm:my-6">
+      <button type="button" onclick="closeSmartDispatchModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center z-10" aria-label="Cerrar Modo Reparto">
+        ✕
+      </button>
+
+      <!-- Header Modo Reparto -->
+      <div class="flex items-center gap-3 pr-10">
+        <span class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 flex items-center justify-center text-2xl shadow">🚀</span>
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">Modo Reparto Inteligente • Ahorro de Bencina</span>
+          <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white">Partir a Repartir (Waze & Maps)</h3>
+        </div>
+      </div>
+
+      <!-- PASO 1: ¿Quién reparte hoy? -->
+      <div class="p-3.5 sm:p-4 rounded-2xl bg-qh-navyDark/90 border border-emerald-400/30 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-300">1️⃣ ¿Quién va al volante hoy?</span>
+          <span id="smart-dispatch-active-driver-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[11px] font-extrabold text-emerald-300">
+            Reparte: Juanjo
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" id="btn-driver-juanjo" onclick="setSmartDispatchDriver('Juanjo')"
+                  class="py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-sky-500 text-qh-navyDark border-sky-300 shadow-lg">
+            <span>🚗</span>
+            <span>Juanjo</span>
+          </button>
+          <button type="button" id="btn-driver-mati" onclick="setSmartDispatchDriver('Mati')"
+                  class="py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-qh-navy text-slate-300 border-white/15 hover:border-amber-400/50">
+            <span>🚙</span>
+            <span>Mati (Moreno)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 2: Controles de Ruta y Optimización por Cercanía -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="optimizeSmartDispatchRoute()"
+                  class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-qh-navyDark font-display font-extrabold text-xs shadow transition flex items-center gap-1.5">
+            <span>⛽</span>
+            <span>Ordenar por Cercanía / Sector</span>
+          </button>
+          <button type="button" onclick="toggleAllSmartDispatchOrders(true)"
+                  class="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] transition">
+            Marcar Todos
+          </button>
+        </div>
+        <button type="button" onclick="openMultiStopGoogleMapsRoute()"
+                class="px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/40 font-display font-extrabold text-xs transition flex items-center gap-1.5">
+          <span>🗺️</span>
+          <span>Armar Ruta Múltiple en Google Maps</span>
+        </button>
+      </div>
+
+      <!-- PASO 3: Tarjeta de PARADA ACTUAL (Vista Gigante para Celular) -->
+      <div id="smart-dispatch-current-stop-container">
+        <!-- Renderizado dinámicamente por JS -->
+      </div>
+
+      <!-- PASO 4: Lista de Paradas de la Ruta (Seleccionar / Reordenar) -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">
+            📋 Orden de la Ruta (<span id="smart-dispatch-route-count">0</span> paradas seleccionadas)
+          </h4>
+          <span class="text-[11px] text-slate-400">Puedes subir/bajar o elegir cuál va primero</span>
+        </div>
+        <div id="smart-dispatch-stops-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+          <!-- Renderizado dinámicamente por JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL DETALLE DE DEUDA Y COMISIONES POR EMBAJADOR (AL PINCHAR NOMBRE)
+       ======================================================================== -->
+  <div id="ambassador-detail-modal" class="fixed inset-0 z-50 hidden items-start sm:items-center justify-center bg-qh-navyDark/90 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-qh-navy text-white rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl border-2 border-amber-400/60 relative space-y-5 my-2 sm:my-6">
+      <button type="button" onclick="closeAmbassadorDetailModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center z-10" aria-label="Cerrar Ficha de Embajador">
+        ✕
+      </button>
+
+      <!-- Encabezado del Embajador -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pr-10 border-b border-white/10 pb-4">
+        <div class="flex items-center gap-3">
+          <span class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/50 text-amber-300 flex items-center justify-center text-2xl shadow">🔍</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">Ficha Detallada de Comisiones</span>
+              <span id="amb-detail-code-badge" class="px-2 py-0.5 rounded-md bg-amber-400/20 border border-amber-400/40 text-[11px] font-extrabold text-amber-300">CODIGO</span>
+            </div>
+            <h3 id="amb-detail-name" class="font-display font-extrabold text-xl sm:text-2xl text-white">Nombre Embajador</h3>
+            <p id="amb-detail-meta" class="text-xs text-slate-400 mt-0.5">Tel: — • Invitado por: Directo</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. Desglose de Ventas Propias + 3. Bonos de Producción de Invitados -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <!-- Desglose Ventas Propias -->
+        <div class="p-4 rounded-2xl bg-qh-navyDark/90 border border-amber-400/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">1️⃣ Desglose de Ventas Propias (Pagadas)</span>
+            <span class="text-[10px] font-bold text-slate-400">Regla Oficial</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+              <span class="text-amber-200 font-bold">🥚 Bandejas Café (<span id="amb-detail-campo-qty">0</span> x $2.000):</span>
+              <span id="amb-detail-campo-comm" class="font-display font-extrabold text-sm text-amber-300">$0</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+              <span class="text-slate-200 font-bold">🥚 Bandejas Blancas (<span id="amb-detail-blanco-qty">0</span> x $1.000):</span>
+              <span id="amb-detail-blanco-comm" class="font-display font-extrabold text-sm text-white">$0</span>
+            </div>
+            <div class="flex items-center justify-between pt-1.5 border-t border-white/10">
+              <span class="font-extrabold text-slate-300">Subtotal Ventas Propias:</span>
+              <span id="amb-detail-own-total" class="font-display font-extrabold text-base text-emerald-300">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bonos de Producción de Invitados + Resumen Histórico -->
+        <div class="p-4 rounded-2xl bg-qh-navyDark/90 border border-sky-400/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-sky-300">3️⃣ Bonos de Invitados y Pagos</span>
+            <span id="amb-detail-guests-count" class="text-[10px] font-bold text-sky-300">0 invitados</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+              <span class="text-sky-200 font-bold">🎁 Bonos por Invitados ($10k/10 Café, $8k/10 Blanco):</span>
+              <span id="amb-detail-bonus-total" class="font-display font-extrabold text-sm text-sky-300">$0</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+              <span class="text-slate-300 font-bold">📈 Total Histórico Ganado:</span>
+              <span id="amb-detail-earned-total" class="font-display font-extrabold text-sm text-white">$0</span>
+            </div>
+            <div class="flex items-center justify-between pt-1.5 border-t border-white/10">
+              <span class="font-extrabold text-emerald-300">💸 Ya Pagado Anteriormente:</span>
+              <span id="amb-detail-paid-total" class="font-display font-extrabold text-base text-emerald-400">$0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TOTAL LÍQUIDO A PAGAR HOY (Deuda actual) + Botón Saldar Deuda -->
+      <div id="amb-detail-net-box" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-500/20 via-amber-500/15 to-emerald-500/20 border-2 border-amber-400/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">5️⃣ Total Líquido a Pagar Hoy (Deuda Pendiente Actual)</span>
+          <div class="flex items-baseline gap-3 mt-1">
+            <span id="amb-detail-pending-debt" class="font-display font-extrabold text-3xl sm:text-4xl text-white">$0</span>
+            <span id="amb-detail-pending-status" class="text-xs font-extrabold text-amber-300">Pendiente de transferencia</span>
+          </div>
+        </div>
+        <div id="amb-detail-pay-action">
+          <!-- Botón 💸 Pagar / Saldar Deuda inyectado dinámicamente -->
+        </div>
+      </div>
+
+      <!-- 2. Lista de Pedidos Asociados a este Embajador -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+            2️⃣ Lista de Pedidos Asociados (<span id="amb-detail-orders-count">0</span> pedidos)
+          </h4>
+          <span class="text-[11px] text-slate-400">Solo los pedidos Pagados/Entregados suman a la deuda</span>
+        </div>
+        <div class="overflow-x-auto rounded-2xl border border-white/10 bg-qh-navyDark/70 max-h-56">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-white/10 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 bg-qh-navyDark">
+                <th class="py-2.5 px-3">Fecha / ID</th>
+                <th class="py-2.5 px-3">Cliente</th>
+                <th class="py-2.5 px-3">Bandejas</th>
+                <th class="py-2.5 px-3">Estado Pedido</th>
+                <th class="py-2.5 px-3 text-right">Comisión ($2k Café / $1k Blanco)</th>
+              </tr>
+            </thead>
+            <tbody id="amb-detail-orders-tbody" class="divide-y divide-white/10">
+              <!-- Inyectado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. Historial de Pagos Anteriores -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+          4️⃣ Historial de Pagos Anteriores Realizados
+        </h4>
+        <div id="amb-detail-payouts-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          <!-- Inyectado por JS -->
+        </div>
+      </div>
     </div>
   </div>
 

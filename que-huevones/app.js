@@ -110,7 +110,7 @@ const PRODUCTS = [
     name: 'Bandeja Huevo Blanco Seleccionado',
     format: '30 unidades',
     eggsCount: 30,
-    commission: 2000,
+    commission: 1000,
     caliberBadge: 'Calibre Primera / Tamaño Grande',
     qualityNote: 'Huevos de Selección Grande • Clara densa y cáscara limpia',
     price: 9000,
@@ -605,7 +605,11 @@ function reconcileBusinessDataDefaults(state) {
     });
   }
 
-  // 3. Normalizar pedidos existentes
+  if (typeof state.finances.dispatchFeePerOrder !== 'number' || Number.isNaN(state.finances.dispatchFeePerOrder)) {
+    state.finances.dispatchFeePerOrder = 2000;
+  }
+
+  // 3. Normalizar pedidos existentes y recalcular retroactivamente comisiones ($2.000 Café / $1.000 Blanco)
   if (Array.isArray(state.orders)) {
     state.orders.forEach((o) => {
       if (typeof o.paid !== 'boolean') {
@@ -623,6 +627,12 @@ function reconcileBusinessDataDefaults(state) {
           o.status = 'Pendiente de Pago';
         }
       }
+      if (typeof o.dispatchedBy !== 'string') {
+        o.dispatchedBy = '';
+      }
+      // Recálculo retroactivo inmediato de comisión: $2.000 Café / $1.000 Blanco
+      const cleanAmb = (o.ambassadorCode || '').trim().toUpperCase();
+      o.commissionAmount = (cleanAmb && cleanAmb !== '-') ? calculateOrderCommission(o.items) : 0;
     });
   }
 }
@@ -686,7 +696,11 @@ function normalizeStateObject(raw) {
       debtSettlements:
         raw.finances && Array.isArray(raw.finances.debtSettlements)
           ? raw.finances.debtSettlements
-          : []
+          : [],
+      dispatchFeePerOrder:
+        raw.finances && typeof raw.finances.dispatchFeePerOrder === 'number'
+          ? raw.finances.dispatchFeePerOrder
+          : 2000
     },
     ambassadors: Array.isArray(raw.ambassadors) ? raw.ambassadors : [],
     users: Array.isArray(raw.users) ? raw.users : [],
@@ -790,6 +804,8 @@ function mergeCloudStates(stateA, stateB) {
       ? a.supabaseConfig
       : SUPABASE_CREDENTIALS;
 
+  const newerFinancesSource = (b.updatedAt || 0) >= (a.updatedAt || 0) ? b.finances : a.finances;
+
   const mergedResult = {
     orders: mergeCollectionById(a.orders, b.orders),
     finances: {
@@ -812,7 +828,11 @@ function mergeCloudStates(stateA, stateB) {
       debtSettlements: mergeCollectionById(
         a.finances.debtSettlements || [],
         b.finances.debtSettlements || []
-      )
+      ),
+      dispatchFeePerOrder:
+        typeof (newerFinancesSource && newerFinancesSource.dispatchFeePerOrder) === 'number'
+          ? newerFinancesSource.dispatchFeePerOrder
+          : 2000
     },
     ambassadors: mergeCollectionById(a.ambassadors, b.ambassadors),
     users: mergeCollectionById(a.users || [], b.users || []),
@@ -1631,19 +1651,19 @@ function closeCartDrawer() {
 }
 
 /**
- * Calcula la comisión proporcional de un pedido según sus ítems:
- * - Bandeja de 30 huevos: $2.000 de comisión por unidad.
+ * Calcula la comisión exacta de un pedido según sus ítems:
+ * - Bandeja Huevo de Campo (Café - 30 un.): $2.000 de comisión por bandeja vendida.
+ * - Bandeja Huevo Blanco (30 un.): $1.000 de comisión por bandeja vendida.
  */
 function calculateOrderCommission(items) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((sum, item) => {
     const qty = Number(item.qty) || 0;
-    const product = PRODUCTS.find((p) => p.id === item.id);
-    const eggs = product ? product.eggsCount : parseInt(item.format, 10) || 0;
-    if (eggs === 30) return sum + qty * 2000;
-    // Históricos retrocompatibles
-    if (eggs === 12) return sum + qty * 800;
-    if (eggs === 60) return sum + qty * 4000;
+    const lowerName = (item.name || '').toLowerCase();
+    const isBlanco = item.id === 'blanco-30' || lowerName.includes('blanco');
+    if (isBlanco) {
+      return sum + qty * 1000;
+    }
     return sum + qty * 2000;
   }, 0);
 }
@@ -3039,7 +3059,7 @@ function updatePortalOrderPreview() {
   const qtyBlanco = Math.max(0, parseInt((document.getElementById('portal-order-qty-blanco') || {}).value, 10) || 0);
   const totalTrays = qtyCampo + qtyBlanco;
   const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
-  const commission = totalTrays * 2000;
+  const commission = qtyCampo * 2000 + qtyBlanco * 1000;
 
   const traysEl = document.getElementById('portal-order-preview-trays');
   const totalEl = document.getElementById('portal-order-preview-total');
@@ -3092,7 +3112,7 @@ async function handleAmbassadorPortalCreateOrder(event) {
   const totalTrays = qtyCampo + qtyBlanco;
   const totalEggs = totalTrays * 30;
   const subtotal = qtyCampo * 11500 + qtyBlanco * 9000;
-  const commissionAmount = totalTrays * 2000;
+  const commissionAmount = qtyCampo * 2000 + qtyBlanco * 1000;
 
   // Código del embajador activo en sesión
   const ambCode = (currentUserCode || currentAdminUser || 'EMBAJADOR').toUpperCase();
@@ -3782,9 +3802,9 @@ function markOrderAsPaid(orderId) {
 
 /**
  * Transición a Estado 3: "Entregado / Completado"
- * Marca cuando las bandejas ya fueron despachadas físicamente.
+ * Marca cuando las bandejas ya fueron despachadas físicamente y registra quién despachó.
  */
-function markOrderAsDelivered(orderId) {
+function markOrderAsDelivered(orderId, customDriver = null) {
   const orders = loadOrders();
   const target = orders.find((o) => o.id === orderId);
   if (!target) return;
@@ -3793,10 +3813,593 @@ function markOrderAsDelivered(orderId) {
   target.approved = true;
   target.deliveryStatus = 'Entregado';
   target.status = 'Entregado';
+
+  if (customDriver) {
+    target.dispatchedBy = customDriver;
+  } else if (!target.dispatchedBy && currentAdminUser) {
+    const cleanAdmin = currentAdminUser.toLowerCase();
+    if (cleanAdmin.includes('juanjo')) {
+      target.dispatchedBy = 'Juanjo';
+    } else if (cleanAdmin.includes('mati') || cleanAdmin.includes('moren')) {
+      target.dispatchedBy = 'Mati';
+    }
+  }
   target.updatedAt = Date.now();
 
-  persistCloudState(`Pedido ${target.displayId || orderId} entregado físicamente`);
-  showToast(`🚚 Pedido ${target.displayId || orderId} marcado como ENTREGADO / COMPLETADO.`);
+  const driverNote = target.dispatchedBy
+    ? ` (Despachó ${target.dispatchedBy === 'Mati' ? 'Mati (Moreno)' : 'Juanjo'})`
+    : '';
+  persistCloudState(`Pedido ${target.displayId || orderId} entregado físicamente${driverNote}`);
+  showToast(`🚚 Pedido ${target.displayId || orderId} marcado como ENTREGADO${driverNote}.`);
+}
+
+/**
+ * Cambia manualmente quién despachó un pedido desde la tabla general de pedidos.
+ */
+function handleOrderDispatchedByChange(orderId, driverVal) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.dispatchedBy = driverVal || '';
+  if (driverVal && target.paid && target.deliveryStatus !== 'Entregado') {
+    target.deliveryStatus = 'Entregado';
+    target.status = 'Entregado';
+  }
+  target.updatedAt = Date.now();
+
+  const label =
+    driverVal === 'Juanjo'
+      ? 'Despachó Juanjo'
+      : driverVal === 'Mati'
+      ? 'Despachó Mati (Moreno)'
+      : 'Pendiente de asignar';
+  persistCloudState(`Despacho de pedido ${target.displayId || orderId}: ${label}`);
+  showToast(`🚗 ${target.displayId || orderId}: ${label}`);
+}
+
+/**
+ * Guarda el valor de referencia por despacho / bencina por entrega en la nube.
+ */
+function handleSaveDispatchFee() {
+  const inp = document.getElementById('dispatch-fee-per-order-input');
+  if (!inp) return;
+  const val = Math.max(0, parseInt(inp.value, 10) || 0);
+  const finances = loadFinances();
+  finances.dispatchFeePerOrder = val;
+  persistCloudState(`Valor por despacho/bencina actualizado a ${formatCLP(val)}`);
+  showToast(`⛽ Valor por despacho actualizado a ${formatCLP(val)} por entrega`);
+}
+
+/**
+ * Calcula en tiempo real cuántos pedidos y cuántas bandejas ha despachado Juanjo vs Mati (Moreno)
+ * y el monto acumulado de despacho/bencina para cada socio.
+ */
+function calculatePartnerDispatchStats() {
+  const orders = loadOrders();
+  const finances = loadFinances();
+  const feePerOrder =
+    typeof finances.dispatchFeePerOrder === 'number' ? finances.dispatchFeePerOrder : 2000;
+
+  let juanjoOrders = 0;
+  let juanjoTrays = 0;
+  let matiOrders = 0;
+  let matiTrays = 0;
+  let unassignedOrders = 0;
+  let unassignedTrays = 0;
+
+  orders.forEach((o) => {
+    const trays = (o.items || []).reduce((acc, it) => acc + (Number(it.qty) || 0), 0) || Math.round((o.totalEggs || 30) / 30);
+    const driver = (o.dispatchedBy || '').trim();
+    if (driver === 'Juanjo') {
+      juanjoOrders += 1;
+      juanjoTrays += trays;
+    } else if (driver === 'Mati' || driver === 'Morensex') {
+      matiOrders += 1;
+      matiTrays += trays;
+    } else if (o.paid || o.deliveryStatus === 'Entregado') {
+      unassignedOrders += 1;
+      unassignedTrays += trays;
+    }
+  });
+
+  const juanjoAmount = juanjoOrders * feePerOrder;
+  const matiAmount = matiOrders * feePerOrder;
+
+  return {
+    feePerOrder,
+    juanjoOrders,
+    juanjoTrays,
+    juanjoAmount,
+    matiOrders,
+    matiTrays,
+    matiAmount,
+    unassignedOrders,
+    unassignedTrays
+  };
+}
+
+/* ==========================================================================
+   🚗 MODO "PARTIR A REPARTIR" Y OPTIMIZACIÓN DE RUTA (WAZE / GOOGLE MAPS)
+   ========================================================================== */
+
+let smartDispatchDriver = 'Juanjo'; // 'Juanjo' | 'Mati'
+let smartDispatchRouteOrderIds = [];
+let smartDispatchSelectedMap = {};
+
+/**
+ * Limpia notas entre paréntesis y añade Santiago, Chile para que Waze y Google Maps
+ * encuentren la dirección exacta al primer clic.
+ */
+function cleanAddressForNavigation(rawAddress) {
+  if (!rawAddress) return '';
+  let clean = String(rawAddress)
+    .replace(/\(Nota:.*?\)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return '';
+  const lower = clean.toLowerCase();
+  if (!lower.includes('chile') && !lower.includes('santiago')) {
+    clean += ', Santiago, Chile';
+  }
+  return clean;
+}
+
+function buildWazeUrl(rawAddress) {
+  const clean = cleanAddressForNavigation(rawAddress);
+  if (!clean) return 'https://waze.com/ul';
+  return `https://waze.com/ul?q=${encodeURIComponent(clean)}&navigate=yes`;
+}
+
+function buildGoogleMapsUrl(rawAddress) {
+  const clean = cleanAddressForNavigation(rawAddress);
+  if (!clean) return 'https://www.google.com/maps';
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(clean)}`;
+}
+
+/**
+ * Asigna un puntaje geográfico por sector/comuna y calle en Santiago para agrupar direcciones cercanas
+ * y minimizar los kilómetros recorridos (ahorro de bencina).
+ */
+function computeAddressProximityKey(rawAddress) {
+  const addr = String(rawAddress || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  // Orden lógico de corredor geográfico en Santiago (Oriente Norte -> Oriente -> Centro -> Sur -> Poniente)
+  const sectorCorridors = [
+    { zone: 10, keywords: ['chicureo', 'colina', 'chamisero', 'piedra roja'] },
+    { zone: 20, keywords: ['lo barnechea', 'la dehesa', 'el rodeo', 'los trapenses', 'camino el alba'] },
+    { zone: 30, keywords: ['vitacura', 'kennedy', 'tabancura', 'geronimo de alderete', 'vitacura'] },
+    { zone: 40, keywords: ['las condes', 'apoquindo', 'manquehue', 'colon', 'cristobal colon', 'iv centenario', 'atenas', 'fleming', 'bilbao', 'estocolmo', 'los militares', 'padre hurtado', 'san carlos'] },
+    { zone: 50, keywords: ['la reina', 'principe de gales', 'larrain', ' Tobalaba', 'ossandon'] },
+    { zone: 60, keywords: ['providencia', 'pocuro', 'eliodoro yanez', 'los leones', 'pedro de valdivia', 'suecia', 'lyon', 'salvador'] },
+    { zone: 70, keywords: ['nunoa', 'irarrazaval', 'grecia', 'simon bolivar', 'chile espana', 'sucre'] },
+    { zone: 80, keywords: ['penalolen', 'macul', 'quilín', 'consistorial', 'tomas moro'] },
+    { zone: 90, keywords: ['santiago', 'centro', 'alameda', 'portugal', 'lira', 'santa isabel', 'san diego'] },
+    { zone: 100, keywords: ['la florida', 'puente alto', 'vicuna mackenna', 'walker martinez'] },
+    { zone: 110, keywords: ['huechuraba', 'recoleta', 'independencia', 'quilicura', 'pedro fontova'] },
+    { zone: 120, keywords: ['maipu', 'pudahuel', 'estacion central', 'cerrillos', 'san miguel', 'la cisterna'] }
+  ];
+
+  let zoneScore = 55; // Sector intermedio por defecto
+  for (const sc of sectorCorridors) {
+    if (sc.keywords.some((kw) => addr.includes(kw.trim()))) {
+      zoneScore = sc.zone;
+      break;
+    }
+  }
+
+  // Extraer nombre de calle principal (sin números) y número de calle para agrupar vecinos de la misma calle
+  const streetName = addr.replace(/[0-9#,.-]/g, '').trim().slice(0, 25);
+  const numMatch = addr.match(/\b(\d{2,5})\b/);
+  const streetNum = numMatch ? parseInt(numMatch[1], 10) : 0;
+
+  return {
+    zoneScore,
+    streetName,
+    streetNum
+  };
+}
+
+function openSmartDispatchModal() {
+  // Determinar quién está en sesión por defecto
+  if (currentAdminUser) {
+    const lower = currentAdminUser.toLowerCase();
+    if (lower.includes('mati') || lower.includes('moren')) {
+      smartDispatchDriver = 'Mati';
+    } else if (lower.includes('juanjo')) {
+      smartDispatchDriver = 'Juanjo';
+    }
+  }
+
+  const orders = loadOrders();
+  // Filtrar pedidos listos para despachar (Pagados - Falta Entregar). Si no hay, mostrar los que faltan entregar.
+  let candidates = orders.filter((o) => o.paid && o.deliveryStatus !== 'Entregado');
+  if (candidates.length === 0) {
+    candidates = orders.filter((o) => o.deliveryStatus !== 'Entregado');
+  }
+
+  smartDispatchRouteOrderIds = candidates.map((o) => o.id);
+  smartDispatchSelectedMap = {};
+  smartDispatchRouteOrderIds.forEach((id) => {
+    smartDispatchSelectedMap[id] = true;
+  });
+
+  // Ordenar automáticamente por cercanía al abrir para ahorrar bencina
+  optimizeSmartDispatchRoute(false);
+
+  const modal = document.getElementById('smart-dispatch-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  renderSmartDispatchModal();
+}
+
+function closeSmartDispatchModal() {
+  const modal = document.getElementById('smart-dispatch-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function setSmartDispatchDriver(driver) {
+  smartDispatchDriver = driver === 'Mati' ? 'Mati' : 'Juanjo';
+  renderSmartDispatchModal();
+  const label = smartDispatchDriver === 'Mati' ? 'Mati (Moreno)' : 'Juanjo';
+  showToast(`🚗 Repartidor activo: ${label}`);
+}
+
+function optimizeSmartDispatchRoute(showNotification = true) {
+  const orders = loadOrders();
+  const orderMap = {};
+  orders.forEach((o) => {
+    orderMap[o.id] = o;
+  });
+
+  smartDispatchRouteOrderIds.sort((idA, idB) => {
+    const ordA = orderMap[idA];
+    const ordB = orderMap[idB];
+    if (!ordA || !ordB) return 0;
+
+    // Primero los seleccionados
+    const selA = smartDispatchSelectedMap[idA] ? 0 : 1;
+    const selB = smartDispatchSelectedMap[idB] ? 0 : 1;
+    if (selA !== selB) return selA - selB;
+
+    const kA = computeAddressProximityKey(ordA.clientAddress);
+    const kB = computeAddressProximityKey(ordB.clientAddress);
+
+    if (kA.zoneScore !== kB.zoneScore) return kA.zoneScore - kB.zoneScore;
+    if (kA.streetName !== kB.streetName) return kA.streetName.localeCompare(kB.streetName);
+    return kA.streetNum - kB.streetNum;
+  });
+
+  renderSmartDispatchModal();
+  if (showNotification) {
+    showToast('⛽ Ruta agrupada y ordenada por sector/cercanía para ahorrar el máximo de bencina');
+  }
+}
+
+function toggleSmartDispatchOrderSelection(orderId) {
+  smartDispatchSelectedMap[orderId] = !smartDispatchSelectedMap[orderId];
+  renderSmartDispatchModal();
+}
+
+function toggleAllSmartDispatchOrders(selectAll = true) {
+  smartDispatchRouteOrderIds.forEach((id) => {
+    smartDispatchSelectedMap[id] = Boolean(selectAll);
+  });
+  renderSmartDispatchModal();
+}
+
+function moveSmartDispatchStop(orderId, direction) {
+  const idx = smartDispatchRouteOrderIds.indexOf(orderId);
+  if (idx === -1) return;
+  if (direction === 'first') {
+    smartDispatchRouteOrderIds.splice(idx, 1);
+    smartDispatchRouteOrderIds.unshift(orderId);
+    smartDispatchSelectedMap[orderId] = true;
+  } else if (direction === 'up' && idx > 0) {
+    const temp = smartDispatchRouteOrderIds[idx - 1];
+    smartDispatchRouteOrderIds[idx - 1] = smartDispatchRouteOrderIds[idx];
+    smartDispatchRouteOrderIds[idx] = temp;
+  } else if (direction === 'down' && idx < smartDispatchRouteOrderIds.length - 1) {
+    const temp = smartDispatchRouteOrderIds[idx + 1];
+    smartDispatchRouteOrderIds[idx + 1] = smartDispatchRouteOrderIds[idx];
+    smartDispatchRouteOrderIds[idx] = temp;
+  }
+  renderSmartDispatchModal();
+}
+
+/**
+ * Abre en Google Maps una ruta con múltiples paradas cargadas de una sola vez
+ * siguiendo el orden inteligente de la ruta.
+ */
+function openMultiStopGoogleMapsRoute() {
+  const orders = loadOrders();
+  const orderMap = {};
+  orders.forEach((o) => {
+    orderMap[o.id] = o;
+  });
+
+  const selectedOrders = smartDispatchRouteOrderIds
+    .filter((id) => smartDispatchSelectedMap[id] && orderMap[id] && orderMap[id].deliveryStatus !== 'Entregado')
+    .map((id) => orderMap[id])
+    .filter((o) => o && o.clientAddress);
+
+  if (selectedOrders.length === 0) {
+    const dispatchCandidates = orders.filter(
+      (o) => o.paid && o.deliveryStatus !== 'Entregado' && o.clientAddress
+    );
+    if (dispatchCandidates.length === 0) {
+      showToast('⚠️ No hay pedidos con dirección pendientes de despachar para armar la ruta.');
+      return;
+    }
+    selectedOrders.push(...dispatchCandidates);
+  }
+
+  const addresses = selectedOrders.map((o) => cleanAddressForNavigation(o.clientAddress)).filter(Boolean);
+  if (addresses.length === 0) {
+    showToast('⚠️ Los pedidos seleccionados no tienen dirección registrada.');
+    return;
+  }
+
+  const destination = addresses[addresses.length - 1];
+  const waypoints = addresses.slice(0, -1);
+
+  let mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+  if (waypoints.length > 0) {
+    mapsUrl += `&waypoints=${encodeURIComponent(waypoints.join('|'))}`;
+  }
+
+  window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+  showToast(`🗺️ Abriendo Ruta Múltiple en Google Maps (${addresses.length} parada(s))`);
+}
+
+/**
+ * Botón Gigante "✅ Entregado — Ir al siguiente":
+ * Pasa el pedido al estado "Entregado", lo atribuye automáticamente a quien inició el modo reparto
+ * ("Juanjo" o "Mati") y salta de inmediato a la siguiente dirección de la ruta.
+ */
+function completeCurrentSmartDispatchStop(orderId) {
+  const orders = loadOrders();
+  const target = orders.find((o) => o.id === orderId);
+  if (!target) return;
+
+  target.paid = true;
+  target.approved = true;
+  target.deliveryStatus = 'Entregado';
+  target.status = 'Entregado';
+  target.dispatchedBy = smartDispatchDriver;
+  target.dispatchedAt = Date.now();
+  target.updatedAt = Date.now();
+
+  // Quitar de la ruta pendiente y saltar al siguiente
+  smartDispatchRouteOrderIds = smartDispatchRouteOrderIds.filter((id) => id !== orderId);
+  delete smartDispatchSelectedMap[orderId];
+
+  const driverLabel = smartDispatchDriver === 'Mati' ? 'Mati (Moreno)' : 'Juanjo';
+  persistCloudState(
+    `Pedido ${target.displayId || orderId} entregado en Modo Reparto (Despachó ${driverLabel})`
+  );
+
+  renderSmartDispatchModal();
+  renderAdminDashboard();
+
+  const remaining = smartDispatchRouteOrderIds.filter((id) => smartDispatchSelectedMap[id]).length;
+  if (remaining > 0) {
+    showToast(
+      `✅ ${target.displayId || orderId} entregado (Despachó ${driverLabel}) • ¡Vamos al siguiente! (${remaining} restante(s))`
+    );
+  } else {
+    showToast(
+      `🎉 ¡Ruta completada! Todos los pedidos seleccionados fueron entregados por ${driverLabel}.`
+    );
+  }
+}
+
+function renderSmartDispatchModal() {
+  const modal = document.getElementById('smart-dispatch-modal');
+  if (!modal) return;
+
+  const badgeEl = document.getElementById('smart-dispatch-active-driver-badge');
+  const btnJuanjo = document.getElementById('btn-driver-juanjo');
+  const btnMati = document.getElementById('btn-driver-mati');
+  const driverLabel = smartDispatchDriver === 'Mati' ? 'Mati (Moreno)' : 'Juanjo';
+
+  if (badgeEl) {
+    badgeEl.textContent = `Al volante: ${driverLabel}`;
+  }
+  if (btnJuanjo && btnMati) {
+    if (smartDispatchDriver === 'Juanjo') {
+      btnJuanjo.className =
+        'py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-sky-500 text-qh-navyDark border-sky-300 shadow-lg';
+      btnMati.className =
+        'py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-qh-navy text-slate-300 border-white/15 hover:border-amber-400/50';
+    } else {
+      btnMati.className =
+        'py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-amber-400 text-qh-navyDark border-amber-200 shadow-lg';
+      btnJuanjo.className =
+        'py-3 px-4 rounded-xl font-display font-extrabold text-xs sm:text-sm border-2 transition flex items-center justify-center gap-2 bg-qh-navy text-slate-300 border-white/15 hover:border-sky-400/50';
+    }
+  }
+
+  const orders = loadOrders();
+  const orderMap = {};
+  orders.forEach((o) => {
+    orderMap[o.id] = o;
+  });
+
+  // Limpiar IDs que ya no existan o ya estén entregados
+  smartDispatchRouteOrderIds = smartDispatchRouteOrderIds.filter(
+    (id) => orderMap[id] && orderMap[id].deliveryStatus !== 'Entregado'
+  );
+
+  const activeSelectedIds = smartDispatchRouteOrderIds.filter((id) => smartDispatchSelectedMap[id]);
+  const countEl = document.getElementById('smart-dispatch-route-count');
+  if (countEl) countEl.textContent = activeSelectedIds.length;
+
+  const currentStopContainer = document.getElementById('smart-dispatch-current-stop-container');
+  const stopsListContainer = document.getElementById('smart-dispatch-stops-list');
+
+  if ( currentStopContainer ) {
+    if (activeSelectedIds.length === 0) {
+      currentStopContainer.innerHTML = `
+        <div class="p-6 rounded-2xl bg-emerald-500/10 border-2 border-emerald-400/40 text-center space-y-2">
+          <span class="text-3xl block">🎉</span>
+          <h4 class="font-display font-extrabold text-lg text-white">¡No quedan paradas pendientes en tu selección!</h4>
+          <p class="text-xs text-slate-300">Selecciona algún pedido de la lista inferior o vuelve al panel.</p>
+        </div>
+      `;
+    } else {
+      const currentOrder = orderMap[activeSelectedIds[0]];
+      const wazeUrl = buildWazeUrl(currentOrder.clientAddress);
+      const mapsUrl = buildGoogleMapsUrl(currentOrder.clientAddress);
+      const itemsText = (currentOrder.items || [])
+        .map((it) => `📦 <strong>${it.qty}x</strong> ${it.name}`)
+        .join(' • ');
+
+      currentStopContainer.innerHTML = `
+        <div class="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 via-qh-navyDark to-sky-500/15 border-2 border-emerald-400 shadow-xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="px-3 py-1 rounded-full bg-emerald-400 text-qh-navyDark font-display font-extrabold text-xs uppercase tracking-wider shadow">
+              📍 PARADA ACTUAL (1 de ${activeSelectedIds.length})
+            </span>
+            <span class="text-xs font-extrabold text-amber-300">
+              ${currentOrder.displayId || currentOrder.id} • ${formatCLP(currentOrder.subtotal)}
+            </span>
+          </div>
+
+          <div class="space-y-1">
+            <h4 class="font-display font-black text-xl sm:text-2xl text-white leading-tight">
+              ${currentOrder.clientName || 'Cliente'}
+            </h4>
+            <p class="text-sm sm:text-base font-extrabold text-amber-300 leading-snug">
+              📍 ${currentOrder.clientAddress || 'Sin dirección especificada'}
+            </p>
+            <p class="text-xs text-slate-200 pt-1">
+              ${itemsText} (${currentOrder.totalEggs || 30} huevos)
+            </p>
+            ${
+              currentOrder.clientPhone
+                ? `<a href="https://wa.me/${currentOrder.clientPhone.replace(/[^0-9]/g, '')}" target="_blank" rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 hover:underline pt-1">
+                     📞 Llamar / WhatsApp Cliente (${currentOrder.clientPhone})
+                   </a>`
+                : ''
+            }
+          </div>
+
+          <!-- Botones Grandes y Directos de Navegación: Waze y Google Maps -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            <a href="${wazeUrl}" target="_blank" rel="noopener noreferrer"
+               class="py-3.5 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-qh-navyDark font-display font-black text-sm shadow-lg transition flex items-center justify-center gap-2 text-center">
+              <span class="text-lg">📍</span>
+              <span>Abrir en Waze</span>
+            </a>
+            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
+               class="py-3.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-qh-navyDark font-display font-black text-sm shadow-lg transition flex items-center justify-center gap-2 text-center">
+              <span class="text-lg">🗺️</span>
+              <span>Abrir en Google Maps</span>
+            </a>
+          </div>
+
+          <!-- Cierre en 1 Clic y Atribución Automática -->
+          <button type="button" onclick="completeCurrentSmartDispatchStop('${currentOrder.id}')"
+                  class="w-full py-4 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-black text-base sm:text-lg shadow-xl shadow-emerald-500/25 transition flex items-center justify-center gap-2 border-2 border-emerald-200">
+            <span>✅ Entregado — Ir al siguiente</span>
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-qh-navyDark/20">Despachó ${driverLabel}</span>
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  if (stopsListContainer) {
+    if (smartDispatchRouteOrderIds.length === 0) {
+      stopsListContainer.innerHTML = `
+        <p class="text-xs text-slate-400 text-center py-4">No hay pedidos pendientes de entrega en este momento.</p>
+      `;
+    } else {
+      stopsListContainer.innerHTML = smartDispatchRouteOrderIds
+        .map((id, idx) => {
+          const ord = orderMap[id];
+          if (!ord) return '';
+          const isSelected = Boolean(smartDispatchSelectedMap[id]);
+          const isCurrent = isSelected && activeSelectedIds[0] === id;
+          const wazeUrl = buildWazeUrl(ord.clientAddress);
+          const mapsUrl = buildGoogleMapsUrl(ord.clientAddress);
+          const traysCount = (ord.items || []).reduce((acc, it) => acc + (Number(it.qty) || 0), 0);
+
+          return `
+            <div class="p-3 rounded-2xl border transition flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 ${
+              isCurrent
+                ? 'bg-emerald-500/15 border-emerald-400'
+                : isSelected
+                ? 'bg-qh-navyDark/90 border-white/15'
+                : 'bg-qh-navyDark/40 border-white/5 opacity-60'
+            }">
+              <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                <input type="checkbox" ${isSelected ? 'checked' : ''}
+                       onchange="toggleSmartDispatchOrderSelection('${ord.id}')"
+                       class="mt-1 w-4 h-4 rounded accent-emerald-400 cursor-pointer" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded-md bg-white/10 text-[10px] font-extrabold text-amber-300">
+                      #${idx + 1}
+                    </span>
+                    <span class="font-display font-extrabold text-xs sm:text-sm text-white truncate">
+                      ${ord.clientName || 'Cliente'}
+                    </span>
+                    <span class="text-[11px] text-emerald-300 font-bold">(${traysCount} band.)</span>
+                  </div>
+                  <p class="text-xs text-amber-200/90 font-semibold truncate mt-0.5">
+                    📍 ${ord.clientAddress || 'Sin dirección'}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <a href="${wazeUrl}" target="_blank" rel="noopener noreferrer"
+                   class="px-2 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/30 text-[10px] font-extrabold transition"
+                   title="Abrir esta dirección en Waze">
+                  📍 Waze
+                </a>
+                <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
+                   class="px-2 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold transition"
+                   title="Abrir esta dirección en Google Maps">
+                  🗺️ Maps
+                </a>
+                ${
+                  idx > 0
+                    ? `<button type="button" onclick="moveSmartDispatchStop('${ord.id}', 'first')"
+                               class="px-2 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-extrabold transition"
+                               title="Ir a este punto primero">
+                         🎯 1°
+                       </button>`
+                    : ''
+                }
+                <button type="button" onclick="moveSmartDispatchStop('${ord.id}', 'up')"
+                        class="px-1.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold transition"
+                        title="Subir en la ruta">
+                  ⬆️
+                </button>
+                <button type="button" onclick="moveSmartDispatchStop('${ord.id}', 'down')"
+                        class="px-1.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold transition"
+                        title="Bajar en la ruta">
+                  ⬇️
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+  }
 }
 
 /**
@@ -3838,7 +4441,7 @@ function markOrderPendingDelivery(orderId) {
  * - Modificar bandejas y cantidades
  * - Modificar manualmente el subtotal / total a pagar (descuentos)
  * - Modificar o quitar el código de embajador
- * - Modificar estado de pago y entrega
+ * - Modificar estado de pago, entrega y quién despachó
  */
 function openEditOrderModal(orderId) {
   const orders = loadOrders();
@@ -3888,6 +4491,11 @@ function openEditOrderModal(orderId) {
     }
   }
 
+  const dispatchedSel = document.getElementById('edit-order-dispatched-by');
+  if (dispatchedSel) {
+    dispatchedSel.value = order.dispatchedBy || '';
+  }
+
   modal.classList.remove('hidden');
   modal.classList.add('flex');
 }
@@ -3935,6 +4543,8 @@ function handleSaveEditOrder(event) {
   const cleanCode = (rawCode === '-' || rawCode === 'SIN CODIGO' || rawCode === 'SIN CÓDIGO') ? '' : rawCode;
 
   const orderState = document.getElementById('edit-order-state').value;
+  const dispatchedByEl = document.getElementById('edit-order-dispatched-by');
+  const dispatchedByVal = dispatchedByEl ? dispatchedByEl.value : order.dispatchedBy || '';
 
   // Reconstruir items
   const newItems = [];
@@ -3969,6 +4579,7 @@ function handleSaveEditOrder(event) {
   order.items = newItems;
   order.totalEggs = (qtyCampo + qtyBlanco) * 30;
   order.subtotal = manualSubtotal;
+  order.dispatchedBy = dispatchedByVal;
 
   order.ambassadorCode = cleanCode;
   order.commissionAmount = cleanCode ? calculateOrderCommission(newItems) : 0;
@@ -4330,6 +4941,9 @@ function payAmbassadorCommission(code, name, amount) {
 
   persistCloudState(`Pago de comisión/bonos a ${cleanCode}: ${formatCLP(amount)} desde Caja`);
   showToast(`💸 Pago de ${formatCLP(amount)} registrado a ${name}. Deuda pendiente saldada a $0.`);
+  if (currentOpenAmbassadorDetailCode && currentOpenAmbassadorDetailCode === cleanCode) {
+    openAmbassadorDetailModal(cleanCode);
+  }
 }
 
 /**
@@ -4357,9 +4971,13 @@ function deleteAmbassadorPayout(payoutId) {
    MÓDULO C: 🤝 SISTEMA DE EMBAJADORES, CARGAS/INVITADOS, BONOS Y USUARIOS
    ========================================================================== */
 
+let currentOpenAmbassadorDetailCode = null;
+
 /**
  * Calcula integralmente:
- * 1. Ventas propias de cada embajador (portal + web) y su comisión directa ($2.000/bandeja)
+ * 1. Ventas propias de cada embajador (portal + web) con la regla exacta:
+ *    - Bandeja Huevo de Campo (Café - 30 un.): $2.000 de comisión por bandeja vendida.
+ *    - Bandeja Huevo Blanco (30 un.): $1.000 de comisión por bandeja vendida.
  * 2. Red de Invitados ("Sus Cargas / Sus Invitados") reclutados por cada embajador
  * 3. Bono por Producción de Invitados:
  *    - Cada bloque de 10 bandejas de Huevo de Campo (Café) vendidas por sus invitados = +$10.000
@@ -4395,11 +5013,15 @@ function calculateAmbassadorsAndBonusesState() {
       ownCampoTrays: 0,
       ownBlancoTrays: 0,
       ownTotalTrays: 0,
+      ownCampoCommission: 0,
+      ownBlancoCommission: 0,
       ownPendingCampoTrays: 0,
       ownPendingBlancoTrays: 0,
       ownPendingTrays: 0,
       ownCommissionEarned: 0,
       ownCommissionHistoricalBeforeCutoff: 0,
+      ownOrdersList: [],
+      payoutsList: [],
       guests: [],
       guestCampoTrays: 0,
       guestBlancoTrays: 0,
@@ -4453,11 +5075,15 @@ function calculateAmbassadorsAndBonusesState() {
           ownCampoTrays: 0,
           ownBlancoTrays: 0,
           ownTotalTrays: 0,
+          ownCampoCommission: 0,
+          ownBlancoCommission: 0,
           ownPendingCampoTrays: 0,
           ownPendingBlancoTrays: 0,
           ownPendingTrays: 0,
           ownCommissionEarned: 0,
           ownCommissionHistoricalBeforeCutoff: 0,
+          ownOrdersList: [],
+          payoutsList: [],
           guests: [],
           guestCampoTrays: 0,
           guestBlancoTrays: 0,
@@ -4485,7 +5111,7 @@ function calculateAmbassadorsAndBonusesState() {
   let totalAllOwnTrays = 0;
   let totalAllOwnCommissionsEarned = 0;
 
-  // 1. Contabilizar pedidos por embajador
+  // 1. Contabilizar pedidos por embajador con la regla estricta: $2.000 Café / $1.000 Blanco
   orders.forEach((o) => {
     const rawCode = (o.ambassadorCode || '').trim().toUpperCase();
     if (!rawCode || rawCode === '-') return;
@@ -4508,11 +5134,15 @@ function calculateAmbassadorsAndBonusesState() {
         ownCampoTrays: 0,
         ownBlancoTrays: 0,
         ownTotalTrays: 0,
+        ownCampoCommission: 0,
+        ownBlancoCommission: 0,
         ownPendingCampoTrays: 0,
         ownPendingBlancoTrays: 0,
         ownPendingTrays: 0,
         ownCommissionEarned: 0,
         ownCommissionHistoricalBeforeCutoff: 0,
+        ownOrdersList: [],
+        payoutsList: [],
         guests: [],
         guestCampoTrays: 0,
         guestBlancoTrays: 0,
@@ -4548,12 +5178,37 @@ function calculateAmbassadorsAndBonusesState() {
     });
 
     const orderTrays = orderCampo + orderBlanco;
+    const campoComm = orderCampo * 2000;
+    const blancoComm = orderBlanco * 1000;
+    const comm = campoComm + blancoComm;
+
+    // Asegurar que el pedido tenga su commissionAmount exacto actualizado
+    o.commissionAmount = comm;
+
+    stat.ownOrdersList.push({
+      id: o.id,
+      displayId: o.displayId || o.id,
+      date: o.date || '-',
+      timestamp: o.timestamp || 0,
+      clientName: o.clientName || 'Cliente',
+      orderType: o.orderType || 'Pedido Único',
+      campoQty: orderCampo,
+      blancoQty: orderBlanco,
+      totalTrays: orderTrays,
+      subtotal: o.subtotal || 0,
+      commission: comm,
+      paid: Boolean(o.paid || o.approved),
+      deliveryStatus: o.deliveryStatus || 'Falta Entregar',
+      status: o.status || 'Pendiente de Pago'
+    });
+
     if (o.approved || o.paid) {
       stat.ordersCount += 1;
       stat.ownCampoTrays += orderCampo;
       stat.ownBlancoTrays += orderBlanco;
       stat.ownTotalTrays += orderTrays;
-      const comm = orderTrays * 2000;
+      stat.ownCampoCommission += campoComm;
+      stat.ownBlancoCommission += blancoComm;
       stat.ownCommissionEarned += comm;
       if ((o.timestamp || 0) <= 1729960000000) {
         stat.ownCommissionHistoricalBeforeCutoff += comm;
@@ -4631,6 +5286,7 @@ function calculateAmbassadorsAndBonusesState() {
     if (matchedKey && statsMap[matchedKey]) {
       const st = statsMap[matchedKey];
       st.totalPaid += payAmt;
+      st.payoutsList.push(pay);
       if (pay.id === 'PAY-AMB-EMILIA-6000' || pay.isHistoricalSeed) {
         st.effectiveDeductiblePaid += Math.min(payAmt, st.ownCommissionHistoricalBeforeCutoff);
       } else {
@@ -4660,6 +5316,193 @@ function calculateAmbassadorsAndBonusesState() {
     totalAllPaidCommissions,
     totalAllPendingToPay
   };
+}
+
+/**
+ * Abre la Ficha Detallada de Deuda y Comisiones al pinchar sobre el nombre de cualquier embajador.
+ */
+function openAmbassadorDetailModal(rawCode) {
+  const clean = (rawCode || '').trim().toUpperCase();
+  if (!clean) return;
+
+  const ambReport = calculateAmbassadorsAndBonusesState();
+  const stat =
+    ambReport.statsMap[clean] ||
+    ambReport.ambassadorList.find(
+      (a) =>
+        (a.code || '').toUpperCase() === clean ||
+        (a.name || '').toUpperCase() === clean
+    );
+  if (!stat) return;
+
+  currentOpenAmbassadorDetailCode = stat.code;
+
+  const modal = document.getElementById('ambassador-detail-modal');
+  if (!modal) return;
+
+  const codeBadge = document.getElementById('amb-detail-code-badge');
+  const nameEl = document.getElementById('amb-detail-name');
+  const metaEl = document.getElementById('amb-detail-meta');
+
+  if (codeBadge) codeBadge.textContent = stat.code;
+  if (nameEl) nameEl.textContent = stat.name;
+  if (metaEl) {
+    metaEl.textContent = `Tel: ${stat.phone || 'Sin teléfono'} • Invitado por: ${stat.invitedBy || 'Directo'}`;
+  }
+
+  // 1. Desglose de Ventas Propias (Pagadas)
+  const campoQtyEl = document.getElementById('amb-detail-campo-qty');
+  const campoCommEl = document.getElementById('amb-detail-campo-comm');
+  const blancoQtyEl = document.getElementById('amb-detail-blanco-qty');
+  const blancoCommEl = document.getElementById('amb-detail-blanco-comm');
+  const ownTotalEl = document.getElementById('amb-detail-own-total');
+
+  if (campoQtyEl) campoQtyEl.textContent = stat.ownCampoTrays || 0;
+  if (campoCommEl) campoCommEl.textContent = formatCLP(stat.ownCampoCommission || 0);
+  if (blancoQtyEl) blancoQtyEl.textContent = stat.ownBlancoTrays || 0;
+  if (blancoCommEl) blancoCommEl.textContent = formatCLP(stat.ownBlancoCommission || 0);
+  if (ownTotalEl) ownTotalEl.textContent = formatCLP(stat.ownCommissionEarned || 0);
+
+  // 3. Bonos de Producción de Invitados y Resumen Histórico
+  const guestsCountEl = document.getElementById('amb-detail-guests-count');
+  const bonusTotalEl = document.getElementById('amb-detail-bonus-total');
+  const earnedTotalEl = document.getElementById('amb-detail-earned-total');
+  const paidTotalEl = document.getElementById('amb-detail-paid-total');
+
+  if (guestsCountEl) {
+    guestsCountEl.textContent = `${(stat.guests || []).length} invitado(s) (${stat.guestTotalTrays || 0} bandejas)`;
+  }
+  if (bonusTotalEl) bonusTotalEl.textContent = formatCLP(stat.totalBonusEarned || 0);
+  if (earnedTotalEl) earnedTotalEl.textContent = formatCLP(stat.totalEarnedAll || 0);
+  if (paidTotalEl) paidTotalEl.textContent = formatCLP(stat.totalPaid || 0);
+
+  // 5. TOTAL LÍQUIDO A PAGAR HOY (Deuda actual)
+  const pendingDebtEl = document.getElementById('amb-detail-pending-debt');
+  const pendingStatusEl = document.getElementById('amb-detail-pending-status');
+  const payActionEl = document.getElementById('amb-detail-pay-action');
+
+  if (pendingDebtEl) {
+    pendingDebtEl.textContent = formatCLP(stat.totalPendingToPay || 0);
+    pendingDebtEl.className =
+      stat.totalPendingToPay > 0
+        ? 'font-display font-extrabold text-3xl sm:text-4xl text-amber-300'
+        : 'font-display font-extrabold text-3xl sm:text-4xl text-emerald-400';
+  }
+  if (pendingStatusEl) {
+    pendingStatusEl.textContent =
+      stat.totalPendingToPay > 0
+        ? 'Deuda Pendiente a Pagar Hoy'
+        : '✅ Cuenta Saldada al Día ($0)';
+  }
+  if (payActionEl) {
+    const safeName = (stat.name || '').replace(/'/g, "\\'");
+    if (stat.totalPendingToPay > 0) {
+      payActionEl.innerHTML = `
+        <button type="button" onclick="payAmbassadorCommission('${stat.code}', '${safeName}', ${stat.totalPendingToPay})"
+                class="py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-qh-navyDark font-display font-black text-xs sm:text-sm shadow-xl transition flex items-center gap-2 whitespace-nowrap">
+          <span>💸 Pagar / Saldar Deuda (${formatCLP(stat.totalPendingToPay)})</span>
+        </button>
+      `;
+    } else {
+      payActionEl.innerHTML = `
+        <span class="px-4 py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-display font-extrabold text-xs">
+          ✅ Sin deuda pendiente ($0)
+        </span>
+      `;
+    }
+  }
+
+  // 2. Lista de Pedidos Asociados
+  const ordersCountEl = document.getElementById('amb-detail-orders-count');
+  const ordersTbody = document.getElementById('amb-detail-orders-tbody');
+  const ordersList = stat.ownOrdersList || [];
+  if (ordersCountEl) ordersCountEl.textContent = ordersList.length;
+
+  if (ordersTbody) {
+    if (ordersList.length === 0) {
+      ordersTbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-6 text-center text-slate-400">
+            Este embajador aún no tiene pedidos asociados a su código ${stat.code}.
+          </td>
+        </tr>
+      `;
+    } else {
+      ordersTbody.innerHTML = ordersList
+        .map((ord) => {
+          const trayParts = [];
+          if (ord.campoQty > 0) trayParts.push(`<span class="text-amber-300 font-bold">${ord.campoQty}x Café ($2k)</span>`);
+          if (ord.blancoQty > 0) trayParts.push(`<span class="text-white font-bold">${ord.blancoQty}x Blanco ($1k)</span>`);
+          const traysHtml = trayParts.join(' + ') || `${ord.totalTrays} band.`;
+
+          let stBadge = '';
+          if (ord.deliveryStatus === 'Entregado') {
+            stBadge = `<span class="px-2 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-extrabold">🚚 Entregado (Pagado)</span>`;
+          } else if (ord.paid) {
+            stBadge = `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-extrabold">✅ Pagado / Aprobado</span>`;
+          } else {
+            stBadge = `<span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold">⏳ Pendiente de Pago</span>`;
+          }
+
+          return `
+            <tr class="hover:bg-white/5 transition">
+              <td class="py-2.5 px-3 whitespace-nowrap">
+                <span class="font-display font-bold text-white block">${ord.displayId}</span>
+                <span class="text-[10px] text-slate-400">${ord.date}</span>
+              </td>
+              <td class="py-2.5 px-3 font-semibold text-white">${ord.clientName}</td>
+              <td class="py-2.5 px-3 whitespace-nowrap">${traysHtml}</td>
+              <td class="py-2.5 px-3 whitespace-nowrap">${stBadge}</td>
+              <td class="py-2.5 px-3 text-right font-display font-extrabold whitespace-nowrap ${
+                ord.paid ? 'text-emerald-400' : 'text-slate-500 line-through'
+              }">
+                ${ord.paid ? `+${formatCLP(ord.commission)}` : `${formatCLP(ord.commission)} (Pend.)`}
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  // 4. Historial de Pagos Anteriores
+  const payoutsListEl = document.getElementById('amb-detail-payouts-list');
+  const payouts = stat.payoutsList || [];
+  if (payoutsListEl) {
+    if (payouts.length === 0) {
+      payoutsListEl.innerHTML = `
+        <p class="text-xs text-slate-400 italic py-2">No se registran pagos anteriores a este embajador ($0 pagado).</p>
+      `;
+    } else {
+      payoutsListEl.innerHTML = payouts
+        .map(
+          (p) => `
+          <div class="p-2.5 rounded-xl bg-qh-navyDark/90 border border-white/10 flex items-center justify-between gap-2 text-xs">
+            <div>
+              <span class="font-bold text-white">${p.concept || 'Pago Comisión Embajador'}</span>
+              <span class="text-[11px] text-slate-400 block">Fecha: ${p.date || '-'}</span>
+            </div>
+            <span class="font-display font-extrabold text-emerald-400 text-sm whitespace-nowrap">
+              Pagado: ${formatCLP(p.amount)}
+            </span>
+          </div>
+        `
+        )
+        .join('');
+    }
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeAmbassadorDetailModal() {
+  currentOpenAmbassadorDetailCode = null;
+  const modal = document.getElementById('ambassador-detail-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 }
 
 function suggestAmbassadorCode() {
@@ -5359,7 +6202,30 @@ function renderAdminDashboard() {
     encPaidSub.textContent = `Pagado histórico: ${formatCLP(ambReport.totalAllPaidCommissions)}`;
   }
 
-  // 5. Renderizar Listas de Trabajo (Worklists) y Tabla de Pedidos (Solo Socios Fundadores)
+  // 5. Renderizar Contabilidad de Despachos entre Socios (Juanjo y Mati) + Listas de Trabajo y Tabla de Pedidos
+  const dispatchStats = calculatePartnerDispatchStats();
+  const dispFeeInput = document.getElementById('dispatch-fee-per-order-input');
+  if (dispFeeInput && document.activeElement !== dispFeeInput) {
+    dispFeeInput.value = dispatchStats.feePerOrder;
+  }
+  const jOrdEl = document.getElementById('dispatch-stats-juanjo-orders');
+  const jTraysEl = document.getElementById('dispatch-stats-juanjo-trays');
+  const jAmtEl = document.getElementById('dispatch-stats-juanjo-amount');
+  const mOrdEl = document.getElementById('dispatch-stats-mati-orders');
+  const mTraysEl = document.getElementById('dispatch-stats-mati-trays');
+  const mAmtEl = document.getElementById('dispatch-stats-mati-amount');
+  const uOrdEl = document.getElementById('dispatch-stats-unassigned-orders');
+  const uTraysEl = document.getElementById('dispatch-stats-unassigned-trays');
+
+  if (jOrdEl) jOrdEl.textContent = dispatchStats.juanjoOrders;
+  if (jTraysEl) jTraysEl.textContent = dispatchStats.juanjoTrays;
+  if (jAmtEl) jAmtEl.textContent = formatCLP(dispatchStats.juanjoAmount);
+  if (mOrdEl) mOrdEl.textContent = dispatchStats.matiOrders;
+  if (mTraysEl) mTraysEl.textContent = dispatchStats.matiTrays;
+  if (mAmtEl) mAmtEl.textContent = formatCLP(dispatchStats.matiAmount);
+  if (uOrdEl) uOrdEl.textContent = dispatchStats.unassignedOrders;
+  if (uTraysEl) uTraysEl.textContent = dispatchStats.unassignedTrays;
+
   const filterType = (document.getElementById('admin-filter-order-type') || {}).value || 'all';
   const sortMode = (document.getElementById('admin-sort-orders') || {}).value || 'newest';
 
@@ -5486,6 +6352,21 @@ function renderAdminDashboard() {
             </button>
           `;
 
+          const wazeUrl = buildWazeUrl(order.clientAddress);
+          const mapsUrl = buildGoogleMapsUrl(order.clientAddress);
+          const navButtonsHtml = order.clientAddress
+            ? `<div class="flex flex-wrap items-center gap-1.5 pt-1">
+                 <a href="${wazeUrl}" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 text-sky-300 border border-sky-400/40 text-[11px] font-extrabold transition shadow-xs">
+                   📍 Abrir en Waze
+                 </a>
+                 <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 text-amber-300 border border-amber-400/40 text-[11px] font-extrabold transition shadow-xs">
+                   🗺️ Abrir en Google Maps
+                 </a>
+               </div>`
+            : '';
+
           const clientDisplay = `
             <div class="space-y-1">
               <span class="font-display font-extrabold text-white text-sm block">${order.clientName || 'Cliente'}</span>
@@ -5502,6 +6383,7 @@ function renderAdminDashboard() {
                   ? `<span class="text-xs text-amber-200/90 font-bold block leading-snug">📍 ${order.clientAddress}</span>`
                   : '<span class="text-[11px] text-slate-500 block italic">Sin dirección registrada</span>'
               }
+              ${navButtonsHtml}
             </div>
           `;
 
@@ -5527,13 +6409,32 @@ function renderAdminDashboard() {
                </div>`
             : `<span class="text-slate-500 text-xs italic">- (Sin código)</span>`;
 
+          const currentDriver = (order.dispatchedBy || '').trim();
+          const dispatchedBySelectHtml = `
+            <div class="pt-0.5">
+              <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-0.5">¿Quién despachó?</label>
+              <select onchange="handleOrderDispatchedByChange('${order.id}', this.value)"
+                      class="w-full px-2.5 py-1.5 rounded-lg bg-qh-navyDark border ${
+                        currentDriver === 'Juanjo'
+                          ? 'border-sky-400/50 text-sky-300'
+                          : currentDriver === 'Mati'
+                          ? 'border-amber-400/50 text-amber-300'
+                          : 'border-white/15 text-slate-300'
+                      } text-[11px] font-extrabold focus:outline-none">
+                <option value="" ${!currentDriver ? 'selected' : ''}>⏳ Pendiente de asignar</option>
+                <option value="Juanjo" ${currentDriver === 'Juanjo' ? 'selected' : ''}>🚗 Despachó Juanjo</option>
+                <option value="Mati" ${currentDriver === 'Mati' ? 'selected' : ''}>🚙 Despachó Mati (Moreno)</option>
+              </select>
+            </div>
+          `;
+
           return `
             <tr class="${rowClass}">
               <td class="py-3.5 px-4 whitespace-nowrap">
                 <span class="font-display font-extrabold text-white block text-sm">${order.displayId || order.id}</span>
                 <span class="text-[11px] text-slate-400 block">${order.date}</span>
               </td>
-              <td class="py-3.5 px-4 min-w-[200px]">
+              <td class="py-3.5 px-4 min-w-[220px]">
                 ${clientDisplay}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
@@ -5558,6 +6459,7 @@ function renderAdminDashboard() {
               <td class="py-3.5 px-4 whitespace-nowrap">
                 <div class="flex flex-col gap-2">
                   <div>${statusBadge}</div>
+                  ${dispatchedBySelectHtml}
                   <div class="flex flex-wrap items-center gap-1.5">${actionButtons}</div>
                 </div>
               </td>
@@ -5801,7 +6703,12 @@ function renderAdminDashboard() {
             <tr class="hover:bg-white/5 transition">
               <td class="py-3.5 px-4">
                 <div class="space-y-1">
-                  <span class="font-display font-extrabold text-white text-sm block">${amb.name}</span>
+                  <button type="button" onclick="openAmbassadorDetailModal('${amb.code}')"
+                          class="text-left group flex items-center gap-1.5 focus:outline-none"
+                          title="Pincha para ver el desglose detallado de ventas, pedidos y deuda">
+                    <span class="font-display font-extrabold text-white group-hover:text-amber-300 underline decoration-amber-400/50 underline-offset-2 text-sm transition">${amb.name}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 text-[10px] font-extrabold group-hover:bg-amber-400 group-hover:text-qh-navyDark transition">🔍 Ver Detalle</span>
+                  </button>
                   <div class="flex flex-wrap items-center gap-1.5">
                     <span class="px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-display font-extrabold text-xs tracking-wider">
                       ${amb.code}
@@ -5823,12 +6730,12 @@ function renderAdminDashboard() {
                 ${invitedByHtml}
               </td>
               <td class="py-3.5 px-4 text-xs">
-                <div class="space-y-0.5">
+                <div class="space-y-0.5 cursor-pointer" onclick="openAmbassadorDetailModal('${amb.code}')">
                   <span class="font-bold text-white block">
                     📦 <strong>${amb.ownTotalTrays}</strong> bandejas (${amb.ordersCount} ped.)
                   </span>
-                  <span class="text-[11px] text-slate-400 block">
-                    ${amb.ownCampoTrays} Café • ${amb.ownBlancoTrays} Blanco${
+                  <span class="text-[11px] text-slate-300 block">
+                    <strong class="text-amber-300">${amb.ownCampoTrays} Café</strong> ($2.000) • <strong class="text-white">${amb.ownBlancoTrays} Blanco</strong> ($1.000)${
                       amb.ownPendingTrays > 0 ? ` (+${amb.ownPendingTrays} pend.)` : ''
                     }
                   </span>
@@ -5844,8 +6751,13 @@ function renderAdminDashboard() {
                 ${formatCLP(amb.totalPaid || 0)}
               </td>
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <div>
-                  <span class="font-display font-extrabold text-lg block ${
+                <div class="cursor-pointer" onclick="openAmbassadorDetailModal('${amb.code}')">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider ${
+                    amb.totalPendingToPay > 0 ? 'text-amber-300' : 'text-slate-500'
+                  } block">
+                    Deuda Pendiente a Pagar:
+                  </span>
+                  <span class="font-display font-black text-lg sm:text-xl block ${
                     amb.totalPendingToPay > 0 ? 'text-amber-400' : 'text-slate-400'
                   }">
                     ${formatCLP(amb.totalPendingToPay)}
@@ -5855,12 +6767,17 @@ function renderAdminDashboard() {
                       ? `<span class="text-[10px] text-slate-300 block">
                            Propia: ${formatCLP(amb.ownCommissionPending)} + Bonos: ${formatCLP(amb.bonusPending)}
                          </span>`
-                      : `<span class="text-[10px] text-slate-500 block">Saldado ($0)</span>`
+                      : `<span class="text-[10px] text-emerald-400 font-bold block">✅ Saldado ($0)</span>`
                   }
                 </div>
               </td>
               <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 <div class="flex flex-wrap items-center justify-end gap-1.5">
+                  <button type="button" onclick="openAmbassadorDetailModal('${amb.code}')"
+                          class="px-2.5 py-1.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 border border-amber-400/40 text-xs font-extrabold text-amber-300 transition"
+                          title="Ver desglose detallado de comisiones y deuda">
+                    🔍 Detalle
+                  </button>
                   <button type="button" onclick="copyAmbassadorCode('${amb.code}')"
                           class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition"
                           title="Copiar código al portapapeles">
@@ -6287,6 +7204,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const smartDispatchModal = document.getElementById('smart-dispatch-modal');
+  if (smartDispatchModal) {
+    smartDispatchModal.addEventListener('click', (e) => {
+      if (e.target === smartDispatchModal) closeSmartDispatchModal();
+    });
+  }
+
+  const ambDetailModal = document.getElementById('ambassador-detail-modal');
+  if (ambDetailModal) {
+    ambDetailModal.addEventListener('click', (e) => {
+      if (e.target === ambDetailModal) closeAmbassadorDetailModal();
+    });
+  }
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeCartDrawer();
@@ -6295,6 +7226,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       closeEditAmbassadorModal();
       closeEditUserModal();
       closeSupabaseConfigModal();
+      closeSmartDispatchModal();
+      closeAmbassadorDetailModal();
     }
   });
 
